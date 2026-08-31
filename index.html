@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Fractal Investigativo v0.4</title>
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Fractal Investigativo v0.5</title>
 
 <style>
+
 * {
     box-sizing: border-box;
 }
@@ -26,11 +31,11 @@ body {
 }
 
 h1 {
-    font-size: 2.1rem;
     margin-bottom: 8px;
 }
 
-h2, h3 {
+h2,
+h3 {
     margin-top: 0;
 }
 
@@ -70,7 +75,7 @@ select {
 }
 
 textarea {
-    min-height: 115px;
+    min-height: 110px;
     resize: vertical;
 }
 
@@ -94,13 +99,13 @@ button {
     color: white;
 }
 
-.perigo {
-    background: #572d2d;
+.sucesso {
+    background: #284a30;
     color: white;
 }
 
-.sucesso {
-    background: #284a30;
+.perigo {
+    background: #572d2d;
     color: white;
 }
 
@@ -108,53 +113,52 @@ button {
     display: none;
 }
 
-.status {
-    margin-top: 10px;
-    padding: 11px;
-    border-radius: 8px;
+.status,
+.info {
+    padding: 12px;
+    border-radius: 9px;
     background: #23251d;
+    margin-top: 10px;
+    margin-bottom: 12px;
 }
 
 .claim,
-.relacao {
-    background: #212219;
+.relacao,
+.verificacao-item,
+.memoria-item {
+    background: #202119;
     border: 1px solid #44463b;
     border-radius: 10px;
     padding: 14px;
     margin-top: 12px;
 }
 
-.claim-id,
-.relacao-id {
-    font-weight: bold;
+.memoria-item {
+    border-left: 4px solid #747668;
+}
+
+.alerta {
+    border-left: 5px solid #8d7136;
+}
+
+.erro {
+    border-left: 5px solid #8d3c3c;
+}
+
+.ok {
+    border-left: 5px solid #3f7b4a;
 }
 
 .tipo {
     display: inline-block;
-    padding: 3px 8px;
-    border-radius: 8px;
     background: #35372d;
-    margin-right: 5px;
+    padding: 3px 8px;
+    border-radius: 7px;
 }
 
 .pequeno {
     color: #999b91;
     font-size: 0.88rem;
-}
-
-.memoria-item {
-    border-left: 4px solid #747668;
-    padding: 14px;
-    margin-top: 12px;
-    background: #202119;
-    border-radius: 8px;
-}
-
-.info {
-    background: #21231b;
-    border-radius: 9px;
-    padding: 13px;
-    margin-bottom: 12px;
 }
 
 .grid {
@@ -163,38 +167,56 @@ button {
     gap: 10px;
 }
 
+.metricas {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.metrica {
+    background: #25271f;
+    padding: 12px;
+    border-radius: 9px;
+}
+
+.numero {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
 hr {
     border: none;
     border-top: 1px solid #3c3d34;
     margin: 22px 0;
 }
 
-.seta {
-    font-size: 1.2rem;
-    font-weight: bold;
-}
+@media(max-width:650px) {
 
-@media (max-width: 650px) {
-    .grid {
+    .grid,
+    .metricas {
         grid-template-columns: 1fr;
     }
+
 }
+
 </style>
+
 </head>
+
 
 <body>
 
 <div class="container">
 
 <div class="versao">
-Versão 0.4 — grafo de relações
+Versão 0.5 — verificador estrutural
 </div>
 
 <h1>🧠 Fractal Investigativo</h1>
 
 <p class="subtitulo">
-Protótipo de investigação recursiva com memória persistente,
-estados epistêmicos e relações entre afirmações.
+Investigação recursiva, memória persistente,
+grafo epistemológico e auditoria estrutural.
 </p>
 
 
@@ -204,7 +226,7 @@ estados epistêmicos e relações entre afirmações.
 
 <textarea
 id="alvo"
-placeholder="Qual é a pergunta, fenômeno ou problema principal?"
+placeholder="Qual é o fenômeno, problema ou pergunta principal?"
 ></textarea>
 
 <button
@@ -222,7 +244,10 @@ class="status oculto"
 </section>
 
 
-<div id="sistema" class="oculto">
+<div
+id="sistema"
+class="oculto"
+>
 
 
 <section class="card">
@@ -327,15 +352,22 @@ Registrar
 
 <div class="info">
 
-<strong>Tipos:</strong><br><br>
+<strong>Tipos:</strong>
+
+<br><br>
 
 B = premissa/base explícita<br>
+
 L = dedução lógica<br>
+
 M = modelo matemático/formal<br>
+
 C = ciência/evidência empírica<br>
+
 H = hipótese/especulação
 
 </div>
+
 
 <label>Afirmação</label>
 
@@ -349,7 +381,7 @@ placeholder="Digite uma afirmação..."
 
 <div>
 
-<label>Tipo epistemológico</label>
+<label>Tipo</label>
 
 <select id="claimTipo">
 
@@ -428,7 +460,7 @@ document.getElementById('valorConfianca').textContent=this.value
 
 <input
 id="claimFonte"
-placeholder="Livro, artigo, experimento, URL, raciocínio próprio..."
+placeholder="Artigo, livro, experimento, URL, raciocínio próprio..."
 >
 
 
@@ -445,22 +477,18 @@ Adicionar afirmação
 </section>
 
 
+
 <section class="card">
 
-<h2>9. Relações entre afirmações</h2>
-
-<p>
-Escolha uma afirmação de origem, o tipo de relação,
-e uma afirmação de destino.
-</p>
+<h2>9. Relações</h2>
 
 
-<label>Afirmação de origem</label>
+<label>Origem</label>
 
 <select id="relOrigem"></select>
 
 
-<label>Relação</label>
+<label>Tipo de relação</label>
 
 <select id="relTipo">
 
@@ -495,16 +523,35 @@ Enfraquece
 </select>
 
 
-<label>Afirmação de destino</label>
+<label>Destino</label>
 
 <select id="relDestino"></select>
 
 
-<label>Observação opcional</label>
+<label>Estado da relação</label>
+
+<select id="relEstado">
+
+<option value="proposta">
+Proposta
+</option>
+
+<option value="validada">
+Validada
+</option>
+
+<option value="contestada">
+Contestada
+</option>
+
+</select>
+
+
+<label>Observação</label>
 
 <textarea
 id="relObservacao"
-placeholder="Por que esta relação existe?"
+placeholder="Explique por que essa relação foi criada."
 ></textarea>
 
 
@@ -516,18 +563,53 @@ Criar relação
 </button>
 
 
-<hr>
-
-<h3>Grafo textual</h3>
-
 <div id="relacoes"></div>
 
 </section>
 
 
+
 <section class="card">
 
-<h2>10. Memória do sistema</h2>
+<h2>10. Verificador estrutural</h2>
+
+<p>
+Este módulo procura fragilidades e inconsistências
+na estrutura registrada.
+</p>
+
+<div class="info">
+
+<strong>Importante:</strong>
+
+este verificador ainda não determina se uma afirmação
+é verdadeira no mundo real.
+
+Ele apenas examina a coerência da estrutura
+que foi cadastrada.
+
+</div>
+
+
+<button
+class="principal"
+onclick="executarVerificacao()"
+>
+🔎 Executar verificação
+</button>
+
+
+<div id="metricas"></div>
+
+<div id="verificacoes"></div>
+
+</section>
+
+
+
+<section class="card">
+
+<h2>11. Memória</h2>
 
 <div
 id="statusMemoria"
@@ -538,12 +620,14 @@ class="status"
 
 <hr>
 
+
 <button
 class="sucesso"
 onclick="arquivarInvestigacao()"
 >
 Arquivar investigação
 </button>
+
 
 <button
 class="secundario"
@@ -552,12 +636,14 @@ onclick="novaInvestigacao()"
 Nova investigação
 </button>
 
+
 <button
 class="secundario"
 onclick="exportarBackup()"
 >
 Exportar backup JSON
 </button>
+
 
 <button
 class="secundario"
@@ -568,6 +654,7 @@ document.getElementById('arquivoBackup').click()
 Importar backup JSON
 </button>
 
+
 <input
 type="file"
 id="arquivoBackup"
@@ -575,6 +662,7 @@ accept=".json,application/json"
 class="oculto"
 onchange="importarBackup(event)"
 >
+
 
 <button
 class="perigo"
@@ -598,24 +686,26 @@ Apagar toda a memória
 </div>
 
 
+
 <script>
 
-const CHAVE_V04 =
-    "fractal_investigativo_v04";
+const CHAVE_V05 =
+"fractal_investigativo_v05";
 
-const CHAVE_V03 =
-    "fractal_investigativo_v03";
+const CHAVE_V04 =
+"fractal_investigativo_v04";
 
 
 let banco = {
 
-    versao: "0.4",
+    versao: "0.5",
 
     ativa: null,
 
     historico: []
 
 };
+
 
 
 function agora() {
@@ -625,6 +715,7 @@ function agora() {
 }
 
 
+
 function idInvestigacao() {
 
     return "INV-" + Date.now();
@@ -632,41 +723,57 @@ function idInvestigacao() {
 }
 
 
+
 function novaEstrutura(alvo) {
 
     return {
 
-        id: idInvestigacao(),
+        id:
+            idInvestigacao(),
 
-        criadoEm: agora(),
+        criadoEm:
+            agora(),
 
-        atualizadoEm: agora(),
+        atualizadoEm:
+            agora(),
 
-        alvo: alvo || "",
+        alvo:
+            alvo || "",
 
-        microalvos: "",
+        microalvos:
+            "",
 
-        hipoteses: "",
+        hipoteses:
+            "",
 
-        evidencias: "",
+        evidencias:
+            "",
 
-        contradicoes: "",
+        contradicoes:
+            "",
 
-        conclusao: "",
+        conclusao:
+            "",
 
-        proximo: "",
+        proximo:
+            "",
 
-        proximoClaim: 1,
+        proximoClaim:
+            1,
 
-        claims: [],
+        claims:
+            [],
 
-        proximaRelacao: 1,
+        proximaRelacao:
+            1,
 
-        relacoes: []
+        relacoes:
+            []
 
     };
 
 }
+
 
 
 function normalizarInvestigacao(i) {
@@ -675,27 +782,55 @@ function normalizarInvestigacao(i) {
         return null;
     }
 
+
     if (!Array.isArray(i.claims)) {
+
         i.claims = [];
+
     }
+
 
     if (!i.proximoClaim) {
+
         i.proximoClaim =
             i.claims.length + 1;
+
     }
+
 
     if (!Array.isArray(i.relacoes)) {
+
         i.relacoes = [];
+
     }
 
+
     if (!i.proximaRelacao) {
+
         i.proximaRelacao =
             i.relacoes.length + 1;
+
     }
+
+
+    i.relacoes.forEach(
+        function(r) {
+
+            if (!r.estado) {
+
+                r.estado =
+                    "proposta";
+
+            }
+
+        }
+    );
+
 
     return i;
 
 }
+
 
 
 function salvarBanco() {
@@ -703,13 +838,19 @@ function salvarBanco() {
     try {
 
         localStorage.setItem(
-            CHAVE_V04,
+
+            CHAVE_V05,
+
             JSON.stringify(banco)
+
         );
+
 
         atualizarStatus();
 
-    } catch (erro) {
+    }
+
+    catch (erro) {
 
         alert(
             "Erro ao salvar memória: " +
@@ -721,38 +862,46 @@ function salvarBanco() {
 }
 
 
+
 function carregarBanco() {
 
     try {
 
-        const v04 =
+        const atual =
             localStorage.getItem(
-                CHAVE_V04
+                CHAVE_V05
             );
 
-        if (v04) {
+
+        if (atual) {
 
             banco =
-                JSON.parse(v04);
+                JSON.parse(atual);
 
-        } else {
+        }
 
-            const v03 =
+        else {
+
+            const anterior =
                 localStorage.getItem(
-                    CHAVE_V03
+                    CHAVE_V04
                 );
 
-            if (v03) {
 
-                const antigo =
-                    JSON.parse(v03);
+            if (anterior) {
 
-                banco = antigo;
+                banco =
+                    JSON.parse(
+                        anterior
+                    );
 
-                banco.versao = "0.4";
+
+                banco.versao =
+                    "0.5";
+
 
                 alert(
-                    "Memória da versão 0.3 encontrada e migrada para a versão 0.4."
+                    "Memória da v0.4 encontrada e migrada para a v0.5."
                 );
 
             }
@@ -760,8 +909,15 @@ function carregarBanco() {
         }
 
 
-        if (!Array.isArray(banco.historico)) {
-            banco.historico = [];
+        if (
+            !Array.isArray(
+                banco.historico
+            )
+        ) {
+
+            banco.historico =
+                [];
+
         }
 
 
@@ -779,16 +935,18 @@ function carregarBanco() {
 
         salvarBanco();
 
-    } catch (erro) {
+    }
+
+    catch (erro) {
 
         console.error(
-            "Erro ao carregar memória:",
             erro
         );
 
     }
 
 }
+
 
 
 function iniciarInvestigacao() {
@@ -816,7 +974,9 @@ function iniciarInvestigacao() {
         banco.ativa =
             novaEstrutura(alvo);
 
-    } else {
+    }
+
+    else {
 
         banco.ativa.alvo =
             alvo;
@@ -837,12 +997,15 @@ function iniciarInvestigacao() {
 
 
     const status =
-        document.getElementById(
+        document
+        .getElementById(
             "statusInicial"
         );
 
+
     status.textContent =
         "✓ Investigação ativa e salva.";
+
 
     status.classList.remove(
         "oculto"
@@ -851,31 +1014,30 @@ function iniciarInvestigacao() {
 }
 
 
+
 function mostrarSistema() {
 
     document
-        .getElementById("sistema")
-        .classList.remove("oculto");
+    .getElementById("sistema")
+    .classList.remove("oculto");
 
 }
+
 
 
 function esconderSistema() {
 
     document
-        .getElementById("sistema")
-        .classList.add("oculto");
+    .getElementById("sistema")
+    .classList.add("oculto");
 
 }
+
 
 
 function registrarCampo(nome) {
 
     if (!banco.ativa) {
-
-        alert(
-            "Inicie primeiro uma investigação."
-        );
 
         return;
 
@@ -901,14 +1063,17 @@ function registrarCampo(nome) {
 }
 
 
+
 function autosalvar() {
 
     if (!banco.ativa) {
+
         return;
+
     }
 
 
-    const campos = [
+    [
 
         "alvo",
 
@@ -924,15 +1089,14 @@ function autosalvar() {
 
         "proximo"
 
-    ];
+    ].forEach(
 
-
-    campos.forEach(
         function(nome) {
 
             const elemento =
                 document
                 .getElementById(nome);
+
 
             if (elemento) {
 
@@ -942,6 +1106,7 @@ function autosalvar() {
             }
 
         }
+
     );
 
 
@@ -954,14 +1119,17 @@ function autosalvar() {
 }
 
 
+
 function preencherCampos() {
 
     if (!banco.ativa) {
+
         return;
+
     }
 
 
-    const campos = [
+    [
 
         "alvo",
 
@@ -977,30 +1145,26 @@ function preencherCampos() {
 
         "proximo"
 
-    ];
+    ].forEach(
 
-
-    campos.forEach(
         function(nome) {
 
             document
-                .getElementById(nome)
-                .value =
+            .getElementById(nome)
+            .value =
                 banco.ativa[nome] || "";
 
         }
+
     );
 
 }
 
 
+
 function adicionarClaim() {
 
     if (!banco.ativa) {
-
-        alert(
-            "Inicie primeiro uma investigação."
-        );
 
         return;
 
@@ -1033,7 +1197,8 @@ function adicionarClaim() {
             "CLM-" +
             banco.ativa.proximoClaim,
 
-        texto: texto,
+        texto:
+            texto,
 
         tipo:
             document
@@ -1074,15 +1239,14 @@ function adicionarClaim() {
 
     banco.ativa.proximoClaim++;
 
+
     banco.ativa.claims.push(
         claim
     );
 
-    banco.ativa.atualizadoEm =
-        agora();
-
 
     salvarBanco();
+
 
     limparFormularioClaim();
 
@@ -1091,82 +1255,74 @@ function adicionarClaim() {
 }
 
 
+
 function limparFormularioClaim() {
 
     document
-        .getElementById(
-            "claimTexto"
-        )
-        .value = "";
+    .getElementById("claimTexto")
+    .value = "";
 
 
     document
-        .getElementById(
-            "claimTipo"
-        )
-        .value = "H";
+    .getElementById("claimTipo")
+    .value = "H";
 
 
     document
-        .getElementById(
-            "claimEstado"
-        )
-        .value = "pendente";
+    .getElementById("claimEstado")
+    .value = "pendente";
 
 
     document
-        .getElementById(
-            "claimConfianca"
-        )
-        .value = 50;
+    .getElementById("claimConfianca")
+    .value = 50;
 
 
     document
-        .getElementById(
-            "valorConfianca"
-        )
-        .textContent = "50";
+    .getElementById("valorConfianca")
+    .textContent = "50";
 
 
     document
-        .getElementById(
-            "claimFonte"
-        )
-        .value = "";
+    .getElementById("claimFonte")
+    .value = "";
 
 }
 
 
+
 function removerClaim(id) {
 
-    if (!banco.ativa) {
-        return;
-    }
-
-
-    const confirmar =
+    const resposta =
         confirm(
             "Remover " +
             id +
-            "?\n\nAs relações ligadas a essa afirmação também serão removidas."
+            " e todas as relações ligadas a ele?"
         );
 
 
-    if (!confirmar) {
+    if (!resposta) {
+
         return;
+
     }
 
 
     banco.ativa.claims =
         banco.ativa.claims.filter(
+
             function(c) {
+
                 return c.id !== id;
+
             }
+
         );
 
 
     banco.ativa.relacoes =
         banco.ativa.relacoes.filter(
+
             function(r) {
 
                 return (
@@ -1175,6 +1331,7 @@ function removerClaim(id) {
                 );
 
             }
+
         );
 
 
@@ -1185,25 +1342,16 @@ function removerClaim(id) {
 }
 
 
+
 function adicionarRelacao() {
 
-    if (!banco.ativa) {
-
-        alert(
-            "Nenhuma investigação ativa."
-        );
-
-        return;
-
-    }
-
-
     if (
+        !banco.ativa ||
         banco.ativa.claims.length < 2
     ) {
 
         alert(
-            "Crie pelo menos duas afirmações antes de relacioná-las."
+            "Crie pelo menos duas afirmações."
         );
 
         return;
@@ -1213,52 +1361,20 @@ function adicionarRelacao() {
 
     const origem =
         document
-        .getElementById(
-            "relOrigem"
-        )
+        .getElementById("relOrigem")
         .value;
 
 
     const destino =
         document
-        .getElementById(
-            "relDestino"
-        )
+        .getElementById("relDestino")
         .value;
-
-
-    const tipo =
-        document
-        .getElementById(
-            "relTipo"
-        )
-        .value;
-
-
-    const observacao =
-        document
-        .getElementById(
-            "relObservacao"
-        )
-        .value
-        .trim();
-
-
-    if (!origem || !destino) {
-
-        alert(
-            "Escolha origem e destino."
-        );
-
-        return;
-
-    }
 
 
     if (origem === destino) {
 
         alert(
-            "Uma afirmação não pode ser relacionada a si mesma nesta versão."
+            "Origem e destino não podem ser iguais."
         );
 
         return;
@@ -1266,17 +1382,29 @@ function adicionarRelacao() {
     }
 
 
+    const tipo =
+        document
+        .getElementById("relTipo")
+        .value;
+
+
     const duplicada =
         banco.ativa.relacoes.some(
+
             function(r) {
 
                 return (
+
                     r.origem === origem &&
+
                     r.destino === destino &&
+
                     r.tipo === tipo
+
                 );
 
             }
+
         );
 
 
@@ -1291,42 +1419,48 @@ function adicionarRelacao() {
     }
 
 
-    const relacao = {
+    banco.ativa.relacoes.push({
 
         id:
             "REL-" +
             banco.ativa.proximaRelacao,
 
-        origem: origem,
+        origem:
+            origem,
 
-        destino: destino,
+        destino:
+            destino,
 
-        tipo: tipo,
+        tipo:
+            tipo,
+
+        estado:
+            document
+            .getElementById(
+                "relEstado"
+            )
+            .value,
 
         observacao:
-            observacao,
+            document
+            .getElementById(
+                "relObservacao"
+            )
+            .value
+            .trim(),
 
         criadoEm:
             agora()
 
-    };
+    });
 
 
     banco.ativa.proximaRelacao++;
 
-    banco.ativa.relacoes.push(
-        relacao
-    );
-
-    banco.ativa.atualizadoEm =
-        agora();
-
 
     document
-        .getElementById(
-            "relObservacao"
-        )
-        .value = "";
+    .getElementById("relObservacao")
+    .value = "";
 
 
     salvarBanco();
@@ -1336,31 +1470,29 @@ function adicionarRelacao() {
 }
 
 
+
 function removerRelacao(id) {
 
-    if (!banco.ativa) {
+    if (
+        !confirm(
+            "Remover " + id + "?"
+        )
+    ) {
+
         return;
-    }
 
-
-    const confirmar =
-        confirm(
-            "Remover a relação " +
-            id +
-            "?"
-        );
-
-
-    if (!confirmar) {
-        return;
     }
 
 
     banco.ativa.relacoes =
         banco.ativa.relacoes.filter(
+
             function(r) {
+
                 return r.id !== id;
+
             }
+
         );
 
 
@@ -1371,123 +1503,21 @@ function removerRelacao(id) {
 }
 
 
-function preencherSeletoresRelacao() {
-
-    const origem =
-        document.getElementById(
-            "relOrigem"
-        );
-
-    const destino =
-        document.getElementById(
-            "relDestino"
-        );
-
-
-    origem.innerHTML = "";
-
-    destino.innerHTML = "";
-
-
-    if (
-        !banco.ativa ||
-        banco.ativa.claims.length === 0
-    ) {
-
-        const opcao1 =
-            document.createElement(
-                "option"
-            );
-
-        opcao1.textContent =
-            "Nenhuma afirmação disponível";
-
-        opcao1.value = "";
-
-
-        const opcao2 =
-            opcao1.cloneNode(true);
-
-
-        origem.appendChild(
-            opcao1
-        );
-
-        destino.appendChild(
-            opcao2
-        );
-
-        return;
-
-    }
-
-
-    banco.ativa.claims.forEach(
-        function(claim) {
-
-            const textoCurto =
-                claim.texto.length > 45
-                ? claim.texto.slice(0,45) + "..."
-                : claim.texto;
-
-
-            const op1 =
-                document.createElement(
-                    "option"
-                );
-
-            op1.value =
-                claim.id;
-
-            op1.textContent =
-                claim.id +
-                " — " +
-                textoCurto;
-
-
-            const op2 =
-                op1.cloneNode(true);
-
-
-            origem.appendChild(
-                op1
-            );
-
-            destino.appendChild(
-                op2
-            );
-
-        }
-    );
-
-
-    if (
-        banco.ativa.claims.length > 1
-    ) {
-
-        destino.selectedIndex = 1;
-
-    }
-
-}
-
 
 function claimPorId(id) {
 
-    if (!banco.ativa) {
-        return null;
-    }
+    return banco.ativa.claims.find(
 
+        function(c) {
 
-    return (
-        banco.ativa.claims.find(
-            function(c) {
-                return c.id === id;
-            }
-        ) || null
+            return c.id === id;
+
+        }
+
     );
 
 }
+
 
 
 function escapar(texto) {
@@ -1505,46 +1535,112 @@ function escapar(texto) {
 
     return String(texto)
 
-        .replace(/&/g, "&amp;")
+    .replace(/&/g,"&amp;")
 
-        .replace(/</g, "&lt;")
+    .replace(/</g,"&lt;")
 
-        .replace(/>/g, "&gt;")
+    .replace(/>/g,"&gt;")
 
-        .replace(/"/g, "&quot;")
+    .replace(/"/g,"&quot;")
 
-        .replace(/'/g, "&#039;")
+    .replace(/'/g,"&#039;")
 
-        .replace(/\n/g, "<br>");
+    .replace(/\n/g,"<br>");
+
+}
+
+
+
+function preencherSeletoresRelacao() {
+
+    const origem =
+        document
+        .getElementById("relOrigem");
+
+
+    const destino =
+        document
+        .getElementById("relDestino");
+
+
+    origem.innerHTML = "";
+
+    destino.innerHTML = "";
+
+
+    if (
+        !banco.ativa ||
+        banco.ativa.claims.length === 0
+    ) {
+
+        origem.innerHTML =
+            "<option value=''>Nenhuma afirmação</option>";
+
+        destino.innerHTML =
+            "<option value=''>Nenhuma afirmação</option>";
+
+        return;
+
+    }
+
+
+    banco.ativa.claims.forEach(
+
+        function(c) {
+
+            const curto =
+                c.texto.length > 35
+
+                ? c.texto.slice(0,35) + "..."
+
+                : c.texto;
+
+
+            const a =
+                document.createElement(
+                    "option"
+                );
+
+
+            a.value =
+                c.id;
+
+
+            a.textContent =
+                c.id +
+                " — " +
+                curto;
+
+
+            origem.appendChild(
+                a
+            );
+
+
+            destino.appendChild(
+                a.cloneNode(true)
+            );
+
+        }
+
+    );
+
+
+    if (
+        banco.ativa.claims.length > 1
+    ) {
+
+        destino.selectedIndex = 1;
+
+    }
 
 }
 
-
-function nomeTipo(tipo) {
-
-    const nomes = {
-
-        B: "Premissa/base",
-
-        L: "Dedução lógica",
-
-        M: "Modelo matemático",
-
-        C: "Ciência/evidência",
-
-        H: "Hipótese"
-
-    };
-
-
-    return nomes[tipo] || tipo;
-
-}
 
 
 function nomeRelacao(tipo) {
 
-    const nomes = {
+    const mapa = {
 
         sustenta:
             "SUSTENTA",
@@ -1570,18 +1666,17 @@ function nomeRelacao(tipo) {
     };
 
 
-    return nomes[tipo] || tipo;
+    return mapa[tipo] || tipo;
 
 }
+
 
 
 function renderizarClaims() {
 
     const caixa =
         document
-        .getElementById(
-            "claims"
-        );
+        .getElementById("claims");
 
 
     if (
@@ -1590,7 +1685,7 @@ function renderizarClaims() {
     ) {
 
         caixa.innerHTML =
-            "<p class='pequeno'>Nenhuma afirmação estruturada.</p>";
+            "<p class='pequeno'>Nenhuma afirmação.</p>";
 
         return;
 
@@ -1601,11 +1696,11 @@ function renderizarClaims() {
 
 
     banco.ativa.claims.forEach(
-        function(claim) {
+
+        function(c) {
 
             const div =
-                document
-                .createElement(
+                document.createElement(
                     "div"
                 );
 
@@ -1616,67 +1711,40 @@ function renderizarClaims() {
 
             div.innerHTML = `
 
-                <div>
+            <strong>${escapar(c.id)}</strong>
 
-                    <span class="claim-id">
-                        ${escapar(claim.id)}
-                    </span>
+            <span class="tipo">
+            ${escapar(c.tipo)}
+            </span>
 
-                    <span class="tipo">
-                        ${escapar(claim.tipo)}
-                    </span>
+            <p>
+            ${escapar(c.texto)}
+            </p>
 
-                    ${escapar(
-                        nomeTipo(
-                            claim.tipo
-                        )
-                    )}
+            <p class="pequeno">
 
-                </div>
+            Estado:
+            ${escapar(c.estado)}
 
-                <p>
-                    ${escapar(
-                        claim.texto
-                    )}
-                </p>
+            <br>
 
-                <p class="pequeno">
+            Confiança:
+            ${escapar(c.confianca)}%
 
-                    Estado:
-                    <strong>
-                        ${escapar(
-                            claim.estado
-                        )}
-                    </strong>
+            <br>
 
-                    <br>
+            Fonte:
+            ${escapar(c.fonte)}
 
-                    Confiança:
-                    <strong>
-                        ${escapar(
-                            claim.confianca
-                        )}%
-                    </strong>
+            </p>
 
-                    <br>
+            <button
+            class="perigo"
+            onclick="removerClaim('${c.id}')"
+            >
+            Remover
+            </button>
 
-                    Fonte:
-                    ${escapar(
-                        claim.fonte
-                    )}
-
-                </p>
-
-                <button
-                    class="perigo"
-                    onclick="
-                    removerClaim(
-                        '${claim.id}'
-                    )
-                    "
-                >
-                    Remover
-                </button>
             `;
 
 
@@ -1685,18 +1753,18 @@ function renderizarClaims() {
             );
 
         }
+
     );
 
 }
+
 
 
 function renderizarRelacoes() {
 
     const caixa =
         document
-        .getElementById(
-            "relacoes"
-        );
+        .getElementById("relacoes");
 
 
     if (
@@ -1705,7 +1773,7 @@ function renderizarRelacoes() {
     ) {
 
         caixa.innerHTML =
-            "<p class='pequeno'>Nenhuma relação criada.</p>";
+            "<p class='pequeno'>Nenhuma relação.</p>";
 
         return;
 
@@ -1716,23 +1784,11 @@ function renderizarRelacoes() {
 
 
     banco.ativa.relacoes.forEach(
-        function(relacao) {
 
-            const origem =
-                claimPorId(
-                    relacao.origem
-                );
-
-
-            const destino =
-                claimPorId(
-                    relacao.destino
-                );
-
+        function(r) {
 
             const div =
-                document
-                .createElement(
+                document.createElement(
                     "div"
                 );
 
@@ -1743,85 +1799,53 @@ function renderizarRelacoes() {
 
             div.innerHTML = `
 
-                <strong class="relacao-id">
-                    ${escapar(
-                        relacao.id
-                    )}
-                </strong>
+            <strong>
+            ${escapar(r.id)}
+            </strong>
 
-                <p>
+            <p>
 
-                    <strong>
-                        ${escapar(
-                            relacao.origem
-                        )}
-                    </strong>
+            ${escapar(r.origem)}
 
-                    <br>
+            <br>
 
-                    ${escapar(
-                        origem
-                        ? origem.texto
-                        : "Afirmação ausente"
-                    )}
+            ↓
 
-                </p>
+            <br>
 
-                <div class="seta">
-                    ↓
-                </div>
+            <strong>
+            ${escapar(nomeRelacao(r.tipo))}
+            </strong>
 
-                <p>
-                    <strong>
-                        ${escapar(
-                            nomeRelacao(
-                                relacao.tipo
-                            )
-                        )}
-                    </strong>
-                </p>
+            <br>
 
-                <div class="seta">
-                    ↓
-                </div>
+            ↓
 
-                <p>
+            <br>
 
-                    <strong>
-                        ${escapar(
-                            relacao.destino
-                        )}
-                    </strong>
+            ${escapar(r.destino)}
 
-                    <br>
+            </p>
 
-                    ${escapar(
-                        destino
-                        ? destino.texto
-                        : "Afirmação ausente"
-                    )}
+            <p class="pequeno">
 
-                </p>
+            Estado:
+            ${escapar(r.estado)}
 
-                <p class="pequeno">
+            <br>
 
-                    Observação:
-                    ${escapar(
-                        relacao.observacao
-                    )}
+            Observação:
+            ${escapar(r.observacao)}
 
-                </p>
+            </p>
 
-                <button
-                    class="perigo"
-                    onclick="
-                    removerRelacao(
-                        '${relacao.id}'
-                    )
-                    "
-                >
-                    Remover relação
-                </button>
+            <button
+            class="perigo"
+            onclick="removerRelacao('${r.id}')"
+            >
+            Remover relação
+            </button>
+
             `;
 
 
@@ -1830,9 +1854,488 @@ function renderizarRelacoes() {
             );
 
         }
+
     );
 
 }
+
+
+
+function executarVerificacao() {
+
+    if (!banco.ativa) {
+
+        return;
+
+    }
+
+
+    const claims =
+        banco.ativa.claims;
+
+
+    const relacoes =
+        banco.ativa.relacoes;
+
+
+    const resultados =
+        [];
+
+
+    const semFonte =
+        claims.filter(
+
+            function(c) {
+
+                return !c.fonte;
+
+            }
+
+        );
+
+
+    if (semFonte.length) {
+
+        resultados.push({
+
+            tipo: "alerta",
+
+            texto:
+                semFonte.length +
+                " afirmação(ões) sem fonte/origem."
+
+        });
+
+    }
+
+
+    const isoladas =
+        claims.filter(
+
+            function(c) {
+
+                return !relacoes.some(
+
+                    function(r) {
+
+                        return (
+
+                            r.origem === c.id ||
+
+                            r.destino === c.id
+
+                        );
+
+                    }
+
+                );
+
+            }
+
+        );
+
+
+    if (isoladas.length) {
+
+        resultados.push({
+
+            tipo: "alerta",
+
+            texto:
+                isoladas.length +
+                " afirmação(ões) isolada(s) no grafo."
+
+        });
+
+    }
+
+
+
+    claims
+    .filter(
+        function(c) {
+
+            return c.tipo === "H";
+
+        }
+    )
+    .forEach(
+
+        function(h) {
+
+            const apoio =
+                relacoes.some(
+
+                    function(r) {
+
+                        return (
+
+                            r.destino === h.id &&
+
+                            (
+                                r.tipo === "sustenta" ||
+
+                                r.tipo === "explica"
+                            )
+
+                        );
+
+                    }
+
+                );
+
+
+            if (!apoio) {
+
+                resultados.push({
+
+                    tipo: "alerta",
+
+                    texto:
+                        h.id +
+                        " é uma hipótese sem relação explícita de apoio."
+
+                });
+
+            }
+
+        }
+
+    );
+
+
+
+    for (
+        let i = 0;
+        i < relacoes.length;
+        i++
+    ) {
+
+        for (
+            let j = i + 1;
+            j < relacoes.length;
+            j++
+        ) {
+
+            const a =
+                relacoes[i];
+
+
+            const b =
+                relacoes[j];
+
+
+            const mesmoPar =
+                a.origem === b.origem &&
+                a.destino === b.destino;
+
+
+            if (mesmoPar) {
+
+                const contradicao =
+                    (
+
+                        a.tipo === "sustenta" &&
+                        b.tipo === "contradiz"
+
+                    )
+
+                    ||
+
+                    (
+
+                        a.tipo === "contradiz" &&
+                        b.tipo === "sustenta"
+
+                    );
+
+
+                if (contradicao) {
+
+                    resultados.push({
+
+                        tipo: "erro",
+
+                        texto:
+                            "Possível inconsistência: " +
+
+                            a.origem +
+
+                            " simultaneamente sustenta e contradiz " +
+
+                            a.destino +
+
+                            "."
+
+                    });
+
+                }
+
+            }
+
+        }
+
+    }
+
+
+
+    const rejeitadasFortes =
+        claims.filter(
+
+            function(c) {
+
+                return (
+
+                    c.estado === "rejeitada" &&
+
+                    c.confianca >= 80
+
+                );
+
+            }
+
+        );
+
+
+    rejeitadasFortes.forEach(
+
+        function(c) {
+
+            resultados.push({
+
+                tipo: "alerta",
+
+                texto:
+
+                    c.id +
+
+                    " está marcada como rejeitada, mas possui confiança de " +
+
+                    c.confianca +
+
+                    "%. Verifique essa combinação."
+
+            });
+
+        }
+
+    );
+
+
+
+    const relContestadas =
+        relacoes.filter(
+
+            function(r) {
+
+                return r.estado ===
+                    "contestada";
+
+            }
+
+        );
+
+
+    if (relContestadas.length) {
+
+        resultados.push({
+
+            tipo: "alerta",
+
+            texto:
+
+                relContestadas.length +
+
+                " relação(ões) estão contestadas."
+
+        });
+
+    }
+
+
+
+    if (resultados.length === 0) {
+
+        resultados.push({
+
+            tipo: "ok",
+
+            texto:
+                "Nenhuma inconsistência estrutural simples foi detectada."
+
+        });
+
+    }
+
+
+    renderizarMetricas();
+
+    renderizarVerificacoes(
+        resultados
+    );
+
+}
+
+
+
+function renderizarMetricas() {
+
+    const claims =
+        banco.ativa.claims;
+
+
+    const relacoes =
+        banco.ativa.relacoes;
+
+
+    const contar =
+        function(tipo) {
+
+            return claims.filter(
+
+                function(c) {
+
+                    return c.tipo === tipo;
+
+                }
+
+            ).length;
+
+        };
+
+
+    document
+    .getElementById("metricas")
+    .innerHTML = `
+
+    <hr>
+
+    <h3>Métricas</h3>
+
+    <div class="metricas">
+
+        <div class="metrica">
+
+            <div class="numero">
+            ${claims.length}
+            </div>
+
+            Afirmações
+
+        </div>
+
+        <div class="metrica">
+
+            <div class="numero">
+            ${relacoes.length}
+            </div>
+
+            Relações
+
+        </div>
+
+        <div class="metrica">
+
+            <div class="numero">
+            ${contar("B")}
+            </div>
+
+            Premissas
+
+        </div>
+
+        <div class="metrica">
+
+            <div class="numero">
+            ${contar("L")}
+            </div>
+
+            Deduções
+
+        </div>
+
+        <div class="metrica">
+
+            <div class="numero">
+            ${contar("M")}
+            </div>
+
+            Modelos
+
+        </div>
+
+        <div class="metrica">
+
+            <div class="numero">
+            ${contar("C")}
+            </div>
+
+            Evidências científicas
+
+        </div>
+
+        <div class="metrica">
+
+            <div class="numero">
+            ${contar("H")}
+            </div>
+
+            Hipóteses
+
+        </div>
+
+    </div>
+
+    `;
+
+}
+
+
+
+function renderizarVerificacoes(
+    resultados
+) {
+
+    const caixa =
+        document
+        .getElementById(
+            "verificacoes"
+        );
+
+
+    caixa.innerHTML =
+        "<h3>Resultado da auditoria</h3>";
+
+
+    resultados.forEach(
+
+        function(r) {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.className =
+                "verificacao-item " +
+                r.tipo;
+
+
+            div.textContent =
+                r.texto;
+
+
+            caixa.appendChild(
+                div
+            );
+
+        }
+
+    );
+
+}
+
 
 
 function renderizarMemoria() {
@@ -1854,60 +2357,42 @@ function renderizarMemoria() {
     }
 
 
-    const i =
-        banco.ativa;
-
-
     caixa.innerHTML = `
 
-        <div class="memoria-item">
+    <div class="memoria-item">
 
-            <strong>
-                ${escapar(i.id)}
-            </strong>
+    <strong>
+    ${escapar(banco.ativa.id)}
+    </strong>
 
-            <p>
-                <strong>Alvo:</strong>
-                <br>
-                ${escapar(i.alvo)}
-            </p>
+    <p>
 
-            <p>
-                <strong>Microalvos:</strong>
-                <br>
-                ${escapar(i.microalvos)}
-            </p>
+    <strong>Alvo:</strong>
 
-            <p>
-                <strong>Conclusão:</strong>
-                <br>
-                ${escapar(i.conclusao)}
-            </p>
+    <br>
 
-            <p class="pequeno">
+    ${escapar(banco.ativa.alvo)}
 
-                Afirmações estruturadas:
-                ${
-                    i.claims
-                    ? i.claims.length
-                    : 0
-                }
+    </p>
 
-                <br>
+    <p class="pequeno">
 
-                Relações:
-                ${
-                    i.relacoes
-                    ? i.relacoes.length
-                    : 0
-                }
+    Afirmações:
+    ${banco.ativa.claims.length}
 
-            </p>
+    <br>
 
-        </div>
+    Relações:
+    ${banco.ativa.relacoes.length}
+
+    </p>
+
+    </div>
+
     `;
 
 }
+
 
 
 function atualizarStatus() {
@@ -1920,35 +2405,22 @@ function atualizarStatus() {
 
 
     if (!elemento) {
+
         return;
-    }
-
-
-    if (banco.ativa) {
-
-        elemento.textContent =
-
-            "✓ " +
-            banco.ativa.id +
-
-            " — " +
-
-            banco.ativa.claims.length +
-
-            " afirmações — " +
-
-            banco.ativa.relacoes.length +
-
-            " relações — memória salva localmente.";
-
-    } else {
-
-        elemento.textContent =
-            "Nenhuma investigação ativa.";
 
     }
+
+
+    elemento.textContent =
+        banco.ativa
+
+        ? "✓ Memória persistente — " +
+          banco.ativa.id
+
+        : "Nenhuma investigação ativa.";
 
 }
+
 
 
 function renderizarHistorico() {
@@ -1961,8 +2433,7 @@ function renderizarHistorico() {
 
 
     if (
-        !banco.historico ||
-        banco.historico.length === 0
+        !banco.historico.length
     ) {
 
         caixa.innerHTML =
@@ -1977,69 +2448,57 @@ function renderizarHistorico() {
 
 
     banco.historico
-        .slice()
-        .reverse()
-        .forEach(
-            function(i) {
+    .slice()
+    .reverse()
+    .forEach(
 
-                const div =
-                    document
-                    .createElement(
-                        "div"
-                    );
+        function(i) {
 
-
-                div.className =
-                    "memoria-item";
-
-
-                div.innerHTML = `
-
-                    <strong>
-                        ${escapar(i.id)}
-                    </strong>
-
-                    <p>
-                        ${escapar(i.alvo)}
-                    </p>
-
-                    <p class="pequeno">
-
-                        Claims:
-                        ${
-                            i.claims
-                            ? i.claims.length
-                            : 0
-                        }
-
-                        <br>
-
-                        Relações:
-                        ${
-                            i.relacoes
-                            ? i.relacoes.length
-                            : 0
-                        }
-
-                        <br>
-
-                        Arquivada:
-                        ${escapar(
-                            i.arquivadoEm
-                        )}
-
-                    </p>
-                `;
-
-
-                caixa.appendChild(
-                    div
+            const div =
+                document.createElement(
+                    "div"
                 );
 
-            }
-        );
+
+            div.className =
+                "memoria-item";
+
+
+            div.innerHTML = `
+
+            <strong>
+            ${escapar(i.id)}
+            </strong>
+
+            <p>
+            ${escapar(i.alvo)}
+            </p>
+
+            <p class="pequeno">
+
+            Claims:
+            ${i.claims.length}
+
+            <br>
+
+            Relações:
+            ${i.relacoes.length}
+
+            </p>
+
+            `;
+
+
+            caixa.appendChild(
+                div
+            );
+
+        }
+
+    );
 
 }
+
 
 
 function renderizarTudo() {
@@ -2059,13 +2518,10 @@ function renderizarTudo() {
 }
 
 
+
 function arquivarInvestigacao() {
 
     if (!banco.ativa) {
-
-        alert(
-            "Nenhuma investigação ativa."
-        );
 
         return;
 
@@ -2104,62 +2560,37 @@ function arquivarInvestigacao() {
 
     renderizarTudo();
 
-
-    alert(
-        "Investigação arquivada."
-    );
-
 }
+
 
 
 function novaInvestigacao() {
 
     if (banco.ativa) {
 
-        const resposta =
+        const continuar =
             confirm(
-                "A investigação atual será arquivada antes de iniciar outra. Continuar?"
+
+                "A investigação atual será arquivada antes de iniciar uma nova. Continuar?"
+
             );
 
 
-        if (!resposta) {
+        if (!continuar) {
+
             return;
+
         }
 
 
-        autosalvar();
-
-
-        const copia =
-            JSON.parse(
-                JSON.stringify(
-                    banco.ativa
-                )
-            );
-
-
-        copia.arquivadoEm =
-            agora();
-
-
-        banco.historico.push(
-            copia
-        );
-
-
-        banco.ativa =
-            null;
+        arquivarInvestigacao();
 
     }
 
 
-    salvarBanco();
-
     limparCampos();
 
     esconderSistema();
-
-    renderizarTudo();
 
 
     window.scrollTo({
@@ -2171,6 +2602,7 @@ function novaInvestigacao() {
     });
 
 }
+
 
 
 function limparCampos() {
@@ -2192,54 +2624,49 @@ function limparCampos() {
         "proximo"
 
     ].forEach(
+
         function(nome) {
 
-            const elemento =
-                document
-                .getElementById(nome);
-
-            if (elemento) {
-                elemento.value = "";
-            }
+            document
+            .getElementById(nome)
+            .value = "";
 
         }
+
     );
 
 
     limparFormularioClaim();
 
-
-    document
-        .getElementById(
-            "relObservacao"
-        )
-        .value = "";
-
 }
+
 
 
 function exportarBackup() {
 
     if (banco.ativa) {
+
         autosalvar();
+
     }
-
-
-    const conteudo =
-        JSON.stringify(
-            banco,
-            null,
-            2
-        );
 
 
     const blob =
         new Blob(
-            [conteudo],
+
+            [
+                JSON.stringify(
+                    banco,
+                    null,
+                    2
+                )
+            ],
+
             {
                 type:
-                "application/json"
+                    "application/json"
             }
+
         );
 
 
@@ -2260,23 +2687,12 @@ function exportarBackup() {
 
 
     link.download =
-
-        "fractal-investigativo-v04-" +
-
+        "fractal-v05-" +
         Date.now() +
-
         ".json";
 
 
-    document.body.appendChild(
-        link
-    );
-
-
     link.click();
-
-
-    link.remove();
 
 
     URL.revokeObjectURL(
@@ -2286,6 +2702,7 @@ function exportarBackup() {
 }
 
 
+
 function importarBackup(evento) {
 
     const arquivo =
@@ -2293,7 +2710,9 @@ function importarBackup(evento) {
 
 
     if (!arquivo) {
+
         return;
+
     }
 
 
@@ -2301,110 +2720,86 @@ function importarBackup(evento) {
         new FileReader();
 
 
-    leitor.onload =
-        function(e) {
+    leitor.onload = function(e) {
 
-            try {
+        try {
 
-                const dados =
-                    JSON.parse(
-                        e.target.result
-                    );
-
-
-                if (
-                    !dados ||
-                    typeof dados !== "object"
-                ) {
-
-                    throw new Error(
-                        "Estrutura inválida."
-                    );
-
-                }
-
-
-                const confirmar =
-                    confirm(
-                        "O backup substituirá a memória atual deste navegador. Continuar?"
-                    );
-
-
-                if (!confirmar) {
-                    return;
-                }
-
-
-                banco =
-                    dados;
-
-
-                banco.versao =
-                    "0.4";
-
-
-                if (
-                    !Array.isArray(
-                        banco.historico
-                    )
-                ) {
-
-                    banco.historico =
-                        [];
-
-                }
-
-
-                banco.ativa =
-                    normalizarInvestigacao(
-                        banco.ativa
-                    );
-
-
-                banco.historico =
-                    banco.historico.map(
-                        normalizarInvestigacao
-                    );
-
-
-                salvarBanco();
-
-
-                if (banco.ativa) {
-
-                    mostrarSistema();
-
-                    preencherCampos();
-
-                } else {
-
-                    limparCampos();
-
-                    esconderSistema();
-
-                }
-
-
-                renderizarTudo();
-
-
-                alert(
-                    "Backup importado."
+            const dados =
+                JSON.parse(
+                    e.target.result
                 );
 
-            } catch (erro) {
 
-                alert(
+            if (
+                !confirm(
+                    "Substituir a memória atual pelo backup?"
+                )
+            ) {
 
-                    "Falha ao importar:\n\n" +
-
-                    erro.message
-
-                );
+                return;
 
             }
 
-        };
+
+            banco =
+                dados;
+
+
+            banco.versao =
+                "0.5";
+
+
+            banco.ativa =
+                normalizarInvestigacao(
+                    banco.ativa
+                );
+
+
+            banco.historico =
+                (
+                    banco.historico || []
+                )
+                .map(
+                    normalizarInvestigacao
+                );
+
+
+            salvarBanco();
+
+
+            if (banco.ativa) {
+
+                mostrarSistema();
+
+                preencherCampos();
+
+            }
+
+            else {
+
+                esconderSistema();
+
+            }
+
+
+            renderizarTudo();
+
+
+            alert(
+                "Backup importado."
+            );
+
+        }
+
+        catch (erro) {
+
+            alert(
+                "Backup inválido."
+            );
+
+        }
+
+    };
 
 
     leitor.readAsText(
@@ -2418,33 +2813,28 @@ function importarBackup(evento) {
 }
 
 
+
 function apagarTodaMemoria() {
 
-    const confirmar =
-        confirm(
+    if (
+        !confirm(
+            "Apagar toda a memória local da v0.5?"
+        )
+    ) {
 
-            "ATENÇÃO:\n\n" +
-
-            "Isso apagará a memória local da versão 0.4 e todo o histórico deste navegador.\n\n" +
-
-            "Continuar?"
-
-        );
-
-
-    if (!confirmar) {
         return;
+
     }
 
 
     localStorage.removeItem(
-        CHAVE_V04
+        CHAVE_V05
     );
 
 
     banco = {
 
-        versao: "0.4",
+        versao: "0.5",
 
         ativa: null,
 
@@ -2459,39 +2849,26 @@ function apagarTodaMemoria() {
 
     renderizarTudo();
 
-
-    alert(
-        "Memória apagada."
-    );
-
 }
 
 
+
 [
-
     "alvo",
-
     "microalvos",
-
     "hipoteses",
-
     "evidencias",
-
     "contradicoes",
-
     "conclusao",
-
     "proximo"
+]
+.forEach(
 
-].forEach(
     function(nome) {
 
-        const elemento =
-            document
-            .getElementById(nome);
-
-
-        elemento.addEventListener(
+        document
+        .getElementById(nome)
+        .addEventListener(
 
             "input",
 
@@ -2508,7 +2885,9 @@ function apagarTodaMemoria() {
         );
 
     }
+
 );
+
 
 
 function iniciarPagina() {
@@ -2538,7 +2917,9 @@ function iniciarPagina() {
             "oculto"
         );
 
-    } else {
+    }
+
+    else {
 
         esconderSistema();
 
@@ -2548,6 +2929,7 @@ function iniciarPagina() {
     renderizarTudo();
 
 }
+
 
 
 window.addEventListener(
@@ -2572,4 +2954,5 @@ iniciarPagina();
 </script>
 
 </body>
+
 </html>

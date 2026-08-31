@@ -225,7 +225,20 @@
       </section>
 
       <section class="card">
-        <h2>10. Memória e backup</h2>
+        <h2>10. Motor evolutivo — ponte Recuris</h2>
+        <p class="muted">Analisa a investigação atual, propõe mudanças rastreáveis, valida antes de registrar e mantém uma memória evolutiva separada no backend Python.</p>
+        <label>URL HTTPS do backend</label>
+        <input id="evoBackendUrl" placeholder="https://seu-backend.exemplo.com">
+        <div class="row">
+          <button id="btnEvoTestar" class="secondary">Testar backend</button>
+          <button id="btnEvoAnalisar" class="primary">Analisar investigação atual</button>
+        </div>
+        <div id="evoStatus" class="status">Backend ainda não configurado.</div>
+        <div id="evoResultado"></div>
+      </section>
+
+      <section class="card">
+        <h2>11. Memória e backup</h2>
         <div id="statusMemoria" class="status"></div>
         <div class="row">
           <button id="btnExportar" class="secondary">Exportar JSON</button>
@@ -242,5 +255,6 @@
   </main>
 
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./recuris-client.js"></script>
 </body>
 </html>

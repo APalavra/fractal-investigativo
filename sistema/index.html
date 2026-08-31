@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Fractal Investigativo — Nível 1</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #111;
+        color: #eee;
+    }
+
+    h1 {
+        margin-top: 0;
+    }
+
+    .descricao {
+        color: #bbb;
+        line-height: 1.5;
+    }
+
+    .bloco {
+        background: #1c1c1c;
+        border: 1px solid #444;
+        border-radius: 10px;
+        padding: 16px;
+        margin: 16px 0;
+    }
+
+    textarea,
+    input {
+        width: 100%;
+        box-sizing: border-box;
+        background: #0d0d0d;
+        color: #fff;
+        border: 1px solid #555;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 16px;
+        margin-top: 8px;
+    }
+
+    textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    button {
+        background: #fff;
+        color: #111;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 18px;
+        margin-top: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    button:hover {
+        opacity: 0.85;
+    }
+
+    .item {
+        border-left: 3px solid #888;
+        padding: 10px;
+        margin: 10px 0;
+        background: #151515;
+    }
+
+    .resultado {
+        white-space: pre-wrap;
+        line-height: 1.5;
+    }
+
+    .contador {
+        color: #aaa;
+        font-size: 14px;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>🧠 Fractal Investigativo — Nível 1</h1>
+
+<p class="descricao">
+Este é o primeiro protótipo do sistema investigativo.
+Ele organiza um problema em camadas de investigação,
+registra hipóteses, evidências, contradições e conclusões,
+e mantém uma memória local dos ciclos realizados.
+</p>
+
+<div class="bloco">
+
+    <h2>1. Alvo principal</h2>
+
+    <p>
+        Qual é o fenômeno, pergunta ou problema que queremos investigar?
+    </p>
+
+    <textarea id="alvo"
+        placeholder="Exemplo: O que precisa ser verdade para que determinado fenômeno exista?"></textarea>
+
+    <button onclick="iniciarInvestigacao()">
+        Iniciar investigação
+    </button>
+
+</div>
+
+<div id="areaInvestigacao" style="display:none;">
+
+    <div class="bloco">
+
+        <h2>2. Microalvos</h2>
+
+        <p>
+            Divida o alvo maior em requisitos menores.
+        </p>
+
+        <textarea id="microalvo"
+            placeholder="Digite um microalvo por linha."></textarea>
+
+        <button onclick="registrarMicroalvos()">
+            Registrar microalvos
+        </button>
+
+        <div id="listaMicroalvos"></div>
+
+    </div>
+
+    <div class="bloco">
+
+        <h2>3. Hipóteses</h2>
+
+        <textarea id="hipotese"
+            placeholder="Digite uma hipótese por linha."></textarea>
+
+        <button onclick="registrarHipoteses()">
+            Registrar hipóteses
+        </button>
+
+        <div id="listaHipoteses"></div>
+
+    </div>
+
+    <div class="bloco">
+
+        <h2>4. Evidências</h2>
+
+        <textarea id="evidencia"
+            placeholder="Registre fatos, observações, experimentos ou fontes que sustentem ou enfraqueçam as hipóteses."></textarea>
+
+        <button onclick="registrarEvidencias()">
+            Registrar evidências
+        </button>
+
+        <div id="listaEvidencias"></div>
+
+    </div>
+
+    <div class="bloco">
+
+        <h2>5. Contradições</h2>
+
+        <textarea id="contradicao"
+            placeholder="Existe alguma informação que contradiga uma hipótese ou conclusão?"></textarea>
+
+        <button onclick="registrarContradicoes()">
+            Registrar contradições
+        </button>
+
+        <div id="listaContradicoes"></div>
+
+    </div>
+
+    <div class="bloco">
+
+        <h2>6. Conclusão provisória</h2>
+
+        <textarea id="conclusao"
+            placeholder="Qual conclusão pode ser obtida com as informações registradas até agora?"></textarea>
+
+        <button onclick="registrarConclusao()">
+            Registrar conclusão
+        </button>
+
+        <div id="resultadoConclusao"></div>
+
+    </div>
+
+    <div class="bloco">
+
+        <h2>7. Próximo microalvo</h2>
+
+        <p>
+            Toda conclusão pode revelar uma nova pergunta.
+        </p>
+
+        <input id="proximo"
+            placeholder="Qual pergunta surgiu a partir desta conclusão?">
+
+        <button onclick="registrarProximo()">
+            Criar próximo ciclo
+        </button>
+
+    </div>
+
+    <div class="bloco">
+
+        <h2>🧬 Memória do sistema</h2>
+
+        <p class="contador" id="contadorMemoria"></p>
+
+        <div id="memoria"></div>
+
+        <button onclick="limparMemoria()">
+            Limpar memória local
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+let investigacao = {
+    alvo: "",
+    microalvos: [],
+    hipoteses: [],
+    evidencias: [],
+    contradicoes: [],
+    conclusao: "",
+    proximos: []
+};
+
+function iniciarInvestigacao() {
+
+    const alvo = document.getElementById("alvo").value.trim();
+
+    if (!alvo) {
+        alert("Digite um alvo antes de iniciar.");
+        return;
+    }
+
+    investigacao.alvo = alvo;
+
+    document.getElementById("areaInvestigacao").style.display = "block";
+
+    salvarMemoria();
+
+    alert("Investigação iniciada.");
+}
+
+function registrarMicroalvos() {
+
+    const texto = document.getElementById("microalvo").value.trim();
+
+    if (!texto) return;
+
+    const itens = texto
+        .split("\n")
+        .map(x => x.trim())
+        .filter(x => x);
+
+    investigacao.microalvos.push(...itens);
+
+    document.getElementById("microalvo").value = "";
+
+    atualizarTela();
+    salvarMemoria();
+}
+
+function registrarHipoteses() {
+
+    const texto = document.getElementById("hipotese").value.trim();
+
+    if (!texto) return;
+
+    const itens = texto
+        .split("\n")
+        .map(x => x.trim())
+        .filter(x => x);
+
+    investigacao.hipoteses.push(...itens);
+
+    document.getElementById("hipotese").value = "";
+
+    atualizarTela();
+    salvarMemoria();
+}
+
+function registrarEvidencias() {
+
+    const texto = document.getElementById("evidencia").value.trim();
+
+    if (!texto) return;
+
+    const itens = texto
+        .split("\n")
+        .map(x => x.trim())
+        .filter(x => x);
+
+    investigacao.evidencias.push(...itens);
+
+    document.getElementById("evidencia").value = "";
+
+    atualizarTela();
+    salvarMemoria();
+}
+
+function registrarContradicoes() {
+
+    const texto = document.getElementById("contradicao").value.trim();
+
+    if (!texto) return;
+
+    const itens = texto
+        .split("\n")
+        .map(x => x.trim())
+        .filter(x => x);
+
+    investigacao.contradicoes.push(...itens);
+
+    document.getElementById("contradicao").value = "";
+
+    atualizarTela();
+    salvarMemoria();
+}
+
+function registrarConclusao() {
+
+    const texto = document.getElementById("conclusao").value.trim();
+
+    if (!texto) return;
+
+    investigacao.conclusao = texto;
+
+    atualizarTela();
+    salvarMemoria();
+}
+
+function registrarProximo() {
+
+    const texto = document.getElementById("proximo").value.trim();
+
+    if (!texto) return;
+
+    investigacao.proximos.push(texto);
+
+    document.getElementById("proximo").value = "";
+
+    atualizarTela();
+    salvarMemoria();
+
+    alert(
+        "Novo microalvo registrado.\n\n" +
+        "O próximo ciclo poderá começar a partir dele."
+    );
+}
+
+function atualizarTela() {
+
+    document.getElementById("listaMicroalvos").innerHTML =
+        transformarLista(investigacao.microalvos);
+
+    document.getElementById("listaHipoteses").innerHTML =
+        transformarLista(investigacao.hipoteses);
+
+    document.getElementById("listaEvidencias").innerHTML =
+        transformarLista(investigacao.evidencias);
+
+    document.getElementById("listaContradicoes").innerHTML =
+        transformarLista(investigacao.contradicoes);
+
+    document.getElementById("resultadoConclusao").innerHTML =
+        investigacao.conclusao
+        ? "<div class='item'>" + escapar(investigacao.conclusao) + "</div>"
+        : "";
+
+    mostrarMemoria();
+}
+
+function transformarLista(lista) {
+
+    return lista.map((item, indice) => {
+
+        return "<div class='item'>" +
+            "<strong>" + (indice + 1) + ".</strong> " +
+            escapar(item) +
+            "</div>";
+
+    }).join("");
+}
+
+function escapar(texto) {
+
+    return texto
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function salvarMemoria() {
+
+    const historico =
+        JSON.parse(localStorage.getItem("fractal_memoria") || "[]");
+
+    const registro = {
+        data: new Date().toISOString(),
+        investigacao: investigacao
+    };
+
+    historico.push(registro);
+
+    localStorage.setItem(
+        "fractal_memoria",
+        JSON.stringify(historico)
+    );
+
+    mostrarMemoria();
+}
+
+function mostrarMemoria() {
+
+    const historico =
+        JSON.parse(localStorage.getItem("fractal_memoria") || "[]");
+
+    const contador =
+        document.getElementById("contadorMemoria");
+
+    const memoria =
+        document.getElementById("memoria");
+
+    if (!contador || !memoria) return;
+
+    contador.innerText =
+        "Registros armazenados neste dispositivo: " +
+        historico.length;
+
+    memoria.innerHTML = historico
+        .slice(-10)
+        .reverse()
+        .map((registro, indice) => {
+
+            return "<div class='item'>" +
+                "<strong>Ciclo " +
+                (historico.length - indice) +
+                "</strong><br>" +
+                escapar(registro.investigacao.alvo) +
+                "</div>";
+
+        }).join("");
+}
+
+function limparMemoria() {
+
+    const confirmar =
+        confirm("Deseja realmente apagar a memória deste dispositivo?");
+
+    if (!confirmar) return;
+
+    localStorage.removeItem("fractal_memoria");
+
+    mostrarMemoria();
+}
+
+window.onload = function() {
+
+    mostrarMemoria();
+
+};
+
+</script>
+
+</body>
+</html>

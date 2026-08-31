@@ -4,479 +4,1023 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Fractal Investigativo — Nível 1</title>
+<title>Fractal Investigativo — Nível 1 — v0.2</title>
 
 <style>
+    * {
+        box-sizing: border-box;
+    }
+
     body {
-        font-family: Arial, sans-serif;
         margin: 0;
-        padding: 20px;
-        background: #111;
-        color: #eee;
-    }
-
-    h1 {
-        margin-top: 0;
-    }
-
-    .descricao {
-        color: #bbb;
+        background: #10110d;
+        color: #d7d7cf;
+        font-family: Arial, Helvetica, sans-serif;
         line-height: 1.5;
     }
 
-    .bloco {
-        background: #1c1c1c;
-        border: 1px solid #444;
-        border-radius: 10px;
-        padding: 16px;
-        margin: 16px 0;
+    .container {
+        max-width: 900px;
+        margin: auto;
+        padding: 24px;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+    }
+
+    h2 {
+        margin-top: 0;
+    }
+
+    .subtitulo {
+        color: #999b92;
+        margin-bottom: 30px;
+    }
+
+    .versao {
+        display: inline-block;
+        background: #26271f;
+        border: 1px solid #44463b;
+        padding: 6px 12px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        border: 1px solid #44463b;
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 22px;
+        background: #171812;
     }
 
     textarea,
     input {
         width: 100%;
-        box-sizing: border-box;
-        background: #0d0d0d;
-        color: #fff;
-        border: 1px solid #555;
-        border-radius: 8px;
-        padding: 12px;
-        font-size: 16px;
-        margin-top: 8px;
+        background: #0d0e0a;
+        color: #e4e4dd;
+        border: 1px solid #55574c;
+        border-radius: 10px;
+        padding: 14px;
+        font-size: 1rem;
+        margin-top: 10px;
+        margin-bottom: 14px;
     }
 
     textarea {
-        min-height: 120px;
+        min-height: 130px;
         resize: vertical;
     }
 
     button {
-        background: #fff;
-        color: #111;
-        border: none;
-        border-radius: 8px;
-        padding: 12px 18px;
-        margin-top: 12px;
-        font-size: 16px;
+        border: 0;
+        border-radius: 10px;
+        padding: 13px 18px;
+        font-size: 1rem;
         font-weight: bold;
         cursor: pointer;
+        margin: 5px 5px 5px 0;
     }
 
-    button:hover {
-        opacity: 0.85;
+    .principal {
+        background: #deded6;
+        color: #11120e;
     }
 
-    .item {
-        border-left: 3px solid #888;
-        padding: 10px;
-        margin: 10px 0;
-        background: #151515;
+    .secundario {
+        background: #313329;
+        color: #e4e4dd;
     }
 
-    .resultado {
+    .perigo {
+        background: #552c2c;
+        color: white;
+    }
+
+    .sucesso {
+        background: #26462e;
+        color: white;
+    }
+
+    .oculto {
+        display: none;
+    }
+
+    .status {
+        padding: 12px;
+        background: #202219;
+        border-radius: 8px;
+        margin-top: 10px;
+        color: #bfc1b6;
+    }
+
+    .memoria-item {
+        border-left: 4px solid #77796b;
+        background: #202119;
+        padding: 15px;
+        margin-top: 15px;
+        border-radius: 8px;
+    }
+
+    .memoria-item strong {
+        color: #ffffff;
+    }
+
+    .campo {
+        margin-bottom: 8px;
+    }
+
+    .pequeno {
+        color: #92948a;
+        font-size: 0.9rem;
+    }
+
+    pre {
         white-space: pre-wrap;
-        line-height: 1.5;
+        word-break: break-word;
     }
 
-    .contador {
-        color: #aaa;
-        font-size: 14px;
+    hr {
+        border: none;
+        border-top: 1px solid #3a3b33;
+        margin: 20px 0;
     }
 </style>
 </head>
 
 <body>
 
-<h1>🧠 Fractal Investigativo — Nível 1</h1>
+<div class="container">
 
-<p class="descricao">
-Este é o primeiro protótipo do sistema investigativo.
-Ele organiza um problema em camadas de investigação,
-registra hipóteses, evidências, contradições e conclusões,
-e mantém uma memória local dos ciclos realizados.
-</p>
+    <div class="versao">Versão 0.2 — memória persistente</div>
 
-<div class="bloco">
+    <h1>🧠 Fractal Investigativo — Nível 1</h1>
 
-    <h2>1. Alvo principal</h2>
-
-    <p>
-        Qual é o fenômeno, pergunta ou problema que queremos investigar?
+    <p class="subtitulo">
+        Protótipo estrutural de investigação recursiva.
+        Esta versão preserva automaticamente a investigação ativa no navegador,
+        restaura o estado após fechar a página e mantém histórico separado.
     </p>
 
-    <textarea id="alvo"
-        placeholder="Exemplo: O que precisa ser verdade para que determinado fenômeno exista?"></textarea>
 
-    <button onclick="iniciarInvestigacao()">
-        Iniciar investigação
-    </button>
+    <!-- 1 -->
+    <section class="card" id="secao1">
 
-</div>
+        <h2>1. Alvo principal</h2>
 
-<div id="areaInvestigacao" style="display:none;">
+        <p>
+            Qual é o fenômeno, pergunta ou problema que queremos investigar?
+        </p>
 
-    <div class="bloco">
+        <textarea
+            id="alvo"
+            placeholder="Exemplo: O que precisa ser verdade para que determinado fenômeno exista?"
+        ></textarea>
+
+        <button class="principal" onclick="iniciarInvestigacao()">
+            Iniciar investigação
+        </button>
+
+        <div id="statusInicial" class="status oculto"></div>
+
+    </section>
+
+
+    <!-- 2 -->
+    <section class="card oculto" id="secao2">
 
         <h2>2. Microalvos</h2>
 
         <p>
-            Divida o alvo maior em requisitos menores.
+            Divida o alvo principal em perguntas menores.
+            Use uma linha para cada microalvo.
         </p>
 
-        <textarea id="microalvo"
-            placeholder="Digite um microalvo por linha."></textarea>
+        <textarea
+            id="microalvos"
+            placeholder="Microalvo 1&#10;Microalvo 2&#10;Microalvo 3"
+        ></textarea>
 
-        <button onclick="registrarMicroalvos()">
+        <button class="principal" onclick="registrarCampo('microalvos')">
             Registrar microalvos
         </button>
 
-        <div id="listaMicroalvos"></div>
+    </section>
 
-    </div>
 
-    <div class="bloco">
+    <!-- 3 -->
+    <section class="card oculto" id="secao3">
 
         <h2>3. Hipóteses</h2>
 
-        <textarea id="hipotese"
-            placeholder="Digite uma hipótese por linha."></textarea>
+        <p>
+            Registre explicações possíveis.
+            Elas ainda não devem ser tratadas como fatos.
+        </p>
 
-        <button onclick="registrarHipoteses()">
+        <textarea
+            id="hipoteses"
+            placeholder="Hipótese 1&#10;Hipótese 2"
+        ></textarea>
+
+        <button class="principal" onclick="registrarCampo('hipoteses')">
             Registrar hipóteses
         </button>
 
-        <div id="listaHipoteses"></div>
+    </section>
 
-    </div>
 
-    <div class="bloco">
+    <!-- 4 -->
+    <section class="card oculto" id="secao4">
 
         <h2>4. Evidências</h2>
 
-        <textarea id="evidencia"
-            placeholder="Registre fatos, observações, experimentos ou fontes que sustentem ou enfraqueçam as hipóteses."></textarea>
+        <p>
+            Registre observações, experimentos, documentos,
+            dados ou outras evidências relevantes.
+        </p>
 
-        <button onclick="registrarEvidencias()">
+        <textarea
+            id="evidencias"
+            placeholder="Evidência 1&#10;Evidência 2"
+        ></textarea>
+
+        <button class="principal" onclick="registrarCampo('evidencias')">
             Registrar evidências
         </button>
 
-        <div id="listaEvidencias"></div>
+    </section>
 
-    </div>
 
-    <div class="bloco">
+    <!-- 5 -->
+    <section class="card oculto" id="secao5">
 
-        <h2>5. Contradições</h2>
+        <h2>5. Contradições e contraexemplos</h2>
 
-        <textarea id="contradicao"
-            placeholder="Existe alguma informação que contradiga uma hipótese ou conclusão?"></textarea>
+        <p>
+            Procure fatos ou argumentos que possam enfraquecer
+            ou contradizer as hipóteses.
+        </p>
 
-        <button onclick="registrarContradicoes()">
+        <textarea
+            id="contradicoes"
+            placeholder="Contradição, anomalia ou contraexemplo..."
+        ></textarea>
+
+        <button class="principal" onclick="registrarCampo('contradicoes')">
             Registrar contradições
         </button>
 
-        <div id="listaContradicoes"></div>
+    </section>
 
-    </div>
 
-    <div class="bloco">
+    <!-- 6 -->
+    <section class="card oculto" id="secao6">
 
         <h2>6. Conclusão provisória</h2>
 
-        <textarea id="conclusao"
-            placeholder="Qual conclusão pode ser obtida com as informações registradas até agora?"></textarea>
+        <p>
+            Qual é a melhor conclusão permitida pelas informações atuais?
+        </p>
 
-        <button onclick="registrarConclusao()">
+        <textarea
+            id="conclusao"
+            placeholder="Conclusão provisória..."
+        ></textarea>
+
+        <button class="principal" onclick="registrarCampo('conclusao')">
             Registrar conclusão
         </button>
 
-        <div id="resultadoConclusao"></div>
+    </section>
 
-    </div>
 
-    <div class="bloco">
+    <!-- 7 -->
+    <section class="card oculto" id="secao7">
 
         <h2>7. Próximo microalvo</h2>
 
         <p>
-            Toda conclusão pode revelar uma nova pergunta.
+            Qual é a próxima pergunta que deve alimentar outro ciclo?
         </p>
 
-        <input id="proximo"
-            placeholder="Qual pergunta surgiu a partir desta conclusão?">
+        <textarea
+            id="proximo"
+            placeholder="Próximo microalvo..."
+        ></textarea>
 
-        <button onclick="registrarProximo()">
-            Criar próximo ciclo
+        <button class="principal" onclick="registrarCampo('proximo')">
+            Registrar próximo microalvo
         </button>
 
-    </div>
+    </section>
 
-    <div class="bloco">
 
-        <h2>🧬 Memória do sistema</h2>
+    <!-- 8 -->
+    <section class="card oculto" id="secao8">
 
-        <p class="contador" id="contadorMemoria"></p>
+        <h2>8. Memória do sistema</h2>
 
-        <div id="memoria"></div>
+        <p>
+            A investigação ativa é salva automaticamente neste navegador.
+        </p>
 
-        <button onclick="limparMemoria()">
-            Limpar memória local
+        <div id="statusMemoria" class="status"></div>
+
+        <div id="memoriaAtual"></div>
+
+        <hr>
+
+        <button class="sucesso" onclick="arquivarInvestigacao()">
+            Arquivar investigação atual
         </button>
 
-    </div>
+        <button class="secundario" onclick="novaInvestigacao()">
+            Nova investigação
+        </button>
+
+        <button class="secundario" onclick="exportarBackup()">
+            Exportar backup JSON
+        </button>
+
+        <button class="perigo" onclick="apagarTodaMemoria()">
+            Apagar toda a memória
+        </button>
+
+        <hr>
+
+        <h2>Histórico</h2>
+
+        <div id="historico"></div>
+
+    </section>
 
 </div>
 
+
 <script>
 
-let investigacao = {
-    alvo: "",
-    microalvos: [],
-    hipoteses: [],
-    evidencias: [],
-    contradicoes: [],
-    conclusao: "",
-    proximos: []
+const CHAVE_MEMORIA = "fractal_investigativo_v02";
+
+let banco = {
+    versao: "0.2",
+    ativa: null,
+    historico: []
 };
+
+
+function criarId() {
+    return "INV-" + Date.now();
+}
+
+
+function agora() {
+    return new Date().toISOString();
+}
+
+
+function criarInvestigacao(alvo) {
+
+    return {
+        id: criarId(),
+        criadoEm: agora(),
+        atualizadoEm: agora(),
+
+        alvo: alvo || "",
+        microalvos: "",
+        hipoteses: "",
+        evidencias: "",
+        contradicoes: "",
+        conclusao: "",
+        proximo: ""
+    };
+
+}
+
+
+function salvarBanco() {
+
+    try {
+
+        localStorage.setItem(
+            CHAVE_MEMORIA,
+            JSON.stringify(banco)
+        );
+
+        atualizarStatusMemoria();
+
+    } catch (erro) {
+
+        alert(
+            "Não foi possível salvar a memória neste navegador.\n\n" +
+            erro
+        );
+
+    }
+
+}
+
+
+function carregarBanco() {
+
+    try {
+
+        const salvo = localStorage.getItem(CHAVE_MEMORIA);
+
+        if (salvo) {
+
+            const convertido = JSON.parse(salvo);
+
+            if (convertido && typeof convertido === "object") {
+
+                banco = convertido;
+
+                if (!Array.isArray(banco.historico)) {
+                    banco.historico = [];
+                }
+
+            }
+
+        }
+
+    } catch (erro) {
+
+        console.error("Erro ao carregar memória:", erro);
+
+    }
+
+}
+
 
 function iniciarInvestigacao() {
 
-    const alvo = document.getElementById("alvo").value.trim();
+    const alvo = document
+        .getElementById("alvo")
+        .value
+        .trim();
 
     if (!alvo) {
-        alert("Digite um alvo antes de iniciar.");
+
+        alert("Digite primeiro um alvo principal.");
+
+        return;
+
+    }
+
+    if (!banco.ativa) {
+
+        banco.ativa = criarInvestigacao(alvo);
+
+    } else {
+
+        banco.ativa.alvo = alvo;
+        banco.ativa.atualizadoEm = agora();
+
+    }
+
+    salvarBanco();
+
+    mostrarSistema();
+
+    preencherCampos();
+
+    renderizarMemoria();
+
+    const status = document.getElementById("statusInicial");
+
+    status.textContent =
+        "Investigação ativa. Alterações serão salvas automaticamente.";
+
+    status.classList.remove("oculto");
+
+}
+
+
+function registrarCampo(nome) {
+
+    if (!banco.ativa) {
+
+        alert("Primeiro inicie uma investigação.");
+
+        return;
+
+    }
+
+    const elemento = document.getElementById(nome);
+
+    banco.ativa[nome] = elemento.value;
+
+    banco.ativa.atualizadoEm = agora();
+
+    salvarBanco();
+
+    renderizarMemoria();
+
+    alert("Registrado e salvo.");
+
+}
+
+
+function salvarAutomaticamente() {
+
+    if (!banco.ativa) {
         return;
     }
 
-    investigacao.alvo = alvo;
+    const campos = [
+        "alvo",
+        "microalvos",
+        "hipoteses",
+        "evidencias",
+        "contradicoes",
+        "conclusao",
+        "proximo"
+    ];
 
-    document.getElementById("areaInvestigacao").style.display = "block";
+    campos.forEach(function(campo) {
 
-    salvarMemoria();
+        const elemento = document.getElementById(campo);
 
-    alert("Investigação iniciada.");
+        if (elemento) {
+            banco.ativa[campo] = elemento.value;
+        }
+
+    });
+
+    banco.ativa.atualizadoEm = agora();
+
+    salvarBanco();
+
+    renderizarMemoria();
+
 }
 
-function registrarMicroalvos() {
 
-    const texto = document.getElementById("microalvo").value.trim();
+function mostrarSistema() {
 
-    if (!texto) return;
+    for (let i = 2; i <= 8; i++) {
 
-    const itens = texto
-        .split("\n")
-        .map(x => x.trim())
-        .filter(x => x);
+        document
+            .getElementById("secao" + i)
+            .classList.remove("oculto");
 
-    investigacao.microalvos.push(...itens);
+    }
 
-    document.getElementById("microalvo").value = "";
-
-    atualizarTela();
-    salvarMemoria();
 }
 
-function registrarHipoteses() {
 
-    const texto = document.getElementById("hipotese").value.trim();
+function esconderSistema() {
 
-    if (!texto) return;
+    for (let i = 2; i <= 8; i++) {
 
-    const itens = texto
-        .split("\n")
-        .map(x => x.trim())
-        .filter(x => x);
+        document
+            .getElementById("secao" + i)
+            .classList.add("oculto");
 
-    investigacao.hipoteses.push(...itens);
+    }
 
-    document.getElementById("hipotese").value = "";
-
-    atualizarTela();
-    salvarMemoria();
 }
 
-function registrarEvidencias() {
 
-    const texto = document.getElementById("evidencia").value.trim();
+function preencherCampos() {
 
-    if (!texto) return;
+    if (!banco.ativa) {
+        return;
+    }
 
-    const itens = texto
-        .split("\n")
-        .map(x => x.trim())
-        .filter(x => x);
+    document.getElementById("alvo").value =
+        banco.ativa.alvo || "";
 
-    investigacao.evidencias.push(...itens);
+    document.getElementById("microalvos").value =
+        banco.ativa.microalvos || "";
 
-    document.getElementById("evidencia").value = "";
+    document.getElementById("hipoteses").value =
+        banco.ativa.hipoteses || "";
 
-    atualizarTela();
-    salvarMemoria();
+    document.getElementById("evidencias").value =
+        banco.ativa.evidencias || "";
+
+    document.getElementById("contradicoes").value =
+        banco.ativa.contradicoes || "";
+
+    document.getElementById("conclusao").value =
+        banco.ativa.conclusao || "";
+
+    document.getElementById("proximo").value =
+        banco.ativa.proximo || "";
+
 }
 
-function registrarContradicoes() {
-
-    const texto = document.getElementById("contradicao").value.trim();
-
-    if (!texto) return;
-
-    const itens = texto
-        .split("\n")
-        .map(x => x.trim())
-        .filter(x => x);
-
-    investigacao.contradicoes.push(...itens);
-
-    document.getElementById("contradicao").value = "";
-
-    atualizarTela();
-    salvarMemoria();
-}
-
-function registrarConclusao() {
-
-    const texto = document.getElementById("conclusao").value.trim();
-
-    if (!texto) return;
-
-    investigacao.conclusao = texto;
-
-    atualizarTela();
-    salvarMemoria();
-}
-
-function registrarProximo() {
-
-    const texto = document.getElementById("proximo").value.trim();
-
-    if (!texto) return;
-
-    investigacao.proximos.push(texto);
-
-    document.getElementById("proximo").value = "";
-
-    atualizarTela();
-    salvarMemoria();
-
-    alert(
-        "Novo microalvo registrado.\n\n" +
-        "O próximo ciclo poderá começar a partir dele."
-    );
-}
-
-function atualizarTela() {
-
-    document.getElementById("listaMicroalvos").innerHTML =
-        transformarLista(investigacao.microalvos);
-
-    document.getElementById("listaHipoteses").innerHTML =
-        transformarLista(investigacao.hipoteses);
-
-    document.getElementById("listaEvidencias").innerHTML =
-        transformarLista(investigacao.evidencias);
-
-    document.getElementById("listaContradicoes").innerHTML =
-        transformarLista(investigacao.contradicoes);
-
-    document.getElementById("resultadoConclusao").innerHTML =
-        investigacao.conclusao
-        ? "<div class='item'>" + escapar(investigacao.conclusao) + "</div>"
-        : "";
-
-    mostrarMemoria();
-}
-
-function transformarLista(lista) {
-
-    return lista.map((item, indice) => {
-
-        return "<div class='item'>" +
-            "<strong>" + (indice + 1) + ".</strong> " +
-            escapar(item) +
-            "</div>";
-
-    }).join("");
-}
 
 function escapar(texto) {
 
-    return texto
+    if (!texto) {
+        return "—";
+    }
+
+    return String(texto)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(/'/g, "&#039;")
+        .replace(/\n/g, "<br>");
+
 }
 
-function salvarMemoria() {
 
-    const historico =
-        JSON.parse(localStorage.getItem("fractal_memoria") || "[]");
+function renderizarMemoria() {
 
-    const registro = {
-        data: new Date().toISOString(),
-        investigacao: investigacao
-    };
+    const caixa = document.getElementById("memoriaAtual");
 
-    historico.push(registro);
+    if (!banco.ativa) {
 
-    localStorage.setItem(
-        "fractal_memoria",
-        JSON.stringify(historico)
+        caixa.innerHTML =
+            "<p>Nenhuma investigação ativa.</p>";
+
+    } else {
+
+        const i = banco.ativa;
+
+        caixa.innerHTML = `
+
+            <div class="memoria-item">
+
+                <strong>${escapar(i.id)}</strong>
+
+                <p class="campo">
+                    <strong>Alvo:</strong><br>
+                    ${escapar(i.alvo)}
+                </p>
+
+                <p class="campo">
+                    <strong>Microalvos:</strong><br>
+                    ${escapar(i.microalvos)}
+                </p>
+
+                <p class="campo">
+                    <strong>Hipóteses:</strong><br>
+                    ${escapar(i.hipoteses)}
+                </p>
+
+                <p class="campo">
+                    <strong>Evidências:</strong><br>
+                    ${escapar(i.evidencias)}
+                </p>
+
+                <p class="campo">
+                    <strong>Contradições:</strong><br>
+                    ${escapar(i.contradicoes)}
+                </p>
+
+                <p class="campo">
+                    <strong>Conclusão:</strong><br>
+                    ${escapar(i.conclusao)}
+                </p>
+
+                <p class="campo">
+                    <strong>Próximo microalvo:</strong><br>
+                    ${escapar(i.proximo)}
+                </p>
+
+                <p class="pequeno">
+                    Atualizado:
+                    ${escapar(i.atualizadoEm)}
+                </p>
+
+            </div>
+        `;
+
+    }
+
+    renderizarHistorico();
+
+    atualizarStatusMemoria();
+
+}
+
+
+function renderizarHistorico() {
+
+    const caixa = document.getElementById("historico");
+
+    if (!banco.historico || banco.historico.length === 0) {
+
+        caixa.innerHTML =
+            "<p class='pequeno'>Nenhuma investigação arquivada.</p>";
+
+        return;
+
+    }
+
+    caixa.innerHTML = "";
+
+    banco.historico
+        .slice()
+        .reverse()
+        .forEach(function(i) {
+
+            const div = document.createElement("div");
+
+            div.className = "memoria-item";
+
+            div.innerHTML = `
+
+                <strong>${escapar(i.id)}</strong>
+
+                <p>
+                    <strong>Alvo:</strong><br>
+                    ${escapar(i.alvo)}
+                </p>
+
+                <p>
+                    <strong>Conclusão:</strong><br>
+                    ${escapar(i.conclusao)}
+                </p>
+
+                <p class="pequeno">
+                    Arquivada em:
+                    ${escapar(i.arquivadoEm || "")}
+                </p>
+            `;
+
+            caixa.appendChild(div);
+
+        });
+
+}
+
+
+function arquivarInvestigacao() {
+
+    if (!banco.ativa) {
+
+        alert("Não existe investigação ativa.");
+
+        return;
+
+    }
+
+    salvarAutomaticamente();
+
+    const copia =
+        JSON.parse(JSON.stringify(banco.ativa));
+
+    copia.arquivadoEm = agora();
+
+    banco.historico.push(copia);
+
+    banco.ativa = null;
+
+    salvarBanco();
+
+    limparCampos();
+
+    esconderSistema();
+
+    renderizarMemoria();
+
+    alert(
+        "Investigação arquivada no histórico."
     );
 
-    mostrarMemoria();
 }
 
-function mostrarMemoria() {
 
-    const historico =
-        JSON.parse(localStorage.getItem("fractal_memoria") || "[]");
+function novaInvestigacao() {
 
-    const contador =
-        document.getElementById("contadorMemoria");
+    if (banco.ativa) {
 
-    const memoria =
-        document.getElementById("memoria");
+        const confirmar = confirm(
+            "Existe uma investigação ativa.\n\n" +
+            "Ela será arquivada antes de iniciar uma nova.\n\n" +
+            "Continuar?"
+        );
 
-    if (!contador || !memoria) return;
+        if (!confirmar) {
+            return;
+        }
 
-    contador.innerText =
-        "Registros armazenados neste dispositivo: " +
-        historico.length;
+        salvarAutomaticamente();
 
-    memoria.innerHTML = historico
-        .slice(-10)
-        .reverse()
-        .map((registro, indice) => {
+        const copia =
+            JSON.parse(JSON.stringify(banco.ativa));
 
-            return "<div class='item'>" +
-                "<strong>Ciclo " +
-                (historico.length - indice) +
-                "</strong><br>" +
-                escapar(registro.investigacao.alvo) +
-                "</div>";
+        copia.arquivadoEm = agora();
 
-        }).join("");
+        banco.historico.push(copia);
+
+        banco.ativa = null;
+
+    }
+
+    salvarBanco();
+
+    limparCampos();
+
+    esconderSistema();
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
 }
 
-function limparMemoria() {
 
-    const confirmar =
-        confirm("Deseja realmente apagar a memória deste dispositivo?");
+function limparCampos() {
 
-    if (!confirmar) return;
+    const campos = [
+        "alvo",
+        "microalvos",
+        "hipoteses",
+        "evidencias",
+        "contradicoes",
+        "conclusao",
+        "proximo"
+    ];
 
-    localStorage.removeItem("fractal_memoria");
+    campos.forEach(function(campo) {
 
-    mostrarMemoria();
+        const elemento =
+            document.getElementById(campo);
+
+        if (elemento) {
+            elemento.value = "";
+        }
+
+    });
+
 }
 
-window.onload = function() {
 
-    mostrarMemoria();
+function atualizarStatusMemoria() {
 
-};
+    const elemento =
+        document.getElementById("statusMemoria");
+
+    if (!elemento) {
+        return;
+    }
+
+    if (banco.ativa) {
+
+        elemento.textContent =
+            "✓ Memória ativa salva neste navegador — " +
+            banco.ativa.id;
+
+    } else {
+
+        elemento.textContent =
+            "Nenhuma investigação ativa.";
+
+    }
+
+}
+
+
+function exportarBackup() {
+
+    salvarAutomaticamente();
+
+    const conteudo =
+        JSON.stringify(banco, null, 2);
+
+    const blob =
+        new Blob(
+            [conteudo],
+            { type: "application/json" }
+        );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+        "fractal-investigativo-backup-" +
+        Date.now() +
+        ".json";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+}
+
+
+function apagarTodaMemoria() {
+
+    const confirmar = confirm(
+        "ATENÇÃO:\n\n" +
+        "Isso apagará a investigação ativa e todo o histórico " +
+        "salvo neste navegador.\n\n" +
+        "Deseja realmente continuar?"
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+    localStorage.removeItem(CHAVE_MEMORIA);
+
+    banco = {
+        versao: "0.2",
+        ativa: null,
+        historico: []
+    };
+
+    limparCampos();
+
+    esconderSistema();
+
+    renderizarMemoria();
+
+    alert("Memória apagada.");
+
+}
+
+
+function iniciarPagina() {
+
+    carregarBanco();
+
+    if (banco.ativa) {
+
+        mostrarSistema();
+
+        preencherCampos();
+
+        const status =
+            document.getElementById("statusInicial");
+
+        status.textContent =
+            "✓ Investigação restaurada automaticamente da memória.";
+
+        status.classList.remove("oculto");
+
+    } else {
+
+        esconderSistema();
+
+    }
+
+    renderizarMemoria();
+
+}
+
+
+const camposAutosave = [
+    "alvo",
+    "microalvos",
+    "hipoteses",
+    "evidencias",
+    "contradicoes",
+    "conclusao",
+    "proximo"
+];
+
+camposAutosave.forEach(function(campo) {
+
+    const elemento =
+        document.getElementById(campo);
+
+    elemento.addEventListener(
+        "input",
+        function() {
+
+            if (banco.ativa) {
+                salvarAutomaticamente();
+            }
+
+        }
+    );
+
+});
+
+
+window.addEventListener(
+    "beforeunload",
+    function() {
+
+        if (banco.ativa) {
+            salvarAutomaticamente();
+        }
+
+    }
+);
+
+
+iniciarPagina();
 
 </script>
 

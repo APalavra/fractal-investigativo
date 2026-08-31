@@ -107,8 +107,10 @@ async function analyzeCurrent() {
 }
 
 async function commitProposal(id) {
-  const button = document.querySelector(`.evoCommit[data-id="${CSS.escape(id)}"]`);
-  const inline = document.querySelector(`.evoCommitMsg[data-msg-for="${CSS.escape(id)}"]`);
+  const escCss = (window.CSS && CSS.escape) ? CSS.escape(id) : id.replace(/["\\]/g, "\\$&");
+  const button = document.querySelector(`.evoCommit[data-id="${escCss}"]`);
+  const inline = document.querySelector(`.evoCommitMsg[data-msg-for="${escCss}"]`);
+
   try {
     if (!lastAnalysis) throw new Error("Execute uma análise primeiro.");
     const investigation = loadInvestigation();
@@ -121,7 +123,7 @@ async function commitProposal(id) {
       button.disabled = true;
       button.textContent = "Registrando...";
     }
-    if (inline) inline.textContent = "Enviando registro ao backend...";
+    if (inline) inline.textContent = "Registrando no backend...";
     setStatus(`Registrando ${id}...`);
 
     const data = await request("/memory/commit", {
@@ -130,18 +132,26 @@ async function commitProposal(id) {
     });
 
     if (data.committed) {
-      const msg = `✓ Registrado como ${data.entry_id}. Memória evolutiva v${data.memory_version}.`;
-      if (button) button.textContent = "✓ Registrado na memória";
-      if (inline) inline.textContent = msg;
+      const msg = `✓ REGISTRADO COM SUCESSO: ${data.entry_id}. Memória evolutiva v${data.memory_version}.`;
+      if (button) button.textContent = "✓ Registrado";
+      if (inline) {
+        inline.textContent = msg;
+        inline.style.fontWeight = "700";
+      }
       setStatus(msg, true);
+      alert(msg);
       return;
     }
 
-    if (data.duplicate) {
-      const msg = `✓ Já estava registrado como ${data.entry_id}. Memória continua em v${data.memory_version}.`;
+    if (data.duplicate || /já foi registrada/i.test(data.message || "")) {
+      const msg = `✓ JÁ ESTAVA REGISTRADO. A memória não foi duplicada e continua em v${data.memory_version}.`;
       if (button) button.textContent = "✓ Já registrado";
-      if (inline) inline.textContent = msg;
+      if (inline) {
+        inline.textContent = msg;
+        inline.style.fontWeight = "700";
+      }
       setStatus(msg, true);
+      alert(msg);
       return;
     }
 
@@ -151,6 +161,7 @@ async function commitProposal(id) {
     }
     if (inline) inline.textContent = `✗ ${data.message}`;
     setStatus(`✗ ${data.message}`);
+    alert(`Falha ao registrar: ${data.message}`);
   } catch (err) {
     if (button) {
       button.disabled = false;
@@ -158,6 +169,7 @@ async function commitProposal(id) {
     }
     if (inline) inline.textContent = `✗ ${err.message}`;
     setStatus(`✗ ${err.message}`);
+    alert(`Falha ao registrar: ${err.message}`);
   }
 }
 

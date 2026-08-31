@@ -1,236 +1,220 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>Fractal Investigativo v0.6</title>
+<title>Fractal Investigativo v0.7</title>
 
 <style>
+*{box-sizing:border-box}
 
-* {
-    box-sizing: border-box;
+body{
+    margin:0;
+    background:#10110d;
+    color:#d8d8d0;
+    font-family:Arial,Helvetica,sans-serif;
+    line-height:1.5
 }
 
-body {
-    margin: 0;
-    background: #10110d;
-    color: #d8d8d0;
-    font-family: Arial, Helvetica, sans-serif;
-    line-height: 1.5;
+.container{
+    max-width:1000px;
+    margin:auto;
+    padding:20px
 }
 
-.container {
-    max-width: 980px;
-    margin: auto;
-    padding: 20px;
+h1{margin-bottom:8px}
+h2,h3{margin-top:0}
+
+.subtitulo,.pequeno{
+    color:#999b91
 }
 
-h1 {
-    margin-bottom: 8px;
+.pequeno{
+    font-size:.88rem
 }
 
-h2,
-h3 {
-    margin-top: 0;
+.versao{
+    display:inline-block;
+    padding:6px 12px;
+    background:#25261f;
+    border:1px solid #4c4d43;
+    border-radius:20px;
+    margin-bottom:16px
 }
 
-.subtitulo,
-.pequeno {
-    color: #9b9d93;
+.card{
+    background:#181912;
+    border:1px solid #45473d;
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:20px
 }
 
-.pequeno {
-    font-size: 0.88rem;
+textarea,input,select{
+    width:100%;
+    background:#0d0e0a;
+    color:#ededE7;
+    border:1px solid #55574d;
+    border-radius:9px;
+    padding:12px;
+    margin-top:7px;
+    margin-bottom:12px;
+    font-size:1rem
 }
 
-.versao {
-    display: inline-block;
-    padding: 6px 12px;
-    border: 1px solid #4c4d43;
-    border-radius: 20px;
-    background: #25261f;
-    margin-bottom: 16px;
+textarea{
+    min-height:105px;
+    resize:vertical
 }
 
-.card {
-    background: #181912;
-    border: 1px solid #45473d;
-    border-radius: 14px;
-    padding: 18px;
-    margin-bottom: 20px;
+button{
+    padding:11px 15px;
+    border:0;
+    border-radius:9px;
+    font-size:.94rem;
+    font-weight:bold;
+    cursor:pointer;
+    margin:4px 4px 4px 0
 }
 
-textarea,
-input,
-select {
-    width: 100%;
-    background: #0d0e0a;
-    color: #edede7;
-    border: 1px solid #55574d;
-    border-radius: 9px;
-    padding: 12px;
-    margin-top: 7px;
-    margin-bottom: 12px;
-    font-size: 1rem;
+.principal{
+    background:#dfdfd7;
+    color:#111
 }
 
-textarea {
-    min-height: 105px;
-    resize: vertical;
+.secundario{
+    background:#35372d;
+    color:white
 }
 
-button {
-    padding: 11px 15px;
-    border: 0;
-    border-radius: 9px;
-    font-size: 0.94rem;
-    font-weight: bold;
-    cursor: pointer;
-    margin: 4px 4px 4px 0;
+.sucesso{
+    background:#294a31;
+    color:white
 }
 
-.principal {
-    background: #e0e0d8;
-    color: #111;
+.perigo{
+    background:#572d2d;
+    color:white
 }
 
-.secundario {
-    background: #35372d;
-    color: white;
+.oculto{
+    display:none
 }
 
-.sucesso {
-    background: #284a30;
-    color: white;
+.status,.info{
+    padding:12px;
+    background:#23251d;
+    border-radius:9px;
+    margin-top:10px;
+    margin-bottom:12px
 }
 
-.perigo {
-    background: #572d2d;
-    color: white;
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px
 }
 
-.oculto {
-    display: none;
+.metricas{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px
 }
 
-.status,
-.info {
-    padding: 12px;
-    border-radius: 9px;
-    background: #23251d;
-    margin-top: 10px;
-    margin-bottom: 12px;
+.metrica{
+    background:#25271f;
+    border-radius:9px;
+    padding:12px
 }
 
-.grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+.numero{
+    font-size:1.45rem;
+    font-weight:bold
 }
 
-.micro {
-    background: #202119;
-    border: 1px solid #46483d;
-    border-radius: 10px;
-    padding: 12px;
-    margin-top: 9px;
-}
-
-.micro-id,
-.claim-id {
-    font-weight: bold;
-}
-
+.micro,
+.micro-relacao,
 .claim,
 .relacao,
 .verificacao,
-.memoria {
-    background: #202119;
-    border: 1px solid #44463b;
-    border-radius: 10px;
-    padding: 13px;
-    margin-top: 11px;
+.prioridade,
+.memoria{
+    background:#202119;
+    border:1px solid #44463b;
+    border-radius:10px;
+    padding:13px;
+    margin-top:11px
 }
 
-.memoria {
-    border-left: 4px solid #747668;
+.memoria{
+    border-left:4px solid #747668
 }
 
-.tipo {
-    display: inline-block;
-    background: #36382e;
-    padding: 3px 8px;
-    border-radius: 7px;
-    margin-left: 5px;
+.alerta{
+    border-left:5px solid #92753b
 }
 
-.alerta {
-    border-left: 5px solid #92753b;
+.erro{
+    border-left:5px solid #914343
 }
 
-.erro {
-    border-left: 5px solid #914343;
+.ok{
+    border-left:5px solid #417c4c
 }
 
-.ok {
-    border-left: 5px solid #417c4c;
+.prioridade-alta{
+    border-left:5px solid #8a783d
 }
 
-.metricas {
-    display: grid;
-    grid-template-columns: repeat(2,1fr);
-    gap: 10px;
+.prioridade-media{
+    border-left:5px solid #66685c
 }
 
-.metrica {
-    background: #25271f;
-    padding: 12px;
-    border-radius: 9px;
+.prioridade-baixa{
+    border-left:5px solid #45473e
 }
 
-.numero {
-    font-size: 1.45rem;
-    font-weight: bold;
+.tipo{
+    display:inline-block;
+    background:#36382e;
+    padding:3px 8px;
+    border-radius:7px;
+    margin-left:5px
 }
 
-hr {
-    border: none;
-    border-top: 1px solid #3c3d34;
-    margin: 22px 0;
+.pontuacao{
+    font-size:1.6rem;
+    font-weight:bold
 }
 
-@media(max-width:650px) {
+hr{
+    border:none;
+    border-top:1px solid #3c3d34;
+    margin:22px 0
+}
 
-    .grid,
-    .metricas {
-        grid-template-columns: 1fr;
+@media(max-width:650px){
+    .grid,.metricas{
+        grid-template-columns:1fr
     }
-
 }
-
 </style>
-
 </head>
-
 
 <body>
 
 <div class="container">
 
 <div class="versao">
-Versão 0.6 — árvore fractal de microalvos
+Versão 0.7 — dependências e prioridade
 </div>
 
 <h1>🧠 Fractal Investigativo</h1>
 
 <p class="subtitulo">
-Árvore recursiva de problemas + grafo epistemológico +
-memória persistente + verificação estrutural.
+Árvore recursiva + grafo epistemológico + dependências entre microalvos +
+motor de prioridade + verificação estrutural.
 </p>
 
 
@@ -240,7 +224,7 @@ memória persistente + verificação estrutural.
 
 <textarea
 id="alvo"
-placeholder="Qual é a pergunta, problema ou fenômeno principal?"
+placeholder="Qual é a pergunta, fenômeno ou problema principal?"
 ></textarea>
 
 <button
@@ -266,33 +250,21 @@ class="status oculto"
 <h2>2. Árvore Fractal de Microalvos</h2>
 
 <div class="info">
-
-Cada microalvo agora é um nó real.
-
-Você pode criar um microalvo diretamente sob o alvo principal
-ou escolher outro microalvo como pai.
-
+Cada microalvo pode possuir filhos, formando profundidade recursiva.
 </div>
-
 
 <label>Novo microalvo</label>
 
 <textarea
 id="novoMicroTexto"
-placeholder="Exemplo: Identificar quais forças atuam sobre o objeto."
+placeholder="Digite um novo microalvo..."
 ></textarea>
-
 
 <label>Inserir dentro de</label>
 
 <select id="microPai">
-
-<option value="">
-ALVO PRINCIPAL
-</option>
-
+<option value="">ALVO PRINCIPAL</option>
 </select>
-
 
 <button
 class="principal"
@@ -301,20 +273,94 @@ onclick="adicionarMicroalvo()"
 Adicionar microalvo
 </button>
 
-
 <hr>
-
-<h3>Estrutura atual</h3>
 
 <div id="arvoreMicro"></div>
 
 </section>
 
 
+<section class="card">
+
+<h2>3. Dependências entre Microalvos</h2>
+
+<div class="info">
+
+A relação possui direção.
+
+<br><br>
+
+Se escolher:
+
+<br>
+
+<strong>MA-2 DEPENDE DE MA-1</strong>
+
+<br><br>
+
+significa que MA-2 não deveria ser considerado plenamente liberado
+enquanto MA-1 ainda não estiver resolvido.
+
+</div>
+
+
+<label>Microalvo de origem</label>
+
+<select id="microRelOrigem"></select>
+
+
+<label>Relação</label>
+
+<select id="microRelTipo">
+
+<option value="depende">
+Depende de
+</option>
+
+<option value="desbloqueia">
+Desbloqueia
+</option>
+
+<option value="refina">
+Refina
+</option>
+
+<option value="complementa">
+Complementa
+</option>
+
+</select>
+
+
+<label>Microalvo de destino</label>
+
+<select id="microRelDestino"></select>
+
+
+<label>Observação</label>
+
+<textarea
+id="microRelObservacao"
+placeholder="Explique por que esta relação existe."
+></textarea>
+
+
+<button
+class="principal"
+onclick="adicionarRelacaoMicro()"
+>
+Criar relação entre microalvos
+</button>
+
+
+<div id="microRelacoes"></div>
+
+</section>
+
 
 <section class="card">
 
-<h2>3. Hipóteses gerais</h2>
+<h2>4. Hipóteses gerais</h2>
 
 <textarea id="hipoteses"></textarea>
 
@@ -328,10 +374,9 @@ Registrar
 </section>
 
 
-
 <section class="card">
 
-<h2>4. Evidências gerais</h2>
+<h2>5. Evidências gerais</h2>
 
 <textarea id="evidencias"></textarea>
 
@@ -345,10 +390,9 @@ Registrar
 </section>
 
 
-
 <section class="card">
 
-<h2>5. Contradições gerais</h2>
+<h2>6. Contradições gerais</h2>
 
 <textarea id="contradicoes"></textarea>
 
@@ -362,10 +406,9 @@ Registrar
 </section>
 
 
-
 <section class="card">
 
-<h2>6. Conclusão provisória</h2>
+<h2>7. Conclusão provisória</h2>
 
 <textarea id="conclusao"></textarea>
 
@@ -379,15 +422,11 @@ Registrar
 </section>
 
 
-
 <section class="card">
 
-<h2>7. Próxima ação investigativa</h2>
+<h2>8. Próxima ação investigativa</h2>
 
-<textarea
-id="proximo"
-placeholder="Qual deve ser o próximo passo?"
-></textarea>
+<textarea id="proximo"></textarea>
 
 <button
 class="principal"
@@ -399,10 +438,9 @@ Registrar
 </section>
 
 
-
 <section class="card">
 
-<h2>8. Registro Epistêmico</h2>
+<h2>9. Registro Epistêmico</h2>
 
 <div class="info">
 
@@ -417,10 +455,7 @@ H = hipótese/especulação
 
 <label>Afirmação</label>
 
-<textarea
-id="claimTexto"
-placeholder="Digite uma afirmação..."
-></textarea>
+<textarea id="claimTexto"></textarea>
 
 
 <label>Microalvo relacionado</label>
@@ -515,10 +550,7 @@ document.getElementById('valorConfianca').textContent=this.value
 
 <label>Fonte / origem</label>
 
-<input
-id="claimFonte"
-placeholder="Artigo, livro, experimento, URL, raciocínio próprio..."
->
+<input id="claimFonte">
 
 
 <button
@@ -534,17 +566,16 @@ Adicionar afirmação
 </section>
 
 
-
 <section class="card">
 
-<h2>9. Relações entre afirmações</h2>
+<h2>10. Relações entre Afirmações</h2>
 
 <label>Origem</label>
 
 <select id="relOrigem"></select>
 
 
-<label>Tipo de relação</label>
+<label>Relação</label>
 
 <select id="relTipo">
 
@@ -621,16 +652,54 @@ Criar relação
 </section>
 
 
-
 <section class="card">
 
-<h2>10. Verificador estrutural</h2>
+<h2>11. Motor de Prioridade</h2>
 
 <div class="info">
 
-O verificador procura problemas na estrutura cadastrada.
+O motor não decide qual afirmação é verdadeira.
 
-Ele ainda não prova que uma afirmação é verdadeira no mundo real.
+Ele calcula qual microalvo parece estruturalmente mais importante
+para receber atenção agora.
+
+<br><br>
+
+Critérios atuais:
+
+<br>
+
+• estado do microalvo<br>
+• dependências ainda não resolvidas<br>
+• quantidade de outros microalvos que dependem dele<br>
+• capacidade de desbloquear outros nós<br>
+• ausência de claims diretamente associados
+
+</div>
+
+
+<button
+class="principal"
+onclick="calcularPrioridades()"
+>
+⚙ Calcular prioridades
+</button>
+
+
+<div id="prioridades"></div>
+
+</section>
+
+
+<section class="card">
+
+<h2>12. Verificador estrutural</h2>
+
+<div class="info">
+
+O verificador detecta fragilidades da estrutura.
+
+Ele não substitui validação científica, histórica, lógica ou documental.
 
 </div>
 
@@ -648,10 +717,9 @@ onclick="executarVerificacao()"
 </section>
 
 
-
 <section class="card">
 
-<h2>11. Memória</h2>
+<h2>13. Memória</h2>
 
 <div
 id="statusMemoria"
@@ -710,7 +778,7 @@ onchange="importarBackup(event)"
 class="perigo"
 onclick="apagarTodaMemoria()"
 >
-Apagar memória da v0.6
+Apagar memória da v0.7
 </button>
 
 
@@ -724,22 +792,21 @@ Apagar memória da v0.6
 
 
 </div>
-
 </div>
 
 
 <script>
 
+const CHAVE_V07 =
+"fractal_investigativo_v07";
+
 const CHAVE_V06 =
 "fractal_investigativo_v06";
-
-const CHAVE_V05 =
-"fractal_investigativo_v05";
 
 
 let banco = {
 
-    versao: "0.6",
+    versao: "0.7",
 
     ativa: null,
 
@@ -749,7 +816,7 @@ let banco = {
 
 
 
-function agora() {
+function agora(){
 
     return new Date().toISOString();
 
@@ -757,7 +824,7 @@ function agora() {
 
 
 
-function idInvestigacao() {
+function idInvestigacao(){
 
     return "INV-" + Date.now();
 
@@ -765,7 +832,7 @@ function idInvestigacao() {
 
 
 
-function novaEstrutura(alvo) {
+function novaEstrutura(alvo){
 
     return {
 
@@ -781,13 +848,16 @@ function novaEstrutura(alvo) {
         alvo:
             alvo || "",
 
-        microalvos:
-            "",
-
         microNos:
             [],
 
         proximoMicroRaiz:
+            1,
+
+        relacoesMicro:
+            [],
+
+        proximaRelacaoMicro:
             1,
 
         hipoteses:
@@ -805,17 +875,17 @@ function novaEstrutura(alvo) {
         proximo:
             "",
 
-        proximoClaim:
-            1,
-
         claims:
             [],
 
-        proximaRelacao:
+        proximoClaim:
             1,
 
         relacoes:
-            []
+            [],
+
+        proximaRelacao:
+            1
 
     };
 
@@ -823,183 +893,54 @@ function novaEstrutura(alvo) {
 
 
 
-function profundidadeMicro(id) {
+function normalizarInvestigacao(i){
 
-    if (!id) {
-        return 0;
-    }
-
-    return id.split(".").length;
-
-}
-
-
-
-function normalizarInvestigacao(i) {
-
-    if (!i) {
+    if(!i){
         return null;
     }
 
 
-    if (!Array.isArray(i.claims)) {
+    if(!Array.isArray(i.microNos)){
+        i.microNos = [];
+    }
+
+
+    if(!Array.isArray(i.relacoesMicro)){
+        i.relacoesMicro = [];
+    }
+
+
+    if(!Array.isArray(i.claims)){
         i.claims = [];
     }
 
 
-    if (!Array.isArray(i.relacoes)) {
+    if(!Array.isArray(i.relacoes)){
         i.relacoes = [];
     }
 
 
-    if (!Array.isArray(i.microNos)) {
+    if(!i.proximoMicroRaiz){
 
-        i.microNos = [];
+        let maior = 0;
 
-    }
+        i.microNos.forEach(function(n){
 
+            const m =
+                /^MA-(\d+)$/
+                .exec(n.id);
 
-    if (!i.proximoClaim) {
+            if(m){
 
-        i.proximoClaim =
-            i.claims.length + 1;
-
-    }
-
-
-    if (!i.proximaRelacao) {
-
-        i.proximaRelacao =
-            i.relacoes.length + 1;
-
-    }
-
-
-    i.relacoes.forEach(
-
-        function(r) {
-
-            if (!r.estado) {
-
-                r.estado =
-                    "proposta";
+                maior =
+                    Math.max(
+                        maior,
+                        Number(m[1])
+                    );
 
             }
 
-        }
-
-    );
-
-
-    i.claims.forEach(
-
-        function(c) {
-
-            if (!("microalvoId" in c)) {
-
-                c.microalvoId =
-                    null;
-
-            }
-
-        }
-
-    );
-
-
-    /*
-    Migração automática:
-    transforma o antigo campo textual de microalvos
-    em nós-raiz, caso ainda não existam nós fractais.
-    */
-
-    if (
-        i.microNos.length === 0 &&
-        i.microalvos &&
-        i.microalvos.trim()
-    ) {
-
-        const linhas =
-            i.microalvos
-            .split("\n")
-            .map(
-                function(x) {
-                    return x.trim();
-                }
-            )
-            .filter(Boolean);
-
-
-        linhas.forEach(
-
-            function(texto, indice) {
-
-                i.microNos.push({
-
-                    id:
-                        "MA-" +
-                        (indice + 1),
-
-                    parentId:
-                        null,
-
-                    titulo:
-                        texto,
-
-                    estado:
-                        "aberto",
-
-                    proximoFilho:
-                        1,
-
-                    criadoEm:
-                        agora(),
-
-                    atualizadoEm:
-                        agora()
-
-                });
-
-            }
-
-        );
-
-
-        i.proximoMicroRaiz =
-            linhas.length + 1;
-
-    }
-
-
-    if (!i.proximoMicroRaiz) {
-
-        let maior =
-            0;
-
-
-        i.microNos.forEach(
-
-            function(n) {
-
-                const match =
-                    /^MA-(\d+)$/
-                    .exec(n.id);
-
-
-                if (match) {
-
-                    maior =
-                        Math.max(
-                            maior,
-                            Number(match[1])
-                        );
-
-                }
-
-            }
-
-        );
-
+        });
 
         i.proximoMicroRaiz =
             maior + 1;
@@ -1007,73 +948,59 @@ function normalizarInvestigacao(i) {
     }
 
 
-    i.microNos.forEach(
+    if(!i.proximaRelacaoMicro){
 
-        function(n) {
+        i.proximaRelacaoMicro =
+            i.relacoesMicro.length + 1;
 
-            if (!n.estado) {
-                n.estado = "aberto";
-            }
-
-
-            if (!n.proximoFilho) {
-
-                let maior =
-                    0;
+    }
 
 
-                const prefixo =
-                    n.id + ".";
+    if(!i.proximoClaim){
+
+        i.proximoClaim =
+            i.claims.length + 1;
+
+    }
 
 
-                i.microNos.forEach(
+    if(!i.proximaRelacao){
 
-                    function(filho) {
+        i.proximaRelacao =
+            i.relacoes.length + 1;
 
-                        if (
-                            filho.parentId ===
-                            n.id
-                        ) {
-
-                            const parte =
-                                filho.id.slice(
-                                    prefixo.length
-                                );
+    }
 
 
-                            const numero =
-                                Number(parte);
+    i.microNos.forEach(function(n){
 
-
-                            if (
-                                Number.isInteger(
-                                    numero
-                                )
-                            ) {
-
-                                maior =
-                                    Math.max(
-                                        maior,
-                                        numero
-                                    );
-
-                            }
-
-                        }
-
-                    }
-
-                );
-
-
-                n.proximoFilho =
-                    maior + 1;
-
-            }
-
+        if(!n.estado){
+            n.estado = "aberto";
         }
 
-    );
+        if(!n.proximoFilho){
+            n.proximoFilho = 1;
+        }
+
+    });
+
+
+    i.claims.forEach(function(c){
+
+        if(!("microalvoId" in c)){
+            c.microalvoId = null;
+        }
+
+    });
+
+
+    i.relacoes.forEach(function(r){
+
+        if(!r.estado){
+            r.estado = "proposta";
+        }
+
+    });
 
 
     return i;
@@ -1082,24 +1009,19 @@ function normalizarInvestigacao(i) {
 
 
 
-function salvarBanco() {
+function salvarBanco(){
 
-    try {
+    try{
 
         localStorage.setItem(
-
-            CHAVE_V06,
-
+            CHAVE_V07,
             JSON.stringify(banco)
-
         );
-
 
         atualizarStatus();
 
     }
-
-    catch (erro) {
+    catch(erro){
 
         alert(
             "Erro ao salvar memória: " +
@@ -1112,45 +1034,40 @@ function salvarBanco() {
 
 
 
-function carregarBanco() {
+function carregarBanco(){
 
-    try {
+    try{
 
         const atual =
             localStorage.getItem(
-                CHAVE_V06
+                CHAVE_V07
             );
 
 
-        if (atual) {
+        if(atual){
 
             banco =
                 JSON.parse(atual);
 
         }
-
-        else {
+        else{
 
             const anterior =
                 localStorage.getItem(
-                    CHAVE_V05
+                    CHAVE_V06
                 );
 
 
-            if (anterior) {
+            if(anterior){
 
                 banco =
-                    JSON.parse(
-                        anterior
-                    );
-
+                    JSON.parse(anterior);
 
                 banco.versao =
-                    "0.6";
-
+                    "0.7";
 
                 alert(
-                    "Memória da v0.5 encontrada. Os dados serão migrados para a estrutura fractal da v0.6."
+                    "Memória da v0.6 encontrada e migrada para a v0.7."
                 );
 
             }
@@ -1158,14 +1075,9 @@ function carregarBanco() {
         }
 
 
-        if (
-            !Array.isArray(
-                banco.historico
-            )
-        ) {
+        if(!Array.isArray(banco.historico)){
 
-            banco.historico =
-                [];
+            banco.historico = [];
 
         }
 
@@ -1177,8 +1089,7 @@ function carregarBanco() {
 
 
         banco.historico =
-            banco.historico
-            .map(
+            banco.historico.map(
                 normalizarInvestigacao
             );
 
@@ -1186,11 +1097,10 @@ function carregarBanco() {
         salvarBanco();
 
     }
-
-    catch (erro) {
+    catch(erro){
 
         console.error(
-            "Erro de migração:",
+            "Erro ao carregar:",
             erro
         );
 
@@ -1200,7 +1110,7 @@ function carregarBanco() {
 
 
 
-function iniciarInvestigacao() {
+function iniciarInvestigacao(){
 
     const alvo =
         document
@@ -1209,7 +1119,7 @@ function iniciarInvestigacao() {
         .trim();
 
 
-    if (!alvo) {
+    if(!alvo){
 
         alert(
             "Digite um alvo principal."
@@ -1220,14 +1130,13 @@ function iniciarInvestigacao() {
     }
 
 
-    if (!banco.ativa) {
+    if(!banco.ativa){
 
         banco.ativa =
             novaEstrutura(alvo);
 
     }
-
-    else {
+    else{
 
         banco.ativa.alvo =
             alvo;
@@ -1266,7 +1175,7 @@ function iniciarInvestigacao() {
 
 
 
-function mostrarSistema() {
+function mostrarSistema(){
 
     document
     .getElementById("sistema")
@@ -1276,7 +1185,7 @@ function mostrarSistema() {
 
 
 
-function esconderSistema() {
+function esconderSistema(){
 
     document
     .getElementById("sistema")
@@ -1286,9 +1195,9 @@ function esconderSistema() {
 
 
 
-function registrarCampo(nome) {
+function registrarCampo(nome){
 
-    if (!banco.ativa) {
+    if(!banco.ativa){
         return;
     }
 
@@ -1313,46 +1222,36 @@ function registrarCampo(nome) {
 
 
 
-function autosalvar() {
+function autosalvar(){
 
-    if (!banco.ativa) {
+    if(!banco.ativa){
         return;
     }
 
 
     [
-
         "alvo",
-
         "hipoteses",
-
         "evidencias",
-
         "contradicoes",
-
         "conclusao",
-
         "proximo"
+    ]
+    .forEach(function(nome){
 
-    ].forEach(
-
-        function(nome) {
-
-            const elemento =
-                document
-                .getElementById(nome);
+        const elemento =
+            document
+            .getElementById(nome);
 
 
-            if (elemento) {
+        if(elemento){
 
-                banco.ativa[nome] =
-                    elemento.value;
-
-            }
+            banco.ativa[nome] =
+                elemento.value;
 
         }
 
-    );
+    });
 
 
     banco.ativa.atualizadoEm =
@@ -1365,60 +1264,107 @@ function autosalvar() {
 
 
 
-function preencherCampos() {
+function preencherCampos(){
 
-    if (!banco.ativa) {
+    if(!banco.ativa){
         return;
     }
 
 
     [
-
         "alvo",
-
         "hipoteses",
-
         "evidencias",
-
         "contradicoes",
-
         "conclusao",
-
         "proximo"
+    ]
+    .forEach(function(nome){
 
-    ].forEach(
+        document
+        .getElementById(nome)
+        .value =
+            banco.ativa[nome] || "";
 
-        function(nome) {
-
-            document
-            .getElementById(nome)
-            .value =
-                banco.ativa[nome] || "";
-
-        }
-
-    );
+    });
 
 }
 
 
 
-function microPorId(id) {
+function partesId(id){
 
-    if (!banco.ativa) {
+    return id
+    .replace("MA-","")
+    .split(".")
+    .map(Number);
+
+}
+
+
+
+function compararIdsMicro(a,b){
+
+    const pa =
+        partesId(a.id);
+
+    const pb =
+        partesId(b.id);
+
+    const t =
+        Math.max(
+            pa.length,
+            pb.length
+        );
+
+
+    for(let i=0;i<t;i++){
+
+        if(pa[i] === undefined){
+            return -1;
+        }
+
+        if(pb[i] === undefined){
+            return 1;
+        }
+
+        if(pa[i] !== pb[i]){
+            return pa[i] - pb[i];
+        }
+
+    }
+
+
+    return 0;
+
+}
+
+
+
+function profundidadeMicro(id){
+
+    if(!id){
+        return 0;
+    }
+
+    return id.split(".").length;
+
+}
+
+
+
+function microPorId(id){
+
+    if(!banco.ativa){
         return null;
     }
 
 
     return (
         banco.ativa.microNos.find(
-
-            function(n) {
-
+            function(n){
                 return n.id === id;
-
             }
-
         ) || null
     );
 
@@ -1426,16 +1372,10 @@ function microPorId(id) {
 
 
 
-function adicionarMicroalvo() {
+function adicionarMicroalvo(){
 
-    if (!banco.ativa) {
-
-        alert(
-            "Inicie uma investigação."
-        );
-
+    if(!banco.ativa){
         return;
-
     }
 
 
@@ -1448,7 +1388,7 @@ function adicionarMicroalvo() {
         .trim();
 
 
-    if (!titulo) {
+    if(!titulo){
 
         alert(
             "Digite o microalvo."
@@ -1470,35 +1410,23 @@ function adicionarMicroalvo() {
     let id;
 
 
-    if (!parentId) {
+    if(!parentId){
 
         id =
             "MA-" +
-            banco.ativa
-            .proximoMicroRaiz;
+            banco.ativa.proximoMicroRaiz;
 
-
-        banco.ativa
-        .proximoMicroRaiz++;
+        banco.ativa.proximoMicroRaiz++;
 
     }
-
-    else {
+    else{
 
         const pai =
-            microPorId(
-                parentId
-            );
+            microPorId(parentId);
 
 
-        if (!pai) {
-
-            alert(
-                "Microalvo-pai não encontrado."
-            );
-
+        if(!pai){
             return;
-
         }
 
 
@@ -1509,9 +1437,6 @@ function adicionarMicroalvo() {
 
 
         pai.proximoFilho++;
-
-        pai.atualizadoEm =
-            agora();
 
     }
 
@@ -1542,10 +1467,6 @@ function adicionarMicroalvo() {
     });
 
 
-    banco.ativa.atualizadoEm =
-        agora();
-
-
     document
     .getElementById(
         "novoMicroTexto"
@@ -1561,23 +1482,19 @@ function adicionarMicroalvo() {
 
 
 
-function atualizarEstadoMicro(
-    id,
-    estado
-) {
+function atualizarEstadoMicro(id,estado){
 
     const micro =
         microPorId(id);
 
 
-    if (!micro) {
+    if(!micro){
         return;
     }
 
 
     micro.estado =
         estado;
-
 
     micro.atualizadoEm =
         agora();
@@ -1591,17 +1508,16 @@ function atualizarEstadoMicro(
 
 
 
-function removerMicroalvo(id) {
+function removerMicroalvo(id){
 
-    if (!banco.ativa) {
+    if(!banco.ativa){
         return;
     }
 
 
     const afetados =
         banco.ativa.microNos.filter(
-
-            function(n) {
+            function(n){
 
                 return (
                     n.id === id ||
@@ -1611,26 +1527,16 @@ function removerMicroalvo(id) {
                 );
 
             }
-
         );
 
 
-    const confirmar =
-        confirm(
-
+    if(
+        !confirm(
             "Remover " +
             id +
-            " e todos os seus descendentes?\n\n" +
-
-            afetados.length +
-            " microalvo(s) serão removidos.\n\n" +
-
-            "Claims associados não serão apagados, mas ficarão sem microalvo."
-
-        );
-
-
-    if (!confirmar) {
+            " e seus descendentes?"
+        )
+    ){
         return;
     }
 
@@ -1638,7 +1544,7 @@ function removerMicroalvo(id) {
     const ids =
         new Set(
             afetados.map(
-                function(n) {
+                function(n){
                     return n.id;
                 }
             )
@@ -1647,36 +1553,42 @@ function removerMicroalvo(id) {
 
     banco.ativa.microNos =
         banco.ativa.microNos.filter(
-
-            function(n) {
+            function(n){
 
                 return !ids.has(
                     n.id
                 );
 
             }
+        );
 
+
+    banco.ativa.relacoesMicro =
+        banco.ativa.relacoesMicro.filter(
+            function(r){
+
+                return (
+                    !ids.has(r.origem) &&
+                    !ids.has(r.destino)
+                );
+
+            }
         );
 
 
     banco.ativa.claims.forEach(
+        function(c){
 
-        function(c) {
-
-            if (
+            if(
                 c.microalvoId &&
                 ids.has(
                     c.microalvoId
                 )
-            ) {
-
-                c.microalvoId =
-                    null;
-
+            ){
+                c.microalvoId = null;
             }
 
         }
-
     );
 
 
@@ -1688,7 +1600,7 @@ function removerMicroalvo(id) {
 
 
 
-function preencherSeletoresMicro() {
+function preencherSeletoresMicro(){
 
     const pai =
         document
@@ -1696,146 +1608,288 @@ function preencherSeletoresMicro() {
             "microPai"
         );
 
-
     const claim =
         document
         .getElementById(
             "claimMicro"
         );
 
+    const origem =
+        document
+        .getElementById(
+            "microRelOrigem"
+        );
+
+    const destino =
+        document
+        .getElementById(
+            "microRelDestino"
+        );
+
 
     pai.innerHTML =
         "<option value=''>ALVO PRINCIPAL</option>";
 
-
     claim.innerHTML =
         "<option value=''>Sem microalvo específico</option>";
 
+    origem.innerHTML = "";
 
-    if (!banco.ativa) {
+    destino.innerHTML = "";
+
+
+    if(!banco.ativa){
         return;
     }
 
 
     banco.ativa.microNos
     .slice()
-    .sort(
-        compararIdsMicro
-    )
-    .forEach(
+    .sort(compararIdsMicro)
+    .forEach(function(n){
 
-        function(n) {
-
-            const prefixo =
-                "↳ ".repeat(
-                    Math.max(
-                        0,
-                        profundidadeMicro(
-                            n.id
-                        ) - 1
-                    )
-                );
-
-
-            const texto =
-                prefixo +
-                n.id +
-                " — " +
-                n.titulo;
-
-
-            const op1 =
-                document
-                .createElement(
-                    "option"
-                );
-
-
-            op1.value =
-                n.id;
-
-
-            op1.textContent =
-                texto;
-
-
-            pai.appendChild(
-                op1
+        const recuo =
+            "↳ ".repeat(
+                Math.max(
+                    0,
+                    profundidadeMicro(n.id)-1
+                )
             );
 
 
-            claim.appendChild(
-                op1.cloneNode(true)
-            );
-
-        }
-
-    );
-
-}
+        const texto =
+            recuo +
+            n.id +
+            " — " +
+            n.titulo;
 
 
-
-function partesId(id) {
-
-    return id
-    .replace("MA-","")
-    .split(".")
-    .map(Number);
-
-}
+        const op =
+            document
+            .createElement("option");
 
 
+        op.value =
+            n.id;
 
-function compararIdsMicro(a,b) {
-
-    const pa =
-        partesId(a.id);
-
-
-    const pb =
-        partesId(b.id);
+        op.textContent =
+            texto;
 
 
-    const tamanho =
-        Math.max(
-            pa.length,
-            pb.length
+        pai.appendChild(
+            op.cloneNode(true)
         );
 
+        claim.appendChild(
+            op.cloneNode(true)
+        );
 
-    for (
-        let i = 0;
-        i < tamanho;
-        i++
-    ) {
+        origem.appendChild(
+            op.cloneNode(true)
+        );
 
-        if (pa[i] === undefined) {
-            return -1;
-        }
+        destino.appendChild(
+            op.cloneNode(true)
+        );
 
-
-        if (pb[i] === undefined) {
-            return 1;
-        }
+    });
 
 
-        if (pa[i] !== pb[i]) {
+    if(
+        banco.ativa.microNos.length > 1
+    ){
 
-            return pa[i] - pb[i];
+        destino.selectedIndex = 1;
 
-        }
+    }
+
+}
+
+
+
+function adicionarRelacaoMicro(){
+
+    if(
+        !banco.ativa ||
+        banco.ativa.microNos.length < 2
+    ){
+
+        alert(
+            "Crie pelo menos dois microalvos."
+        );
+
+        return;
 
     }
 
 
-    return 0;
+    const origem =
+        document
+        .getElementById(
+            "microRelOrigem"
+        )
+        .value;
+
+
+    const destino =
+        document
+        .getElementById(
+            "microRelDestino"
+        )
+        .value;
+
+
+    const tipo =
+        document
+        .getElementById(
+            "microRelTipo"
+        )
+        .value;
+
+
+    if(!origem || !destino){
+        return;
+    }
+
+
+    if(origem === destino){
+
+        alert(
+            "Um microalvo não pode se relacionar consigo mesmo."
+        );
+
+        return;
+
+    }
+
+
+    const duplicada =
+        banco.ativa.relacoesMicro.some(
+            function(r){
+
+                return (
+                    r.origem === origem &&
+                    r.destino === destino &&
+                    r.tipo === tipo
+                );
+
+            }
+        );
+
+
+    if(duplicada){
+
+        alert(
+            "Essa relação já existe."
+        );
+
+        return;
+
+    }
+
+
+    banco.ativa.relacoesMicro.push({
+
+        id:
+            "MR-" +
+            banco.ativa.proximaRelacaoMicro,
+
+        origem:
+            origem,
+
+        destino:
+            destino,
+
+        tipo:
+            tipo,
+
+        observacao:
+            document
+            .getElementById(
+                "microRelObservacao"
+            )
+            .value
+            .trim(),
+
+        criadoEm:
+            agora()
+
+    });
+
+
+    banco.ativa.proximaRelacaoMicro++;
+
+
+    document
+    .getElementById(
+        "microRelObservacao"
+    )
+    .value = "";
+
+
+    salvarBanco();
+
+    renderizarTudo();
 
 }
 
 
 
-function renderizarArvoreMicro() {
+function removerRelacaoMicro(id){
+
+    if(
+        !confirm(
+            "Remover " +
+            id +
+            "?"
+        )
+    ){
+        return;
+    }
+
+
+    banco.ativa.relacoesMicro =
+        banco.ativa.relacoesMicro.filter(
+            function(r){
+                return r.id !== id;
+            }
+        );
+
+
+    salvarBanco();
+
+    renderizarTudo();
+
+}
+
+
+
+function nomeRelacaoMicro(tipo){
+
+    const mapa = {
+
+        depende:
+            "DEPENDE DE",
+
+        desbloqueia:
+            "DESBLOQUEIA",
+
+        refina:
+            "REFINA",
+
+        complementa:
+            "COMPLEMENTA"
+
+    };
+
+
+    return mapa[tipo] || tipo;
+
+}
+
+
+
+function renderizarArvoreMicro(){
 
     const caixa =
         document
@@ -1844,13 +1898,13 @@ function renderizarArvoreMicro() {
         );
 
 
-    if (
+    if(
         !banco.ativa ||
         banco.ativa.microNos.length === 0
-    ) {
+    ){
 
         caixa.innerHTML =
-            "<p class='pequeno'>Nenhum microalvo criado.</p>";
+            "<p class='pequeno'>Nenhum microalvo.</p>";
 
         return;
 
@@ -1862,144 +1916,225 @@ function renderizarArvoreMicro() {
 
     banco.ativa.microNos
     .slice()
-    .sort(
-        compararIdsMicro
-    )
-    .forEach(
+    .sort(compararIdsMicro)
+    .forEach(function(n){
 
-        function(n) {
-
-            const div =
-                document
-                .createElement(
-                    "div"
-                );
+        const div =
+            document
+            .createElement("div");
 
 
-            div.className =
-                "micro";
+        div.className =
+            "micro";
 
 
-            const profundidade =
-                profundidadeMicro(
-                    n.id
-                ) - 1;
+        const profundidade =
+            profundidadeMicro(n.id)-1;
 
 
-            div.style.marginLeft =
-                Math.min(
-                    profundidade * 16,
-                    96
-                ) + "px";
+        div.style.marginLeft =
+            Math.min(
+                profundidade*16,
+                96
+            ) + "px";
 
 
-            const claimsLigados =
-                banco.ativa.claims.filter(
+        const claims =
+            banco.ativa.claims.filter(
+                function(c){
 
-                    function(c) {
+                    return (
+                        c.microalvoId ===
+                        n.id
+                    );
 
-                        return (
-                            c.microalvoId ===
-                            n.id
-                        );
-
-                    }
-
-                ).length;
+                }
+            ).length;
 
 
-            div.innerHTML = `
+        div.innerHTML = `
 
-                <strong class="micro-id">
-                ${escapar(n.id)}
-                </strong>
+            <strong>
+            ${escapar(n.id)}
+            </strong>
 
-                <p>
-                ${escapar(n.titulo)}
-                </p>
+            <p>
+            ${escapar(n.titulo)}
+            </p>
 
-                <p class="pequeno">
+            <p class="pequeno">
 
-                Profundidade:
-                ${profundidade}
+            Profundidade:
+            ${profundidade}
 
-                <br>
+            <br>
 
-                Claims diretamente associados:
-                ${claimsLigados}
+            Claims diretos:
+            ${claims}
 
-                </p>
+            </p>
 
-                <label>Estado</label>
+            <label>Estado</label>
 
-                <select
-                onchange="
-                atualizarEstadoMicro(
-                    '${n.id}',
-                    this.value
-                )
-                "
-                >
+            <select
+            onchange="
+            atualizarEstadoMicro(
+                '${n.id}',
+                this.value
+            )
+            "
+            >
 
-                    <option
-                    value="aberto"
-                    ${n.estado === "aberto" ? "selected" : ""}
-                    >
-                    Aberto
-                    </option>
+            <option
+            value="aberto"
+            ${n.estado==="aberto"?"selected":""}
+            >
+            Aberto
+            </option>
 
-                    <option
-                    value="investigando"
-                    ${n.estado === "investigando" ? "selected" : ""}
-                    >
-                    Investigando
-                    </option>
+            <option
+            value="investigando"
+            ${n.estado==="investigando"?"selected":""}
+            >
+            Investigando
+            </option>
 
-                    <option
-                    value="resolvido"
-                    ${n.estado === "resolvido" ? "selected" : ""}
-                    >
-                    Resolvido
-                    </option>
+            <option
+            value="resolvido"
+            ${n.estado==="resolvido"?"selected":""}
+            >
+            Resolvido
+            </option>
 
-                    <option
-                    value="bloqueado"
-                    ${n.estado === "bloqueado" ? "selected" : ""}
-                    >
-                    Bloqueado
-                    </option>
+            <option
+            value="bloqueado"
+            ${n.estado==="bloqueado"?"selected":""}
+            >
+            Bloqueado
+            </option>
 
-                </select>
+            </select>
 
-                <button
-                class="perigo"
-                onclick="
-                removerMicroalvo(
-                    '${n.id}'
-                )
-                "
-                >
-                Remover ramo
-                </button>
+            <button
+            class="perigo"
+            onclick="
+            removerMicroalvo(
+                '${n.id}'
+            )
+            "
+            >
+            Remover ramo
+            </button>
 
-            `;
+        `;
 
 
-            caixa.appendChild(
-                div
-            );
+        caixa.appendChild(div);
 
-        }
-
-    );
+    });
 
 }
 
 
 
-function adicionarClaim() {
+function renderizarRelacoesMicro(){
 
-    if (!banco.ativa) {
+    const caixa =
+        document
+        .getElementById(
+            "microRelacoes"
+        );
+
+
+    if(
+        !banco.ativa ||
+        banco.ativa.relacoesMicro.length === 0
+    ){
+
+        caixa.innerHTML =
+            "<p class='pequeno'>Nenhuma dependência entre microalvos.</p>";
+
+        return;
+
+    }
+
+
+    caixa.innerHTML = "";
+
+
+    banco.ativa.relacoesMicro
+    .forEach(function(r){
+
+        const div =
+            document
+            .createElement("div");
+
+
+        div.className =
+            "micro-relacao";
+
+
+        div.innerHTML = `
+
+            <strong>
+            ${escapar(r.id)}
+            </strong>
+
+            <p>
+
+            ${escapar(r.origem)}
+
+            <br>
+            ↓
+            <br>
+
+            <strong>
+            ${escapar(
+                nomeRelacaoMicro(
+                    r.tipo
+                )
+            )}
+            </strong>
+
+            <br>
+            ↓
+            <br>
+
+            ${escapar(r.destino)}
+
+            </p>
+
+            <p class="pequeno">
+
+            ${escapar(r.observacao)}
+
+            </p>
+
+            <button
+            class="perigo"
+            onclick="
+            removerRelacaoMicro(
+                '${r.id}'
+            )
+            "
+            >
+            Remover relação
+            </button>
+
+        `;
+
+
+        caixa.appendChild(div);
+
+    });
+
+}
+
+
+
+function adicionarClaim(){
+
+    if(!banco.ativa){
         return;
     }
 
@@ -2013,7 +2148,7 @@ function adicionarClaim() {
         .trim();
 
 
-    if (!texto) {
+    if(!texto){
 
         alert(
             "Digite a afirmação."
@@ -2024,7 +2159,7 @@ function adicionarClaim() {
     }
 
 
-    const claim = {
+    banco.ativa.claims.push({
 
         id:
             "CLM-" +
@@ -2074,15 +2209,10 @@ function adicionarClaim() {
         criadoEm:
             agora()
 
-    };
+    });
 
 
     banco.ativa.proximoClaim++;
-
-
-    banco.ativa.claims.push(
-        claim
-    );
 
 
     salvarBanco();
@@ -2095,11 +2225,18 @@ function adicionarClaim() {
 
 
 
-function limparFormularioClaim() {
+function limparFormularioClaim(){
 
     document
     .getElementById(
         "claimTexto"
+    )
+    .value = "";
+
+
+    document
+    .getElementById(
+        "claimMicro"
     )
     .value = "";
 
@@ -2138,48 +2275,34 @@ function limparFormularioClaim() {
     )
     .value = "";
 
-
-    document
-    .getElementById(
-        "claimMicro"
-    )
-    .value = "";
-
 }
 
 
 
-function removerClaim(id) {
+function removerClaim(id){
 
-    if (
+    if(
         !confirm(
             "Remover " +
             id +
             " e suas relações?"
         )
-    ) {
-
+    ){
         return;
-
     }
 
 
     banco.ativa.claims =
         banco.ativa.claims.filter(
-
-            function(c) {
-
+            function(c){
                 return c.id !== id;
-
             }
-
         );
 
 
     banco.ativa.relacoes =
         banco.ativa.relacoes.filter(
-
-            function(r) {
+            function(r){
 
                 return (
                     r.origem !== id &&
@@ -2187,7 +2310,6 @@ function removerClaim(id) {
                 );
 
             }
-
         );
 
 
@@ -2199,12 +2321,12 @@ function removerClaim(id) {
 
 
 
-function adicionarRelacao() {
+function adicionarRelacao(){
 
-    if (
+    if(
         !banco.ativa ||
         banco.ativa.claims.length < 2
-    ) {
+    ){
 
         alert(
             "Crie pelo menos duas afirmações."
@@ -2239,19 +2361,7 @@ function adicionarRelacao() {
         .value;
 
 
-    if (
-        !origem ||
-        !destino
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        origem === destino
-    ) {
+    if(origem === destino){
 
         alert(
             "Origem e destino não podem ser iguais."
@@ -2264,25 +2374,19 @@ function adicionarRelacao() {
 
     const duplicada =
         banco.ativa.relacoes.some(
-
-            function(r) {
+            function(r){
 
                 return (
-
                     r.origem === origem &&
-
                     r.destino === destino &&
-
                     r.tipo === tipo
-
                 );
 
             }
-
         );
 
 
-    if (duplicada) {
+    if(duplicada){
 
         alert(
             "Essa relação já existe."
@@ -2347,30 +2451,24 @@ function adicionarRelacao() {
 
 
 
-function removerRelacao(id) {
+function removerRelacao(id){
 
-    if (
+    if(
         !confirm(
             "Remover " +
             id +
             "?"
         )
-    ) {
-
+    ){
         return;
-
     }
 
 
     banco.ativa.relacoes =
         banco.ativa.relacoes.filter(
-
-            function(r) {
-
+            function(r){
                 return r.id !== id;
-
             }
-
         );
 
 
@@ -2382,14 +2480,13 @@ function removerRelacao(id) {
 
 
 
-function preencherSeletoresRelacao() {
+function preencherSeletoresRelacao(){
 
     const origem =
         document
         .getElementById(
             "relOrigem"
         );
-
 
     const destino =
         document
@@ -2403,10 +2500,10 @@ function preencherSeletoresRelacao() {
     destino.innerHTML = "";
 
 
-    if (
+    if(
         !banco.ativa ||
         banco.ativa.claims.length === 0
-    ) {
+    ){
 
         origem.innerHTML =
             "<option value=''>Nenhuma afirmação</option>";
@@ -2419,53 +2516,46 @@ function preencherSeletoresRelacao() {
     }
 
 
-    banco.ativa.claims.forEach(
+    banco.ativa.claims
+    .forEach(function(c){
 
-        function(c) {
-
-            const curto =
-                c.texto.length > 35
-                ? c.texto.slice(0,35) + "..."
-                : c.texto;
-
-
-            const op =
-                document
-                .createElement(
-                    "option"
-                );
+        const curto =
+            c.texto.length > 35
+            ? c.texto.slice(0,35) + "..."
+            : c.texto;
 
 
-            op.value =
-                c.id;
+        const op =
+            document
+            .createElement("option");
 
 
-            op.textContent =
-                c.id +
-                " — " +
-                curto;
+        op.value =
+            c.id;
 
 
-            origem.appendChild(
-                op
-            );
+        op.textContent =
+            c.id +
+            " — " +
+            curto;
 
 
-            destino.appendChild(
-                op.cloneNode(true)
-            );
+        origem.appendChild(
+            op.cloneNode(true)
+        );
 
-        }
+        destino.appendChild(
+            op.cloneNode(true)
+        );
 
-    );
+    });
 
 
-    if (
+    if(
         banco.ativa.claims.length > 1
-    ) {
+    ){
 
-        destino.selectedIndex =
-            1;
+        destino.selectedIndex = 1;
 
     }
 
@@ -2473,38 +2563,7 @@ function preencherSeletoresRelacao() {
 
 
 
-function escapar(texto) {
-
-    if (
-        texto === null ||
-        texto === undefined ||
-        texto === ""
-    ) {
-
-        return "—";
-
-    }
-
-
-    return String(texto)
-
-    .replace(/&/g,"&amp;")
-
-    .replace(/</g,"&lt;")
-
-    .replace(/>/g,"&gt;")
-
-    .replace(/"/g,"&quot;")
-
-    .replace(/'/g,"&#039;")
-
-    .replace(/\n/g,"<br>");
-
-}
-
-
-
-function nomeRelacao(tipo) {
+function nomeRelacao(tipo){
 
     const mapa = {
 
@@ -2538,7 +2597,36 @@ function nomeRelacao(tipo) {
 
 
 
-function renderizarClaims() {
+function escapar(texto){
+
+    if(
+        texto === null ||
+        texto === undefined ||
+        texto === ""
+    ){
+        return "—";
+    }
+
+
+    return String(texto)
+
+    .replace(/&/g,"&amp;")
+
+    .replace(/</g,"&lt;")
+
+    .replace(/>/g,"&gt;")
+
+    .replace(/"/g,"&quot;")
+
+    .replace(/'/g,"&#039;")
+
+    .replace(/\n/g,"<br>");
+
+}
+
+
+
+function renderizarClaims(){
 
     const caixa =
         document
@@ -2547,10 +2635,10 @@ function renderizarClaims() {
         );
 
 
-    if (
+    if(
         !banco.ativa ||
         banco.ativa.claims.length === 0
-    ) {
+    ){
 
         caixa.innerHTML =
             "<p class='pequeno'>Nenhuma afirmação.</p>";
@@ -2563,84 +2651,77 @@ function renderizarClaims() {
     caixa.innerHTML = "";
 
 
-    banco.ativa.claims.forEach(
+    banco.ativa.claims
+    .forEach(function(c){
 
-        function(c) {
-
-            const div =
-                document
-                .createElement(
-                    "div"
-                );
+        const div =
+            document
+            .createElement("div");
 
 
-            div.className =
-                "claim";
+        div.className =
+            "claim";
 
 
-            div.innerHTML = `
+        div.innerHTML = `
 
-                <strong class="claim-id">
-                ${escapar(c.id)}
-                </strong>
+            <strong>
+            ${escapar(c.id)}
+            </strong>
 
-                <span class="tipo">
-                ${escapar(c.tipo)}
-                </span>
+            <span class="tipo">
+            ${escapar(c.tipo)}
+            </span>
 
-                <p>
-                ${escapar(c.texto)}
-                </p>
+            <p>
+            ${escapar(c.texto)}
+            </p>
 
-                <p class="pequeno">
+            <p class="pequeno">
 
-                Microalvo:
-                ${escapar(c.microalvoId)}
+            Microalvo:
+            ${escapar(c.microalvoId)}
 
-                <br>
+            <br>
 
-                Estado:
-                ${escapar(c.estado)}
+            Estado:
+            ${escapar(c.estado)}
 
-                <br>
+            <br>
 
-                Confiança:
-                ${escapar(c.confianca)}%
+            Confiança:
+            ${escapar(c.confianca)}%
 
-                <br>
+            <br>
 
-                Fonte:
-                ${escapar(c.fonte)}
+            Fonte:
+            ${escapar(c.fonte)}
 
-                </p>
+            </p>
 
-                <button
-                class="perigo"
-                onclick="
-                removerClaim(
-                    '${c.id}'
-                )
-                "
-                >
-                Remover
-                </button>
+            <button
+            class="perigo"
+            onclick="
+            removerClaim(
+                '${c.id}'
+            )
+            "
+            >
+            Remover
+            </button>
 
-            `;
+        `;
 
 
-            caixa.appendChild(
-                div
-            );
+        caixa.appendChild(div);
 
-        }
-
-    );
+    });
 
 }
 
 
 
-function renderizarRelacoes() {
+function renderizarRelacoes(){
 
     const caixa =
         document
@@ -2649,10 +2730,10 @@ function renderizarRelacoes() {
         );
 
 
-    if (
+    if(
         !banco.ativa ||
         banco.ativa.relacoes.length === 0
-    ) {
+    ){
 
         caixa.innerHTML =
             "<p class='pequeno'>Nenhuma relação.</p>";
@@ -2665,92 +2746,497 @@ function renderizarRelacoes() {
     caixa.innerHTML = "";
 
 
-    banco.ativa.relacoes.forEach(
+    banco.ativa.relacoes
+    .forEach(function(r){
 
-        function(r) {
+        const div =
+            document
+            .createElement("div");
 
-            const div =
-                document
-                .createElement(
-                    "div"
+
+        div.className =
+            "relacao";
+
+
+        div.innerHTML = `
+
+            <strong>
+            ${escapar(r.id)}
+            </strong>
+
+            <p>
+
+            ${escapar(r.origem)}
+
+            <br>
+            ↓
+            <br>
+
+            <strong>
+            ${escapar(
+                nomeRelacao(r.tipo)
+            )}
+            </strong>
+
+            <br>
+            ↓
+            <br>
+
+            ${escapar(r.destino)}
+
+            </p>
+
+            <p class="pequeno">
+
+            Estado:
+            ${escapar(r.estado)}
+
+            <br>
+
+            Observação:
+            ${escapar(r.observacao)}
+
+            </p>
+
+            <button
+            class="perigo"
+            onclick="
+            removerRelacao(
+                '${r.id}'
+            )
+            "
+            >
+            Remover relação
+            </button>
+
+        `;
+
+
+        caixa.appendChild(div);
+
+    });
+
+}
+
+
+
+function dependenciaPendente(microId){
+
+    const dependencias =
+        banco.ativa.relacoesMicro.filter(
+            function(r){
+
+                return (
+                    r.tipo === "depende" &&
+                    r.origem === microId
+                );
+
+            }
+        );
+
+
+    return dependencias.some(
+        function(r){
+
+            const requisito =
+                microPorId(
+                    r.destino
                 );
 
 
-            div.className =
-                "relacao";
-
-
-            div.innerHTML = `
-
-                <strong>
-                ${escapar(r.id)}
-                </strong>
-
-                <p>
-
-                ${escapar(r.origem)}
-
-                <br>
-                ↓
-                <br>
-
-                <strong>
-                ${escapar(
-                    nomeRelacao(
-                        r.tipo
-                    )
-                )}
-                </strong>
-
-                <br>
-                ↓
-                <br>
-
-                ${escapar(r.destino)}
-
-                </p>
-
-                <p class="pequeno">
-
-                Estado:
-                ${escapar(r.estado)}
-
-                <br>
-
-                Observação:
-                ${escapar(r.observacao)}
-
-                </p>
-
-                <button
-                class="perigo"
-                onclick="
-                removerRelacao(
-                    '${r.id}'
-                )
-                "
-                >
-                Remover relação
-                </button>
-
-            `;
-
-
-            caixa.appendChild(
-                div
+            return (
+                requisito &&
+                requisito.estado !==
+                "resolvido"
             );
 
         }
-
     );
 
 }
 
 
 
-function executarVerificacao() {
+function calcularPontuacaoMicro(micro){
 
-    if (!banco.ativa) {
+    let pontos = 0;
+
+    const razoes = [];
+
+
+    if(
+        micro.estado ===
+        "resolvido"
+    ){
+
+        return {
+            pontos:-1000,
+            razoes:[
+                "Microalvo já resolvido."
+            ]
+        };
+
+    }
+
+
+    if(
+        micro.estado ===
+        "bloqueado"
+    ){
+
+        pontos -= 30;
+
+        razoes.push(
+            "Marcado manualmente como bloqueado."
+        );
+
+    }
+
+
+    if(
+        micro.estado ===
+        "aberto"
+    ){
+
+        pontos += 10;
+
+        razoes.push(
+            "+10 por estar aberto."
+        );
+
+    }
+
+
+    if(
+        micro.estado ===
+        "investigando"
+    ){
+
+        pontos += 7;
+
+        razoes.push(
+            "+7 por já estar em investigação."
+        );
+
+    }
+
+
+    if(
+        dependenciaPendente(
+            micro.id
+        )
+    ){
+
+        pontos -= 25;
+
+        razoes.push(
+            "-25 porque depende de microalvo ainda não resolvido."
+        );
+
+    }
+
+
+    const dependentes =
+        banco.ativa.relacoesMicro.filter(
+            function(r){
+
+                return (
+                    r.tipo ===
+                    "depende" &&
+                    r.destino ===
+                    micro.id
+                );
+
+            }
+        ).length;
+
+
+    if(dependentes){
+
+        pontos +=
+            dependentes * 5;
+
+        razoes.push(
+            "+" +
+            (dependentes*5) +
+            " porque " +
+            dependentes +
+            " microalvo(s) dependem dele."
+        );
+
+    }
+
+
+    const desbloqueios =
+        banco.ativa.relacoesMicro.filter(
+            function(r){
+
+                return (
+                    r.tipo ===
+                    "desbloqueia" &&
+                    r.origem ===
+                    micro.id
+                );
+
+            }
+        ).length;
+
+
+    if(desbloqueios){
+
+        pontos +=
+            desbloqueios * 4;
+
+        razoes.push(
+            "+" +
+            (desbloqueios*4) +
+            " por potencial de desbloqueio."
+        );
+
+    }
+
+
+    const claims =
+        banco.ativa.claims.filter(
+            function(c){
+
+                return (
+                    c.microalvoId ===
+                    micro.id
+                );
+
+            }
+        );
+
+
+    if(claims.length === 0){
+
+        pontos += 3;
+
+        razoes.push(
+            "+3 porque ainda não possui claims diretamente associados."
+        );
+
+    }
+
+
+    const contestados =
+        claims.filter(
+            function(c){
+
+                return (
+                    c.estado ===
+                    "contestada"
+                );
+
+            }
+        ).length;
+
+
+    if(contestados){
+
+        pontos +=
+            contestados * 2;
+
+        razoes.push(
+            "+" +
+            (contestados*2) +
+            " porque possui claims contestados que exigem atenção."
+        );
+
+    }
+
+
+    return {
+        pontos:pontos,
+        razoes:razoes
+    };
+
+}
+
+
+
+function calcularPrioridades(){
+
+    if(!banco.ativa){
+        return;
+    }
+
+
+    const caixa =
+        document
+        .getElementById(
+            "prioridades"
+        );
+
+
+    if(
+        banco.ativa.microNos.length === 0
+    ){
+
+        caixa.innerHTML =
+            "<p class='pequeno'>Nenhum microalvo disponível.</p>";
+
+        return;
+
+    }
+
+
+    const ranking =
+        banco.ativa.microNos
+        .map(function(m){
+
+            const calculo =
+                calcularPontuacaoMicro(m);
+
+
+            return {
+
+                micro:
+                    m,
+
+                pontos:
+                    calculo.pontos,
+
+                razoes:
+                    calculo.razoes
+
+            };
+
+        })
+        .filter(
+            function(x){
+
+                return (
+                    x.micro.estado !==
+                    "resolvido"
+                );
+
+            }
+        )
+        .sort(
+            function(a,b){
+
+                return (
+                    b.pontos -
+                    a.pontos
+                );
+
+            }
+        );
+
+
+    caixa.innerHTML =
+        "<h3>Ranking atual</h3>";
+
+
+    ranking.forEach(
+        function(item,index){
+
+            const div =
+                document
+                .createElement("div");
+
+
+            let classe =
+                "prioridade-baixa";
+
+
+            if(index === 0){
+
+                classe =
+                    "prioridade-alta";
+
+            }
+            else if(index < 3){
+
+                classe =
+                    "prioridade-media";
+
+            }
+
+
+            div.className =
+                "prioridade " +
+                classe;
+
+
+            div.innerHTML = `
+
+                <strong>
+                #${index+1} —
+                ${escapar(
+                    item.micro.id
+                )}
+                </strong>
+
+                <p>
+                ${escapar(
+                    item.micro.titulo
+                )}
+                </p>
+
+                <div class="pontuacao">
+                ${item.pontos}
+                pontos
+                </div>
+
+                <p class="pequeno">
+
+                ${item.razoes
+                    .map(escapar)
+                    .join("<br>")}
+
+                </p>
+
+            `;
+
+
+            caixa.appendChild(div);
+
+        }
+    );
+
+
+    if(ranking.length){
+
+        const topo =
+            ranking[0];
+
+
+        const destaque =
+            document
+            .createElement("div");
+
+
+        destaque.className =
+            "status";
+
+
+        destaque.innerHTML =
+
+            "<strong>Próximo foco estrutural sugerido:</strong><br>" +
+
+            escapar(topo.micro.id) +
+
+            " — " +
+
+            escapar(topo.micro.titulo);
+
+
+        caixa.prepend(
+            destaque
+        );
+
+    }
+
+}
+
+
+
+function executarVerificacao(){
+
+    if(!banco.ativa){
         return;
     }
 
@@ -2758,72 +3244,36 @@ function executarVerificacao() {
     const claims =
         banco.ativa.claims;
 
-
     const relacoes =
         banco.ativa.relacoes;
-
 
     const micros =
         banco.ativa.microNos;
 
+    const microRel =
+        banco.ativa.relacoesMicro;
 
-    const resultados =
-        [];
+
+    const resultados = [];
 
 
     const semFonte =
         claims.filter(
-
-            function(c) {
-
+            function(c){
                 return !c.fonte;
-
             }
-
         );
 
 
-    if (semFonte.length) {
+    if(semFonte.length){
 
         resultados.push({
 
-            classe:
-                "alerta",
+            classe:"alerta",
 
             texto:
                 semFonte.length +
-                " afirmação(ões) sem fonte/origem."
-
-        });
-
-    }
-
-
-    const claimsSemMicro =
-        claims.filter(
-
-            function(c) {
-
-                return !c.microalvoId;
-
-            }
-
-        );
-
-
-    if (
-        claimsSemMicro.length &&
-        micros.length
-    ) {
-
-        resultados.push({
-
-            classe:
-                "alerta",
-
-            texto:
-                claimsSemMicro.length +
-                " afirmação(ões) não estão ligadas a um microalvo."
+                " afirmação(ões) sem fonte."
 
         });
 
@@ -2832,76 +3282,32 @@ function executarVerificacao() {
 
     const microsSemClaims =
         micros.filter(
-
-            function(n) {
+            function(m){
 
                 return !claims.some(
-
-                    function(c) {
+                    function(c){
 
                         return (
                             c.microalvoId ===
-                            n.id
+                            m.id
                         );
 
                     }
-
                 );
 
             }
-
         );
 
 
-    if (microsSemClaims.length) {
+    if(microsSemClaims.length){
 
         resultados.push({
 
-            classe:
-                "alerta",
+            classe:"alerta",
 
             texto:
                 microsSemClaims.length +
-                " microalvo(s) ainda não possuem claims diretamente associados."
-
-        });
-
-    }
-
-
-    const isoladas =
-        claims.filter(
-
-            function(c) {
-
-                return !relacoes.some(
-
-                    function(r) {
-
-                        return (
-                            r.origem === c.id ||
-                            r.destino === c.id
-                        );
-
-                    }
-
-                );
-
-            }
-
-        );
-
-
-    if (isoladas.length) {
-
-        resultados.push({
-
-            classe:
-                "alerta",
-
-            texto:
-                isoladas.length +
-                " afirmação(ões) estão isoladas no grafo."
+                " microalvo(s) sem claims diretamente associados."
 
         });
 
@@ -2910,105 +3316,102 @@ function executarVerificacao() {
 
     claims
     .filter(
-        function(c) {
-
+        function(c){
             return c.tipo === "H";
-
         }
     )
     .forEach(
-
-        function(h) {
+        function(h){
 
             const apoio =
                 relacoes.some(
-
-                    function(r) {
+                    function(r){
 
                         return (
-
-                            r.destino === h.id &&
-
+                            r.destino ===
+                            h.id &&
                             (
-                                r.tipo === "sustenta" ||
-                                r.tipo === "explica"
+                                r.tipo ===
+                                "sustenta" ||
+                                r.tipo ===
+                                "explica"
                             )
-
                         );
 
                     }
-
                 );
 
 
-            if (!apoio) {
+            if(!apoio){
 
                 resultados.push({
 
-                    classe:
-                        "alerta",
+                    classe:"alerta",
 
                     texto:
                         h.id +
-                        " é uma hipótese sem apoio explícito no grafo."
+                        " é hipótese sem apoio explícito."
 
                 });
 
             }
 
         }
-
     );
 
 
-    for (
-        let i = 0;
-        i < relacoes.length;
+    for(
+        let i=0;
+        i<relacoes.length;
         i++
-    ) {
+    ){
 
-        for (
-            let j = i + 1;
-            j < relacoes.length;
+        for(
+            let j=i+1;
+            j<relacoes.length;
             j++
-        ) {
+        ){
 
             const a =
                 relacoes[i];
-
 
             const b =
                 relacoes[j];
 
 
-            if (
-                a.origem === b.origem &&
-                a.destino === b.destino
-            ) {
+            if(
+                a.origem ===
+                b.origem &&
+                a.destino ===
+                b.destino
+            ){
 
                 const conflito =
                     (
-                        a.tipo === "sustenta" &&
-                        b.tipo === "contradiz"
+                        a.tipo ===
+                        "sustenta" &&
+                        b.tipo ===
+                        "contradiz"
                     )
                     ||
                     (
-                        a.tipo === "contradiz" &&
-                        b.tipo === "sustenta"
+                        a.tipo ===
+                        "contradiz" &&
+                        b.tipo ===
+                        "sustenta"
                     );
 
 
-                if (conflito) {
+                if(conflito){
 
                     resultados.push({
 
-                        classe:
-                            "erro",
+                        classe:"erro",
 
                         texto:
                             "Possível inconsistência: " +
                             a.origem +
-                            " simultaneamente sustenta e contradiz " +
+                            " sustenta e contradiz " +
                             a.destino +
                             "."
 
@@ -3023,14 +3426,115 @@ function executarVerificacao() {
     }
 
 
-    if (
-        resultados.length === 0
-    ) {
+    microRel
+    .filter(
+        function(r){
+
+            return r.tipo ===
+                "depende";
+
+        }
+    )
+    .forEach(
+        function(r){
+
+            const inversa =
+                microRel.some(
+                    function(x){
+
+                        return (
+                            x.tipo ===
+                            "depende" &&
+                            x.origem ===
+                            r.destino &&
+                            x.destino ===
+                            r.origem
+                        );
+
+                    }
+                );
+
+
+            if(inversa){
+
+                const chave =
+                    [
+                        r.origem,
+                        r.destino
+                    ]
+                    .sort()
+                    .join("|");
+
+
+                if(
+                    !resultados.some(
+                        function(x){
+
+                            return (
+                                x.chave ===
+                                chave
+                            );
+
+                        }
+                    )
+                ){
+
+                    resultados.push({
+
+                        classe:"erro",
+
+                        chave:
+                            chave,
+
+                        texto:
+                            "Dependência circular simples detectada entre " +
+                            r.origem +
+                            " e " +
+                            r.destino +
+                            "."
+
+                    });
+
+                }
+
+            }
+
+        }
+    );
+
+
+    micros.forEach(
+        function(m){
+
+            if(
+                dependenciaPendente(
+                    m.id
+                ) &&
+                m.estado ===
+                "resolvido"
+            ){
+
+                resultados.push({
+
+                    classe:"alerta",
+
+                    texto:
+                        m.id +
+                        " está marcado como resolvido, mas possui dependência ainda não resolvida."
+
+                });
+
+            }
+
+        }
+    );
+
+
+    if(resultados.length === 0){
 
         resultados.push({
 
-            classe:
-                "ok",
+            classe:"ok",
 
             texto:
                 "Nenhuma inconsistência estrutural simples foi detectada."
@@ -3050,53 +3554,48 @@ function executarVerificacao() {
 
 
 
-function renderizarMetricas() {
+function renderizarMetricas(){
 
     const micros =
         banco.ativa.microNos;
 
-
     const claims =
         banco.ativa.claims;
-
 
     const relacoes =
         banco.ativa.relacoes;
 
+    const microRel =
+        banco.ativa.relacoesMicro;
 
-    let profundidadeMaxima =
-        0;
+
+    let profundidade = 0;
 
 
     micros.forEach(
+        function(m){
 
-        function(n) {
-
-            profundidadeMaxima =
+            profundidade =
                 Math.max(
-                    profundidadeMaxima,
+                    profundidade,
                     profundidadeMicro(
-                        n.id
+                        m.id
                     )
                 );
 
         }
-
     );
 
 
-    const abertos =
+    const bloqueadosDependencia =
         micros.filter(
+            function(m){
 
-            function(n) {
-
-                return (
-                    n.estado !==
-                    "resolvido"
+                return dependenciaPendente(
+                    m.id
                 );
 
             }
-
         ).length;
 
 
@@ -3108,44 +3607,51 @@ function renderizarMetricas() {
 
         <hr>
 
-        <h3>Métricas estruturais</h3>
+        <h3>Métricas</h3>
 
         <div class="metricas">
 
-            <div class="metrica">
-                <div class="numero">
-                ${micros.length}
-                </div>
-                Microalvos
-            </div>
+        <div class="metrica">
+        <div class="numero">
+        ${micros.length}
+        </div>
+        Microalvos
+        </div>
 
-            <div class="metrica">
-                <div class="numero">
-                ${profundidadeMaxima}
-                </div>
-                Profundidade máxima
-            </div>
+        <div class="metrica">
+        <div class="numero">
+        ${profundidade}
+        </div>
+        Profundidade máxima
+        </div>
 
-            <div class="metrica">
-                <div class="numero">
-                ${abertos}
-                </div>
-                Microalvos não resolvidos
-            </div>
+        <div class="metrica">
+        <div class="numero">
+        ${microRel.length}
+        </div>
+        Relações entre microalvos
+        </div>
 
-            <div class="metrica">
-                <div class="numero">
-                ${claims.length}
-                </div>
-                Afirmações
-            </div>
+        <div class="metrica">
+        <div class="numero">
+        ${bloqueadosDependencia}
+        </div>
+        Com dependências pendentes
+        </div>
 
-            <div class="metrica">
-                <div class="numero">
-                ${relacoes.length}
-                </div>
-                Relações
-            </div>
+        <div class="metrica">
+        <div class="numero">
+        ${claims.length}
+        </div>
+        Claims
+        </div>
+
+        <div class="metrica">
+        <div class="numero">
+        ${relacoes.length}
+        </div>
+        Relações epistemológicas
+        </div>
 
         </div>
 
@@ -3155,9 +3661,7 @@ function renderizarMetricas() {
 
 
 
-function renderizarVerificacoes(
-    resultados
-) {
+function renderizarVerificacoes(resultados){
 
     const caixa =
         document
@@ -3171,14 +3675,11 @@ function renderizarVerificacoes(
 
 
     resultados.forEach(
-
-        function(r) {
+        function(r){
 
             const div =
                 document
-                .createElement(
-                    "div"
-                );
+                .createElement("div");
 
 
             div.className =
@@ -3190,19 +3691,16 @@ function renderizarVerificacoes(
                 r.texto;
 
 
-            caixa.appendChild(
-                div
-            );
+            caixa.appendChild(div);
 
         }
-
     );
 
 }
 
 
 
-function renderizarMemoria() {
+function renderizarMemoria(){
 
     const caixa =
         document
@@ -3211,7 +3709,7 @@ function renderizarMemoria() {
         );
 
 
-    if (!banco.ativa) {
+    if(!banco.ativa){
 
         caixa.innerHTML =
             "<p>Nenhuma investigação ativa.</p>";
@@ -3221,70 +3719,45 @@ function renderizarMemoria() {
     }
 
 
-    let profundidade =
-        0;
-
-
-    banco.ativa.microNos.forEach(
-
-        function(n) {
-
-            profundidade =
-                Math.max(
-                    profundidade,
-                    profundidadeMicro(
-                        n.id
-                    )
-                );
-
-        }
-
-    );
-
-
     caixa.innerHTML = `
 
         <div class="memoria">
 
-            <strong>
-            ${escapar(
-                banco.ativa.id
-            )}
-            </strong>
+        <strong>
+        ${escapar(
+            banco.ativa.id
+        )}
+        </strong>
 
-            <p>
+        <p>
+        <strong>Alvo:</strong>
+        <br>
+        ${escapar(
+            banco.ativa.alvo
+        )}
+        </p>
 
-            <strong>Alvo:</strong>
+        <p class="pequeno">
 
-            <br>
+        Microalvos:
+        ${banco.ativa.microNos.length}
 
-            ${escapar(
-                banco.ativa.alvo
-            )}
+        <br>
 
-            </p>
+        Dependências:
+        ${banco.ativa.relacoesMicro.length}
 
-            <p class="pequeno">
+        <br>
 
-            Microalvos:
-            ${banco.ativa.microNos.length}
+        Claims:
+        ${banco.ativa.claims.length}
 
-            <br>
+        <br>
 
-            Profundidade:
-            ${profundidade}
+        Relações epistemológicas:
+        ${banco.ativa.relacoes.length}
 
-            <br>
-
-            Claims:
-            ${banco.ativa.claims.length}
-
-            <br>
-
-            Relações:
-            ${banco.ativa.relacoes.length}
-
-            </p>
+        </p>
 
         </div>
 
@@ -3294,23 +3767,23 @@ function renderizarMemoria() {
 
 
 
-function atualizarStatus() {
+function atualizarStatus(){
 
-    const elemento =
+    const e =
         document
         .getElementById(
             "statusMemoria"
         );
 
 
-    if (!elemento) {
+    if(!e){
         return;
     }
 
 
-    if (banco.ativa) {
+    if(banco.ativa){
 
-        elemento.textContent =
+        e.textContent =
 
             "✓ Memória persistente — " +
 
@@ -3320,13 +3793,16 @@ function atualizarStatus() {
 
             banco.ativa.microNos.length +
 
-            " microalvos.";
+            " microalvos — " +
+
+            banco.ativa.relacoesMicro.length +
+
+            " dependências.";
 
     }
+    else{
 
-    else {
-
-        elemento.textContent =
+        e.textContent =
             "Nenhuma investigação ativa.";
 
     }
@@ -3335,7 +3811,7 @@ function atualizarStatus() {
 
 
 
-function renderizarHistorico() {
+function renderizarHistorico(){
 
     const caixa =
         document
@@ -3344,10 +3820,10 @@ function renderizarHistorico() {
         );
 
 
-    if (
+    if(
         !banco.historico ||
         banco.historico.length === 0
-    ) {
+    ){
 
         caixa.innerHTML =
             "<p class='pequeno'>Nenhuma investigação arquivada.</p>";
@@ -3364,14 +3840,11 @@ function renderizarHistorico() {
     .slice()
     .reverse()
     .forEach(
-
-        function(i) {
+        function(i){
 
             const div =
                 document
-                .createElement(
-                    "div"
-                );
+                .createElement("div");
 
 
             div.className =
@@ -3395,38 +3868,37 @@ function renderizarHistorico() {
 
                 <br>
 
-                Claims:
-                ${i.claims.length}
+                Dependências:
+                ${i.relacoesMicro.length}
 
                 <br>
 
-                Relações:
-                ${i.relacoes.length}
+                Claims:
+                ${i.claims.length}
 
                 </p>
 
             `;
 
 
-            caixa.appendChild(
-                div
-            );
+            caixa.appendChild(div);
 
         }
-
     );
 
 }
 
 
 
-function renderizarTudo() {
+function renderizarTudo(){
 
     atualizarStatus();
 
     preencherSeletoresMicro();
 
     renderizarArvoreMicro();
+
+    renderizarRelacoesMicro();
 
     renderizarClaims();
 
@@ -3442,9 +3914,9 @@ function renderizarTudo() {
 
 
 
-function arquivarInvestigacao() {
+function arquivarInvestigacao(){
 
-    if (!banco.ativa) {
+    if(!banco.ativa){
         return;
     }
 
@@ -3485,17 +3957,15 @@ function arquivarInvestigacao() {
 
 
 
-function novaInvestigacao() {
+function novaInvestigacao(){
 
-    if (banco.ativa) {
+    if(banco.ativa){
 
-        const confirmar =
-            confirm(
+        if(
+            !confirm(
                 "A investigação atual será arquivada antes de iniciar outra. Continuar?"
-            );
-
-
-        if (!confirmar) {
+            )
+        ){
             return;
         }
 
@@ -3511,52 +3981,38 @@ function novaInvestigacao() {
 
 
     window.scrollTo({
-
-        top: 0,
-
-        behavior:
-            "smooth"
-
+        top:0,
+        behavior:"smooth"
     });
 
 }
 
 
 
-function limparCampos() {
+function limparCampos(){
 
     [
-
         "alvo",
-
         "hipoteses",
-
         "evidencias",
-
         "contradicoes",
-
         "conclusao",
-
         "proximo",
+        "novoMicroTexto",
+        "microRelObservacao"
+    ]
+    .forEach(function(nome){
 
-        "novoMicroTexto"
-
-    ].forEach(
-
-        function(nome) {
-
-            const e =
-                document
-                .getElementById(nome);
+        const e =
+            document
+            .getElementById(nome);
 
 
-            if (e) {
-                e.value = "";
-            }
-
+        if(e){
+            e.value = "";
         }
 
-    );
+    });
 
 
     limparFormularioClaim();
@@ -3572,18 +4028,15 @@ function limparCampos() {
 
 
 
-function exportarBackup() {
+function exportarBackup(){
 
-    if (banco.ativa) {
-
+    if(banco.ativa){
         autosalvar();
-
     }
 
 
     const blob =
         new Blob(
-
             [
                 JSON.stringify(
                     banco,
@@ -3591,12 +4044,10 @@ function exportarBackup() {
                     2
                 )
             ],
-
             {
                 type:
                     "application/json"
             }
-
         );
 
 
@@ -3608,9 +4059,7 @@ function exportarBackup() {
 
     const link =
         document
-        .createElement(
-            "a"
-        );
+        .createElement("a");
 
 
     link.href =
@@ -3618,11 +4067,8 @@ function exportarBackup() {
 
 
     link.download =
-
-        "fractal-v06-" +
-
+        "fractal-v07-" +
         Date.now() +
-
         ".json";
 
 
@@ -3632,7 +4078,6 @@ function exportarBackup() {
 
 
     link.click();
-
 
     link.remove();
 
@@ -3645,13 +4090,13 @@ function exportarBackup() {
 
 
 
-function importarBackup(evento) {
+function importarBackup(evento){
 
     const arquivo =
         evento.target.files[0];
 
 
-    if (!arquivo) {
+    if(!arquivo){
         return;
     }
 
@@ -3661,9 +4106,9 @@ function importarBackup(evento) {
 
 
     leitor.onload =
-        function(e) {
+        function(e){
 
-            try {
+            try{
 
                 const dados =
                     JSON.parse(
@@ -3671,11 +4116,11 @@ function importarBackup(evento) {
                     );
 
 
-                if (
+                if(
                     !dados ||
                     typeof dados !==
                     "object"
-                ) {
+                ){
 
                     throw new Error(
                         "Estrutura inválida."
@@ -3684,14 +4129,12 @@ function importarBackup(evento) {
                 }
 
 
-                if (
+                if(
                     !confirm(
-                        "O backup substituirá a memória atual da v0.6. Continuar?"
+                        "O backup substituirá a memória atual da v0.7. Continuar?"
                     )
-                ) {
-
+                ){
                     return;
-
                 }
 
 
@@ -3700,14 +4143,14 @@ function importarBackup(evento) {
 
 
                 banco.versao =
-                    "0.6";
+                    "0.7";
 
 
-                if (
+                if(
                     !Array.isArray(
                         banco.historico
                     )
-                ) {
+                ){
 
                     banco.historico =
                         [];
@@ -3730,15 +4173,14 @@ function importarBackup(evento) {
                 salvarBanco();
 
 
-                if (banco.ativa) {
+                if(banco.ativa){
 
                     mostrarSistema();
 
                     preencherCampos();
 
                 }
-
-                else {
+                else{
 
                     esconderSistema();
 
@@ -3753,8 +4195,7 @@ function importarBackup(evento) {
                 );
 
             }
-
-            catch (erro) {
+            catch(erro){
 
                 alert(
                     "Falha ao importar backup: " +
@@ -3771,41 +4212,35 @@ function importarBackup(evento) {
     );
 
 
-    evento.target.value =
-        "";
+    evento.target.value = "";
 
 }
 
 
 
-function apagarTodaMemoria() {
+function apagarTodaMemoria(){
 
-    if (
+    if(
         !confirm(
-            "Apagar toda a memória local da v0.6?"
+            "Apagar toda a memória local da v0.7?"
         )
-    ) {
-
+    ){
         return;
-
     }
 
 
     localStorage.removeItem(
-        CHAVE_V06
+        CHAVE_V07
     );
 
 
     banco = {
 
-        versao:
-            "0.6",
+        versao:"0.7",
 
-        ativa:
-            null,
+        ativa:null,
 
-        historico:
-            []
+        historico:[]
 
     };
 
@@ -3829,39 +4264,32 @@ function apagarTodaMemoria() {
     "proximo"
 ]
 .forEach(
-
-    function(nome) {
+    function(nome){
 
         document
         .getElementById(nome)
         .addEventListener(
-
             "input",
+            function(){
 
-            function() {
-
-                if (banco.ativa) {
-
+                if(banco.ativa){
                     autosalvar();
-
                 }
 
             }
-
         );
 
     }
-
 );
 
 
 
-function iniciarPagina() {
+function iniciarPagina(){
 
     carregarBanco();
 
 
-    if (banco.ativa) {
+    if(banco.ativa){
 
         mostrarSistema();
 
@@ -3884,8 +4312,7 @@ function iniciarPagina() {
         );
 
     }
-
-    else {
+    else{
 
         esconderSistema();
 
@@ -3899,19 +4326,14 @@ function iniciarPagina() {
 
 
 window.addEventListener(
-
     "beforeunload",
+    function(){
 
-    function() {
-
-        if (banco.ativa) {
-
+        if(banco.ativa){
             autosalvar();
-
         }
 
     }
-
 );
 
 
@@ -3920,5 +4342,4 @@ iniciarPagina();
 </script>
 
 </body>
-
 </html>

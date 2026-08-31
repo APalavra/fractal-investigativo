@@ -8,7 +8,7 @@
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>Fractal Investigativo v0.5</title>
+<title>Fractal Investigativo v0.6</title>
 
 <style>
 
@@ -25,9 +25,9 @@ body {
 }
 
 .container {
-    max-width: 950px;
+    max-width: 980px;
     margin: auto;
-    padding: 22px;
+    padding: 20px;
 }
 
 h1 {
@@ -39,8 +39,13 @@ h3 {
     margin-top: 0;
 }
 
-.subtitulo {
-    color: #a0a198;
+.subtitulo,
+.pequeno {
+    color: #9b9d93;
+}
+
+.pequeno {
+    font-size: 0.88rem;
 }
 
 .versao {
@@ -56,7 +61,7 @@ h3 {
     background: #181912;
     border: 1px solid #45473d;
     border-radius: 14px;
-    padding: 19px;
+    padding: 18px;
     margin-bottom: 20px;
 }
 
@@ -68,22 +73,22 @@ select {
     color: #edede7;
     border: 1px solid #55574d;
     border-radius: 9px;
-    padding: 13px;
-    margin-top: 8px;
+    padding: 12px;
+    margin-top: 7px;
     margin-bottom: 12px;
     font-size: 1rem;
 }
 
 textarea {
-    min-height: 110px;
+    min-height: 105px;
     resize: vertical;
 }
 
 button {
-    padding: 12px 16px;
+    padding: 11px 15px;
     border: 0;
     border-radius: 9px;
-    font-size: 0.95rem;
+    font-size: 0.94rem;
     font-weight: bold;
     cursor: pointer;
     margin: 4px 4px 4px 0;
@@ -95,7 +100,7 @@ button {
 }
 
 .secundario {
-    background: #34362c;
+    background: #35372d;
     color: white;
 }
 
@@ -122,54 +127,63 @@ button {
     margin-bottom: 12px;
 }
 
-.claim,
-.relacao,
-.verificacao-item,
-.memoria-item {
-    background: #202119;
-    border: 1px solid #44463b;
-    border-radius: 10px;
-    padding: 14px;
-    margin-top: 12px;
-}
-
-.memoria-item {
-    border-left: 4px solid #747668;
-}
-
-.alerta {
-    border-left: 5px solid #8d7136;
-}
-
-.erro {
-    border-left: 5px solid #8d3c3c;
-}
-
-.ok {
-    border-left: 5px solid #3f7b4a;
-}
-
-.tipo {
-    display: inline-block;
-    background: #35372d;
-    padding: 3px 8px;
-    border-radius: 7px;
-}
-
-.pequeno {
-    color: #999b91;
-    font-size: 0.88rem;
-}
-
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
 }
 
+.micro {
+    background: #202119;
+    border: 1px solid #46483d;
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 9px;
+}
+
+.micro-id,
+.claim-id {
+    font-weight: bold;
+}
+
+.claim,
+.relacao,
+.verificacao,
+.memoria {
+    background: #202119;
+    border: 1px solid #44463b;
+    border-radius: 10px;
+    padding: 13px;
+    margin-top: 11px;
+}
+
+.memoria {
+    border-left: 4px solid #747668;
+}
+
+.tipo {
+    display: inline-block;
+    background: #36382e;
+    padding: 3px 8px;
+    border-radius: 7px;
+    margin-left: 5px;
+}
+
+.alerta {
+    border-left: 5px solid #92753b;
+}
+
+.erro {
+    border-left: 5px solid #914343;
+}
+
+.ok {
+    border-left: 5px solid #417c4c;
+}
+
 .metricas {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2,1fr);
     gap: 10px;
 }
 
@@ -180,7 +194,7 @@ button {
 }
 
 .numero {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     font-weight: bold;
 }
 
@@ -209,14 +223,14 @@ hr {
 <div class="container">
 
 <div class="versao">
-Versão 0.5 — verificador estrutural
+Versão 0.6 — árvore fractal de microalvos
 </div>
 
 <h1>🧠 Fractal Investigativo</h1>
 
 <p class="subtitulo">
-Investigação recursiva, memória persistente,
-grafo epistemológico e auditoria estrutural.
+Árvore recursiva de problemas + grafo epistemológico +
+memória persistente + verificação estrutural.
 </p>
 
 
@@ -226,7 +240,7 @@ grafo epistemológico e auditoria estrutural.
 
 <textarea
 id="alvo"
-placeholder="Qual é o fenômeno, problema ou pergunta principal?"
+placeholder="Qual é a pergunta, problema ou fenômeno principal?"
 ></textarea>
 
 <button
@@ -244,31 +258,63 @@ class="status oculto"
 </section>
 
 
-<div
-id="sistema"
-class="oculto"
->
+<div id="sistema" class="oculto">
 
 
 <section class="card">
 
-<h2>2. Microalvos</h2>
+<h2>2. Árvore Fractal de Microalvos</h2>
 
-<textarea id="microalvos"></textarea>
+<div class="info">
+
+Cada microalvo agora é um nó real.
+
+Você pode criar um microalvo diretamente sob o alvo principal
+ou escolher outro microalvo como pai.
+
+</div>
+
+
+<label>Novo microalvo</label>
+
+<textarea
+id="novoMicroTexto"
+placeholder="Exemplo: Identificar quais forças atuam sobre o objeto."
+></textarea>
+
+
+<label>Inserir dentro de</label>
+
+<select id="microPai">
+
+<option value="">
+ALVO PRINCIPAL
+</option>
+
+</select>
+
 
 <button
 class="principal"
-onclick="registrarCampo('microalvos')"
+onclick="adicionarMicroalvo()"
 >
-Registrar
+Adicionar microalvo
 </button>
+
+
+<hr>
+
+<h3>Estrutura atual</h3>
+
+<div id="arvoreMicro"></div>
 
 </section>
 
 
+
 <section class="card">
 
-<h2>3. Hipóteses</h2>
+<h2>3. Hipóteses gerais</h2>
 
 <textarea id="hipoteses"></textarea>
 
@@ -282,9 +328,10 @@ Registrar
 </section>
 
 
+
 <section class="card">
 
-<h2>4. Evidências</h2>
+<h2>4. Evidências gerais</h2>
 
 <textarea id="evidencias"></textarea>
 
@@ -298,9 +345,10 @@ Registrar
 </section>
 
 
+
 <section class="card">
 
-<h2>5. Contradições / contraexemplos</h2>
+<h2>5. Contradições gerais</h2>
 
 <textarea id="contradicoes"></textarea>
 
@@ -312,6 +360,7 @@ Registrar
 </button>
 
 </section>
+
 
 
 <section class="card">
@@ -330,11 +379,15 @@ Registrar
 </section>
 
 
+
 <section class="card">
 
-<h2>7. Próximo microalvo</h2>
+<h2>7. Próxima ação investigativa</h2>
 
-<textarea id="proximo"></textarea>
+<textarea
+id="proximo"
+placeholder="Qual deve ser o próximo passo?"
+></textarea>
 
 <button
 class="principal"
@@ -346,24 +399,17 @@ Registrar
 </section>
 
 
+
 <section class="card">
 
 <h2>8. Registro Epistêmico</h2>
 
 <div class="info">
 
-<strong>Tipos:</strong>
-
-<br><br>
-
 B = premissa/base explícita<br>
-
 L = dedução lógica<br>
-
 M = modelo matemático/formal<br>
-
 C = ciência/evidência empírica<br>
-
 H = hipótese/especulação
 
 </div>
@@ -375,6 +421,17 @@ H = hipótese/especulação
 id="claimTexto"
 placeholder="Digite uma afirmação..."
 ></textarea>
+
+
+<label>Microalvo relacionado</label>
+
+<select id="claimMicro">
+
+<option value="">
+Sem microalvo específico
+</option>
+
+</select>
 
 
 <div class="grid">
@@ -480,8 +537,7 @@ Adicionar afirmação
 
 <section class="card">
 
-<h2>9. Relações</h2>
-
+<h2>9. Relações entre afirmações</h2>
 
 <label>Origem</label>
 
@@ -528,7 +584,7 @@ Enfraquece
 <select id="relDestino"></select>
 
 
-<label>Estado da relação</label>
+<label>Estado</label>
 
 <select id="relEstado">
 
@@ -549,10 +605,7 @@ Contestada
 
 <label>Observação</label>
 
-<textarea
-id="relObservacao"
-placeholder="Explique por que essa relação foi criada."
-></textarea>
+<textarea id="relObservacao"></textarea>
 
 
 <button
@@ -573,23 +626,13 @@ Criar relação
 
 <h2>10. Verificador estrutural</h2>
 
-<p>
-Este módulo procura fragilidades e inconsistências
-na estrutura registrada.
-</p>
-
 <div class="info">
 
-<strong>Importante:</strong>
+O verificador procura problemas na estrutura cadastrada.
 
-este verificador ainda não determina se uma afirmação
-é verdadeira no mundo real.
-
-Ele apenas examina a coerência da estrutura
-que foi cadastrada.
+Ele ainda não prova que uma afirmação é verdadeira no mundo real.
 
 </div>
-
 
 <button
 class="principal"
@@ -597,7 +640,6 @@ onclick="executarVerificacao()"
 >
 🔎 Executar verificação
 </button>
-
 
 <div id="metricas"></div>
 
@@ -668,7 +710,7 @@ onchange="importarBackup(event)"
 class="perigo"
 onclick="apagarTodaMemoria()"
 >
-Apagar toda a memória
+Apagar memória da v0.6
 </button>
 
 
@@ -686,19 +728,18 @@ Apagar toda a memória
 </div>
 
 
-
 <script>
+
+const CHAVE_V06 =
+"fractal_investigativo_v06";
 
 const CHAVE_V05 =
 "fractal_investigativo_v05";
 
-const CHAVE_V04 =
-"fractal_investigativo_v04";
-
 
 let banco = {
 
-    versao: "0.5",
+    versao: "0.6",
 
     ativa: null,
 
@@ -743,6 +784,12 @@ function novaEstrutura(alvo) {
         microalvos:
             "",
 
+        microNos:
+            [],
+
+        proximoMicroRaiz:
+            1,
+
         hipoteses:
             "",
 
@@ -776,6 +823,18 @@ function novaEstrutura(alvo) {
 
 
 
+function profundidadeMicro(id) {
+
+    if (!id) {
+        return 0;
+    }
+
+    return id.split(".").length;
+
+}
+
+
+
 function normalizarInvestigacao(i) {
 
     if (!i) {
@@ -784,8 +843,18 @@ function normalizarInvestigacao(i) {
 
 
     if (!Array.isArray(i.claims)) {
-
         i.claims = [];
+    }
+
+
+    if (!Array.isArray(i.relacoes)) {
+        i.relacoes = [];
+    }
+
+
+    if (!Array.isArray(i.microNos)) {
+
+        i.microNos = [];
 
     }
 
@@ -794,13 +863,6 @@ function normalizarInvestigacao(i) {
 
         i.proximoClaim =
             i.claims.length + 1;
-
-    }
-
-
-    if (!Array.isArray(i.relacoes)) {
-
-        i.relacoes = [];
 
     }
 
@@ -814,6 +876,7 @@ function normalizarInvestigacao(i) {
 
 
     i.relacoes.forEach(
+
         function(r) {
 
             if (!r.estado) {
@@ -824,6 +887,192 @@ function normalizarInvestigacao(i) {
             }
 
         }
+
+    );
+
+
+    i.claims.forEach(
+
+        function(c) {
+
+            if (!("microalvoId" in c)) {
+
+                c.microalvoId =
+                    null;
+
+            }
+
+        }
+
+    );
+
+
+    /*
+    Migração automática:
+    transforma o antigo campo textual de microalvos
+    em nós-raiz, caso ainda não existam nós fractais.
+    */
+
+    if (
+        i.microNos.length === 0 &&
+        i.microalvos &&
+        i.microalvos.trim()
+    ) {
+
+        const linhas =
+            i.microalvos
+            .split("\n")
+            .map(
+                function(x) {
+                    return x.trim();
+                }
+            )
+            .filter(Boolean);
+
+
+        linhas.forEach(
+
+            function(texto, indice) {
+
+                i.microNos.push({
+
+                    id:
+                        "MA-" +
+                        (indice + 1),
+
+                    parentId:
+                        null,
+
+                    titulo:
+                        texto,
+
+                    estado:
+                        "aberto",
+
+                    proximoFilho:
+                        1,
+
+                    criadoEm:
+                        agora(),
+
+                    atualizadoEm:
+                        agora()
+
+                });
+
+            }
+
+        );
+
+
+        i.proximoMicroRaiz =
+            linhas.length + 1;
+
+    }
+
+
+    if (!i.proximoMicroRaiz) {
+
+        let maior =
+            0;
+
+
+        i.microNos.forEach(
+
+            function(n) {
+
+                const match =
+                    /^MA-(\d+)$/
+                    .exec(n.id);
+
+
+                if (match) {
+
+                    maior =
+                        Math.max(
+                            maior,
+                            Number(match[1])
+                        );
+
+                }
+
+            }
+
+        );
+
+
+        i.proximoMicroRaiz =
+            maior + 1;
+
+    }
+
+
+    i.microNos.forEach(
+
+        function(n) {
+
+            if (!n.estado) {
+                n.estado = "aberto";
+            }
+
+
+            if (!n.proximoFilho) {
+
+                let maior =
+                    0;
+
+
+                const prefixo =
+                    n.id + ".";
+
+
+                i.microNos.forEach(
+
+                    function(filho) {
+
+                        if (
+                            filho.parentId ===
+                            n.id
+                        ) {
+
+                            const parte =
+                                filho.id.slice(
+                                    prefixo.length
+                                );
+
+
+                            const numero =
+                                Number(parte);
+
+
+                            if (
+                                Number.isInteger(
+                                    numero
+                                )
+                            ) {
+
+                                maior =
+                                    Math.max(
+                                        maior,
+                                        numero
+                                    );
+
+                            }
+
+                        }
+
+                    }
+
+                );
+
+
+                n.proximoFilho =
+                    maior + 1;
+
+            }
+
+        }
+
     );
 
 
@@ -839,7 +1088,7 @@ function salvarBanco() {
 
         localStorage.setItem(
 
-            CHAVE_V05,
+            CHAVE_V06,
 
             JSON.stringify(banco)
 
@@ -869,7 +1118,7 @@ function carregarBanco() {
 
         const atual =
             localStorage.getItem(
-                CHAVE_V05
+                CHAVE_V06
             );
 
 
@@ -884,7 +1133,7 @@ function carregarBanco() {
 
             const anterior =
                 localStorage.getItem(
-                    CHAVE_V04
+                    CHAVE_V05
                 );
 
 
@@ -897,11 +1146,11 @@ function carregarBanco() {
 
 
                 banco.versao =
-                    "0.5";
+                    "0.6";
 
 
                 alert(
-                    "Memória da v0.4 encontrada e migrada para a v0.5."
+                    "Memória da v0.5 encontrada. Os dados serão migrados para a estrutura fractal da v0.6."
                 );
 
             }
@@ -928,7 +1177,8 @@ function carregarBanco() {
 
 
         banco.historico =
-            banco.historico.map(
+            banco.historico
+            .map(
                 normalizarInvestigacao
             );
 
@@ -940,6 +1190,7 @@ function carregarBanco() {
     catch (erro) {
 
         console.error(
+            "Erro de migração:",
             erro
         );
 
@@ -1038,9 +1289,7 @@ function esconderSistema() {
 function registrarCampo(nome) {
 
     if (!banco.ativa) {
-
         return;
-
     }
 
 
@@ -1067,17 +1316,13 @@ function registrarCampo(nome) {
 function autosalvar() {
 
     if (!banco.ativa) {
-
         return;
-
     }
 
 
     [
 
         "alvo",
-
-        "microalvos",
 
         "hipoteses",
 
@@ -1123,17 +1368,13 @@ function autosalvar() {
 function preencherCampos() {
 
     if (!banco.ativa) {
-
         return;
-
     }
 
 
     [
 
         "alvo",
-
-        "microalvos",
 
         "hipoteses",
 
@@ -1162,12 +1403,604 @@ function preencherCampos() {
 
 
 
-function adicionarClaim() {
+function microPorId(id) {
+
+    if (!banco.ativa) {
+        return null;
+    }
+
+
+    return (
+        banco.ativa.microNos.find(
+
+            function(n) {
+
+                return n.id === id;
+
+            }
+
+        ) || null
+    );
+
+}
+
+
+
+function adicionarMicroalvo() {
 
     if (!banco.ativa) {
 
+        alert(
+            "Inicie uma investigação."
+        );
+
         return;
 
+    }
+
+
+    const titulo =
+        document
+        .getElementById(
+            "novoMicroTexto"
+        )
+        .value
+        .trim();
+
+
+    if (!titulo) {
+
+        alert(
+            "Digite o microalvo."
+        );
+
+        return;
+
+    }
+
+
+    const parentId =
+        document
+        .getElementById(
+            "microPai"
+        )
+        .value || null;
+
+
+    let id;
+
+
+    if (!parentId) {
+
+        id =
+            "MA-" +
+            banco.ativa
+            .proximoMicroRaiz;
+
+
+        banco.ativa
+        .proximoMicroRaiz++;
+
+    }
+
+    else {
+
+        const pai =
+            microPorId(
+                parentId
+            );
+
+
+        if (!pai) {
+
+            alert(
+                "Microalvo-pai não encontrado."
+            );
+
+            return;
+
+        }
+
+
+        id =
+            pai.id +
+            "." +
+            pai.proximoFilho;
+
+
+        pai.proximoFilho++;
+
+        pai.atualizadoEm =
+            agora();
+
+    }
+
+
+    banco.ativa.microNos.push({
+
+        id:
+            id,
+
+        parentId:
+            parentId,
+
+        titulo:
+            titulo,
+
+        estado:
+            "aberto",
+
+        proximoFilho:
+            1,
+
+        criadoEm:
+            agora(),
+
+        atualizadoEm:
+            agora()
+
+    });
+
+
+    banco.ativa.atualizadoEm =
+        agora();
+
+
+    document
+    .getElementById(
+        "novoMicroTexto"
+    )
+    .value = "";
+
+
+    salvarBanco();
+
+    renderizarTudo();
+
+}
+
+
+
+function atualizarEstadoMicro(
+    id,
+    estado
+) {
+
+    const micro =
+        microPorId(id);
+
+
+    if (!micro) {
+        return;
+    }
+
+
+    micro.estado =
+        estado;
+
+
+    micro.atualizadoEm =
+        agora();
+
+
+    salvarBanco();
+
+    renderizarTudo();
+
+}
+
+
+
+function removerMicroalvo(id) {
+
+    if (!banco.ativa) {
+        return;
+    }
+
+
+    const afetados =
+        banco.ativa.microNos.filter(
+
+            function(n) {
+
+                return (
+                    n.id === id ||
+                    n.id.startsWith(
+                        id + "."
+                    )
+                );
+
+            }
+
+        );
+
+
+    const confirmar =
+        confirm(
+
+            "Remover " +
+            id +
+            " e todos os seus descendentes?\n\n" +
+
+            afetados.length +
+            " microalvo(s) serão removidos.\n\n" +
+
+            "Claims associados não serão apagados, mas ficarão sem microalvo."
+
+        );
+
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    const ids =
+        new Set(
+            afetados.map(
+                function(n) {
+                    return n.id;
+                }
+            )
+        );
+
+
+    banco.ativa.microNos =
+        banco.ativa.microNos.filter(
+
+            function(n) {
+
+                return !ids.has(
+                    n.id
+                );
+
+            }
+
+        );
+
+
+    banco.ativa.claims.forEach(
+
+        function(c) {
+
+            if (
+                c.microalvoId &&
+                ids.has(
+                    c.microalvoId
+                )
+            ) {
+
+                c.microalvoId =
+                    null;
+
+            }
+
+        }
+
+    );
+
+
+    salvarBanco();
+
+    renderizarTudo();
+
+}
+
+
+
+function preencherSeletoresMicro() {
+
+    const pai =
+        document
+        .getElementById(
+            "microPai"
+        );
+
+
+    const claim =
+        document
+        .getElementById(
+            "claimMicro"
+        );
+
+
+    pai.innerHTML =
+        "<option value=''>ALVO PRINCIPAL</option>";
+
+
+    claim.innerHTML =
+        "<option value=''>Sem microalvo específico</option>";
+
+
+    if (!banco.ativa) {
+        return;
+    }
+
+
+    banco.ativa.microNos
+    .slice()
+    .sort(
+        compararIdsMicro
+    )
+    .forEach(
+
+        function(n) {
+
+            const prefixo =
+                "↳ ".repeat(
+                    Math.max(
+                        0,
+                        profundidadeMicro(
+                            n.id
+                        ) - 1
+                    )
+                );
+
+
+            const texto =
+                prefixo +
+                n.id +
+                " — " +
+                n.titulo;
+
+
+            const op1 =
+                document
+                .createElement(
+                    "option"
+                );
+
+
+            op1.value =
+                n.id;
+
+
+            op1.textContent =
+                texto;
+
+
+            pai.appendChild(
+                op1
+            );
+
+
+            claim.appendChild(
+                op1.cloneNode(true)
+            );
+
+        }
+
+    );
+
+}
+
+
+
+function partesId(id) {
+
+    return id
+    .replace("MA-","")
+    .split(".")
+    .map(Number);
+
+}
+
+
+
+function compararIdsMicro(a,b) {
+
+    const pa =
+        partesId(a.id);
+
+
+    const pb =
+        partesId(b.id);
+
+
+    const tamanho =
+        Math.max(
+            pa.length,
+            pb.length
+        );
+
+
+    for (
+        let i = 0;
+        i < tamanho;
+        i++
+    ) {
+
+        if (pa[i] === undefined) {
+            return -1;
+        }
+
+
+        if (pb[i] === undefined) {
+            return 1;
+        }
+
+
+        if (pa[i] !== pb[i]) {
+
+            return pa[i] - pb[i];
+
+        }
+
+    }
+
+
+    return 0;
+
+}
+
+
+
+function renderizarArvoreMicro() {
+
+    const caixa =
+        document
+        .getElementById(
+            "arvoreMicro"
+        );
+
+
+    if (
+        !banco.ativa ||
+        banco.ativa.microNos.length === 0
+    ) {
+
+        caixa.innerHTML =
+            "<p class='pequeno'>Nenhum microalvo criado.</p>";
+
+        return;
+
+    }
+
+
+    caixa.innerHTML = "";
+
+
+    banco.ativa.microNos
+    .slice()
+    .sort(
+        compararIdsMicro
+    )
+    .forEach(
+
+        function(n) {
+
+            const div =
+                document
+                .createElement(
+                    "div"
+                );
+
+
+            div.className =
+                "micro";
+
+
+            const profundidade =
+                profundidadeMicro(
+                    n.id
+                ) - 1;
+
+
+            div.style.marginLeft =
+                Math.min(
+                    profundidade * 16,
+                    96
+                ) + "px";
+
+
+            const claimsLigados =
+                banco.ativa.claims.filter(
+
+                    function(c) {
+
+                        return (
+                            c.microalvoId ===
+                            n.id
+                        );
+
+                    }
+
+                ).length;
+
+
+            div.innerHTML = `
+
+                <strong class="micro-id">
+                ${escapar(n.id)}
+                </strong>
+
+                <p>
+                ${escapar(n.titulo)}
+                </p>
+
+                <p class="pequeno">
+
+                Profundidade:
+                ${profundidade}
+
+                <br>
+
+                Claims diretamente associados:
+                ${claimsLigados}
+
+                </p>
+
+                <label>Estado</label>
+
+                <select
+                onchange="
+                atualizarEstadoMicro(
+                    '${n.id}',
+                    this.value
+                )
+                "
+                >
+
+                    <option
+                    value="aberto"
+                    ${n.estado === "aberto" ? "selected" : ""}
+                    >
+                    Aberto
+                    </option>
+
+                    <option
+                    value="investigando"
+                    ${n.estado === "investigando" ? "selected" : ""}
+                    >
+                    Investigando
+                    </option>
+
+                    <option
+                    value="resolvido"
+                    ${n.estado === "resolvido" ? "selected" : ""}
+                    >
+                    Resolvido
+                    </option>
+
+                    <option
+                    value="bloqueado"
+                    ${n.estado === "bloqueado" ? "selected" : ""}
+                    >
+                    Bloqueado
+                    </option>
+
+                </select>
+
+                <button
+                class="perigo"
+                onclick="
+                removerMicroalvo(
+                    '${n.id}'
+                )
+                "
+                >
+                Remover ramo
+                </button>
+
+            `;
+
+
+            caixa.appendChild(
+                div
+            );
+
+        }
+
+    );
+
+}
+
+
+
+function adicionarClaim() {
+
+    if (!banco.ativa) {
+        return;
     }
 
 
@@ -1199,6 +2032,13 @@ function adicionarClaim() {
 
         texto:
             texto,
+
+        microalvoId:
+            document
+            .getElementById(
+                "claimMicro"
+            )
+            .value || null,
 
         tipo:
             document
@@ -1247,7 +2087,6 @@ function adicionarClaim() {
 
     salvarBanco();
 
-
     limparFormularioClaim();
 
     renderizarTudo();
@@ -1259,32 +2098,51 @@ function adicionarClaim() {
 function limparFormularioClaim() {
 
     document
-    .getElementById("claimTexto")
+    .getElementById(
+        "claimTexto"
+    )
     .value = "";
 
 
     document
-    .getElementById("claimTipo")
+    .getElementById(
+        "claimTipo"
+    )
     .value = "H";
 
 
     document
-    .getElementById("claimEstado")
+    .getElementById(
+        "claimEstado"
+    )
     .value = "pendente";
 
 
     document
-    .getElementById("claimConfianca")
+    .getElementById(
+        "claimConfianca"
+    )
     .value = 50;
 
 
     document
-    .getElementById("valorConfianca")
+    .getElementById(
+        "valorConfianca"
+    )
     .textContent = "50";
 
 
     document
-    .getElementById("claimFonte")
+    .getElementById(
+        "claimFonte"
+    )
+    .value = "";
+
+
+    document
+    .getElementById(
+        "claimMicro"
+    )
     .value = "";
 
 }
@@ -1293,15 +2151,13 @@ function limparFormularioClaim() {
 
 function removerClaim(id) {
 
-    const resposta =
-        confirm(
+    if (
+        !confirm(
             "Remover " +
             id +
-            " e todas as relações ligadas a ele?"
-        );
-
-
-    if (!resposta) {
+            " e suas relações?"
+        )
+    ) {
 
         return;
 
@@ -1361,17 +2217,41 @@ function adicionarRelacao() {
 
     const origem =
         document
-        .getElementById("relOrigem")
+        .getElementById(
+            "relOrigem"
+        )
         .value;
 
 
     const destino =
         document
-        .getElementById("relDestino")
+        .getElementById(
+            "relDestino"
+        )
         .value;
 
 
-    if (origem === destino) {
+    const tipo =
+        document
+        .getElementById(
+            "relTipo"
+        )
+        .value;
+
+
+    if (
+        !origem ||
+        !destino
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        origem === destino
+    ) {
 
         alert(
             "Origem e destino não podem ser iguais."
@@ -1380,12 +2260,6 @@ function adicionarRelacao() {
         return;
 
     }
-
-
-    const tipo =
-        document
-        .getElementById("relTipo")
-        .value;
 
 
     const duplicada =
@@ -1459,7 +2333,9 @@ function adicionarRelacao() {
 
 
     document
-    .getElementById("relObservacao")
+    .getElementById(
+        "relObservacao"
+    )
     .value = "";
 
 
@@ -1475,7 +2351,9 @@ function removerRelacao(id) {
 
     if (
         !confirm(
-            "Remover " + id + "?"
+            "Remover " +
+            id +
+            "?"
         )
     ) {
 
@@ -1504,17 +2382,92 @@ function removerRelacao(id) {
 
 
 
-function claimPorId(id) {
+function preencherSeletoresRelacao() {
 
-    return banco.ativa.claims.find(
+    const origem =
+        document
+        .getElementById(
+            "relOrigem"
+        );
+
+
+    const destino =
+        document
+        .getElementById(
+            "relDestino"
+        );
+
+
+    origem.innerHTML = "";
+
+    destino.innerHTML = "";
+
+
+    if (
+        !banco.ativa ||
+        banco.ativa.claims.length === 0
+    ) {
+
+        origem.innerHTML =
+            "<option value=''>Nenhuma afirmação</option>";
+
+        destino.innerHTML =
+            "<option value=''>Nenhuma afirmação</option>";
+
+        return;
+
+    }
+
+
+    banco.ativa.claims.forEach(
 
         function(c) {
 
-            return c.id === id;
+            const curto =
+                c.texto.length > 35
+                ? c.texto.slice(0,35) + "..."
+                : c.texto;
+
+
+            const op =
+                document
+                .createElement(
+                    "option"
+                );
+
+
+            op.value =
+                c.id;
+
+
+            op.textContent =
+                c.id +
+                " — " +
+                curto;
+
+
+            origem.appendChild(
+                op
+            );
+
+
+            destino.appendChild(
+                op.cloneNode(true)
+            );
 
         }
 
     );
+
+
+    if (
+        banco.ativa.claims.length > 1
+    ) {
+
+        destino.selectedIndex =
+            1;
+
+    }
 
 }
 
@@ -1546,93 +2499,6 @@ function escapar(texto) {
     .replace(/'/g,"&#039;")
 
     .replace(/\n/g,"<br>");
-
-}
-
-
-
-function preencherSeletoresRelacao() {
-
-    const origem =
-        document
-        .getElementById("relOrigem");
-
-
-    const destino =
-        document
-        .getElementById("relDestino");
-
-
-    origem.innerHTML = "";
-
-    destino.innerHTML = "";
-
-
-    if (
-        !banco.ativa ||
-        banco.ativa.claims.length === 0
-    ) {
-
-        origem.innerHTML =
-            "<option value=''>Nenhuma afirmação</option>";
-
-        destino.innerHTML =
-            "<option value=''>Nenhuma afirmação</option>";
-
-        return;
-
-    }
-
-
-    banco.ativa.claims.forEach(
-
-        function(c) {
-
-            const curto =
-                c.texto.length > 35
-
-                ? c.texto.slice(0,35) + "..."
-
-                : c.texto;
-
-
-            const a =
-                document.createElement(
-                    "option"
-                );
-
-
-            a.value =
-                c.id;
-
-
-            a.textContent =
-                c.id +
-                " — " +
-                curto;
-
-
-            origem.appendChild(
-                a
-            );
-
-
-            destino.appendChild(
-                a.cloneNode(true)
-            );
-
-        }
-
-    );
-
-
-    if (
-        banco.ativa.claims.length > 1
-    ) {
-
-        destino.selectedIndex = 1;
-
-    }
 
 }
 
@@ -1676,7 +2542,9 @@ function renderizarClaims() {
 
     const caixa =
         document
-        .getElementById("claims");
+        .getElementById(
+            "claims"
+        );
 
 
     if (
@@ -1700,7 +2568,8 @@ function renderizarClaims() {
         function(c) {
 
             const div =
-                document.createElement(
+                document
+                .createElement(
                     "div"
                 );
 
@@ -1711,39 +2580,50 @@ function renderizarClaims() {
 
             div.innerHTML = `
 
-            <strong>${escapar(c.id)}</strong>
+                <strong class="claim-id">
+                ${escapar(c.id)}
+                </strong>
 
-            <span class="tipo">
-            ${escapar(c.tipo)}
-            </span>
+                <span class="tipo">
+                ${escapar(c.tipo)}
+                </span>
 
-            <p>
-            ${escapar(c.texto)}
-            </p>
+                <p>
+                ${escapar(c.texto)}
+                </p>
 
-            <p class="pequeno">
+                <p class="pequeno">
 
-            Estado:
-            ${escapar(c.estado)}
+                Microalvo:
+                ${escapar(c.microalvoId)}
 
-            <br>
+                <br>
 
-            Confiança:
-            ${escapar(c.confianca)}%
+                Estado:
+                ${escapar(c.estado)}
 
-            <br>
+                <br>
 
-            Fonte:
-            ${escapar(c.fonte)}
+                Confiança:
+                ${escapar(c.confianca)}%
 
-            </p>
+                <br>
 
-            <button
-            class="perigo"
-            onclick="removerClaim('${c.id}')"
-            >
-            Remover
-            </button>
+                Fonte:
+                ${escapar(c.fonte)}
+
+                </p>
+
+                <button
+                class="perigo"
+                onclick="
+                removerClaim(
+                    '${c.id}'
+                )
+                "
+                >
+                Remover
+                </button>
 
             `;
 
@@ -1764,7 +2644,9 @@ function renderizarRelacoes() {
 
     const caixa =
         document
-        .getElementById("relacoes");
+        .getElementById(
+            "relacoes"
+        );
 
 
     if (
@@ -1788,7 +2670,8 @@ function renderizarRelacoes() {
         function(r) {
 
             const div =
-                document.createElement(
+                document
+                .createElement(
                     "div"
                 );
 
@@ -1799,52 +2682,56 @@ function renderizarRelacoes() {
 
             div.innerHTML = `
 
-            <strong>
-            ${escapar(r.id)}
-            </strong>
+                <strong>
+                ${escapar(r.id)}
+                </strong>
 
-            <p>
+                <p>
 
-            ${escapar(r.origem)}
+                ${escapar(r.origem)}
 
-            <br>
+                <br>
+                ↓
+                <br>
 
-            ↓
+                <strong>
+                ${escapar(
+                    nomeRelacao(
+                        r.tipo
+                    )
+                )}
+                </strong>
 
-            <br>
+                <br>
+                ↓
+                <br>
 
-            <strong>
-            ${escapar(nomeRelacao(r.tipo))}
-            </strong>
+                ${escapar(r.destino)}
 
-            <br>
+                </p>
 
-            ↓
+                <p class="pequeno">
 
-            <br>
+                Estado:
+                ${escapar(r.estado)}
 
-            ${escapar(r.destino)}
+                <br>
 
-            </p>
+                Observação:
+                ${escapar(r.observacao)}
 
-            <p class="pequeno">
+                </p>
 
-            Estado:
-            ${escapar(r.estado)}
-
-            <br>
-
-            Observação:
-            ${escapar(r.observacao)}
-
-            </p>
-
-            <button
-            class="perigo"
-            onclick="removerRelacao('${r.id}')"
-            >
-            Remover relação
-            </button>
+                <button
+                class="perigo"
+                onclick="
+                removerRelacao(
+                    '${r.id}'
+                )
+                "
+                >
+                Remover relação
+                </button>
 
             `;
 
@@ -1864,9 +2751,7 @@ function renderizarRelacoes() {
 function executarVerificacao() {
 
     if (!banco.ativa) {
-
         return;
-
     }
 
 
@@ -1876,6 +2761,10 @@ function executarVerificacao() {
 
     const relacoes =
         banco.ativa.relacoes;
+
+
+    const micros =
+        banco.ativa.microNos;
 
 
     const resultados =
@@ -1898,11 +2787,82 @@ function executarVerificacao() {
 
         resultados.push({
 
-            tipo: "alerta",
+            classe:
+                "alerta",
 
             texto:
                 semFonte.length +
                 " afirmação(ões) sem fonte/origem."
+
+        });
+
+    }
+
+
+    const claimsSemMicro =
+        claims.filter(
+
+            function(c) {
+
+                return !c.microalvoId;
+
+            }
+
+        );
+
+
+    if (
+        claimsSemMicro.length &&
+        micros.length
+    ) {
+
+        resultados.push({
+
+            classe:
+                "alerta",
+
+            texto:
+                claimsSemMicro.length +
+                " afirmação(ões) não estão ligadas a um microalvo."
+
+        });
+
+    }
+
+
+    const microsSemClaims =
+        micros.filter(
+
+            function(n) {
+
+                return !claims.some(
+
+                    function(c) {
+
+                        return (
+                            c.microalvoId ===
+                            n.id
+                        );
+
+                    }
+
+                );
+
+            }
+
+        );
+
+
+    if (microsSemClaims.length) {
+
+        resultados.push({
+
+            classe:
+                "alerta",
+
+            texto:
+                microsSemClaims.length +
+                " microalvo(s) ainda não possuem claims diretamente associados."
 
         });
 
@@ -1919,11 +2879,8 @@ function executarVerificacao() {
                     function(r) {
 
                         return (
-
                             r.origem === c.id ||
-
                             r.destino === c.id
-
                         );
 
                     }
@@ -1939,16 +2896,16 @@ function executarVerificacao() {
 
         resultados.push({
 
-            tipo: "alerta",
+            classe:
+                "alerta",
 
             texto:
                 isoladas.length +
-                " afirmação(ões) isolada(s) no grafo."
+                " afirmação(ões) estão isoladas no grafo."
 
         });
 
     }
-
 
 
     claims
@@ -1974,7 +2931,6 @@ function executarVerificacao() {
 
                             (
                                 r.tipo === "sustenta" ||
-
                                 r.tipo === "explica"
                             )
 
@@ -1989,11 +2945,12 @@ function executarVerificacao() {
 
                 resultados.push({
 
-                    tipo: "alerta",
+                    classe:
+                        "alerta",
 
                     texto:
                         h.id +
-                        " é uma hipótese sem relação explícita de apoio."
+                        " é uma hipótese sem apoio explícito no grafo."
 
                 });
 
@@ -2002,7 +2959,6 @@ function executarVerificacao() {
         }
 
     );
-
 
 
     for (
@@ -2025,46 +2981,35 @@ function executarVerificacao() {
                 relacoes[j];
 
 
-            const mesmoPar =
+            if (
                 a.origem === b.origem &&
-                a.destino === b.destino;
+                a.destino === b.destino
+            ) {
 
-
-            if (mesmoPar) {
-
-                const contradicao =
+                const conflito =
                     (
-
                         a.tipo === "sustenta" &&
                         b.tipo === "contradiz"
-
                     )
-
                     ||
-
                     (
-
                         a.tipo === "contradiz" &&
                         b.tipo === "sustenta"
-
                     );
 
 
-                if (contradicao) {
+                if (conflito) {
 
                     resultados.push({
 
-                        tipo: "erro",
+                        classe:
+                            "erro",
 
                         texto:
                             "Possível inconsistência: " +
-
                             a.origem +
-
                             " simultaneamente sustenta e contradiz " +
-
                             a.destino +
-
                             "."
 
                     });
@@ -2078,87 +3023,14 @@ function executarVerificacao() {
     }
 
 
-
-    const rejeitadasFortes =
-        claims.filter(
-
-            function(c) {
-
-                return (
-
-                    c.estado === "rejeitada" &&
-
-                    c.confianca >= 80
-
-                );
-
-            }
-
-        );
-
-
-    rejeitadasFortes.forEach(
-
-        function(c) {
-
-            resultados.push({
-
-                tipo: "alerta",
-
-                texto:
-
-                    c.id +
-
-                    " está marcada como rejeitada, mas possui confiança de " +
-
-                    c.confianca +
-
-                    "%. Verifique essa combinação."
-
-            });
-
-        }
-
-    );
-
-
-
-    const relContestadas =
-        relacoes.filter(
-
-            function(r) {
-
-                return r.estado ===
-                    "contestada";
-
-            }
-
-        );
-
-
-    if (relContestadas.length) {
+    if (
+        resultados.length === 0
+    ) {
 
         resultados.push({
 
-            tipo: "alerta",
-
-            texto:
-
-                relContestadas.length +
-
-                " relação(ões) estão contestadas."
-
-        });
-
-    }
-
-
-
-    if (resultados.length === 0) {
-
-        resultados.push({
-
-            tipo: "ok",
+            classe:
+                "ok",
 
             texto:
                 "Nenhuma inconsistência estrutural simples foi detectada."
@@ -2180,6 +3052,10 @@ function executarVerificacao() {
 
 function renderizarMetricas() {
 
+    const micros =
+        banco.ativa.microNos;
+
+
     const claims =
         banco.ativa.claims;
 
@@ -2188,103 +3064,90 @@ function renderizarMetricas() {
         banco.ativa.relacoes;
 
 
-    const contar =
-        function(tipo) {
+    let profundidadeMaxima =
+        0;
 
-            return claims.filter(
 
-                function(c) {
+    micros.forEach(
 
-                    return c.tipo === tipo;
+        function(n) {
 
-                }
+            profundidadeMaxima =
+                Math.max(
+                    profundidadeMaxima,
+                    profundidadeMicro(
+                        n.id
+                    )
+                );
 
-            ).length;
+        }
 
-        };
+    );
+
+
+    const abertos =
+        micros.filter(
+
+            function(n) {
+
+                return (
+                    n.estado !==
+                    "resolvido"
+                );
+
+            }
+
+        ).length;
 
 
     document
-    .getElementById("metricas")
+    .getElementById(
+        "metricas"
+    )
     .innerHTML = `
 
-    <hr>
+        <hr>
 
-    <h3>Métricas</h3>
+        <h3>Métricas estruturais</h3>
 
-    <div class="metricas">
+        <div class="metricas">
 
-        <div class="metrica">
-
-            <div class="numero">
-            ${claims.length}
+            <div class="metrica">
+                <div class="numero">
+                ${micros.length}
+                </div>
+                Microalvos
             </div>
 
-            Afirmações
-
-        </div>
-
-        <div class="metrica">
-
-            <div class="numero">
-            ${relacoes.length}
+            <div class="metrica">
+                <div class="numero">
+                ${profundidadeMaxima}
+                </div>
+                Profundidade máxima
             </div>
 
-            Relações
-
-        </div>
-
-        <div class="metrica">
-
-            <div class="numero">
-            ${contar("B")}
+            <div class="metrica">
+                <div class="numero">
+                ${abertos}
+                </div>
+                Microalvos não resolvidos
             </div>
 
-            Premissas
-
-        </div>
-
-        <div class="metrica">
-
-            <div class="numero">
-            ${contar("L")}
+            <div class="metrica">
+                <div class="numero">
+                ${claims.length}
+                </div>
+                Afirmações
             </div>
 
-            Deduções
-
-        </div>
-
-        <div class="metrica">
-
-            <div class="numero">
-            ${contar("M")}
+            <div class="metrica">
+                <div class="numero">
+                ${relacoes.length}
+                </div>
+                Relações
             </div>
 
-            Modelos
-
         </div>
-
-        <div class="metrica">
-
-            <div class="numero">
-            ${contar("C")}
-            </div>
-
-            Evidências científicas
-
-        </div>
-
-        <div class="metrica">
-
-            <div class="numero">
-            ${contar("H")}
-            </div>
-
-            Hipóteses
-
-        </div>
-
-    </div>
 
     `;
 
@@ -2304,7 +3167,7 @@ function renderizarVerificacoes(
 
 
     caixa.innerHTML =
-        "<h3>Resultado da auditoria</h3>";
+        "<h3>Resultado</h3>";
 
 
     resultados.forEach(
@@ -2312,14 +3175,15 @@ function renderizarVerificacoes(
         function(r) {
 
             const div =
-                document.createElement(
+                document
+                .createElement(
                     "div"
                 );
 
 
             div.className =
-                "verificacao-item " +
-                r.tipo;
+                "verificacao " +
+                r.classe;
 
 
             div.textContent =
@@ -2357,37 +3221,72 @@ function renderizarMemoria() {
     }
 
 
+    let profundidade =
+        0;
+
+
+    banco.ativa.microNos.forEach(
+
+        function(n) {
+
+            profundidade =
+                Math.max(
+                    profundidade,
+                    profundidadeMicro(
+                        n.id
+                    )
+                );
+
+        }
+
+    );
+
+
     caixa.innerHTML = `
 
-    <div class="memoria-item">
+        <div class="memoria">
 
-    <strong>
-    ${escapar(banco.ativa.id)}
-    </strong>
+            <strong>
+            ${escapar(
+                banco.ativa.id
+            )}
+            </strong>
 
-    <p>
+            <p>
 
-    <strong>Alvo:</strong>
+            <strong>Alvo:</strong>
 
-    <br>
+            <br>
 
-    ${escapar(banco.ativa.alvo)}
+            ${escapar(
+                banco.ativa.alvo
+            )}
 
-    </p>
+            </p>
 
-    <p class="pequeno">
+            <p class="pequeno">
 
-    Afirmações:
-    ${banco.ativa.claims.length}
+            Microalvos:
+            ${banco.ativa.microNos.length}
 
-    <br>
+            <br>
 
-    Relações:
-    ${banco.ativa.relacoes.length}
+            Profundidade:
+            ${profundidade}
 
-    </p>
+            <br>
 
-    </div>
+            Claims:
+            ${banco.ativa.claims.length}
+
+            <br>
+
+            Relações:
+            ${banco.ativa.relacoes.length}
+
+            </p>
+
+        </div>
 
     `;
 
@@ -2405,19 +3304,32 @@ function atualizarStatus() {
 
 
     if (!elemento) {
-
         return;
-
     }
 
 
-    elemento.textContent =
-        banco.ativa
+    if (banco.ativa) {
 
-        ? "✓ Memória persistente — " +
-          banco.ativa.id
+        elemento.textContent =
 
-        : "Nenhuma investigação ativa.";
+            "✓ Memória persistente — " +
+
+            banco.ativa.id +
+
+            " — " +
+
+            banco.ativa.microNos.length +
+
+            " microalvos.";
+
+    }
+
+    else {
+
+        elemento.textContent =
+            "Nenhuma investigação ativa.";
+
+    }
 
 }
 
@@ -2433,7 +3345,8 @@ function renderizarHistorico() {
 
 
     if (
-        !banco.historico.length
+        !banco.historico ||
+        banco.historico.length === 0
     ) {
 
         caixa.innerHTML =
@@ -2455,36 +3368,42 @@ function renderizarHistorico() {
         function(i) {
 
             const div =
-                document.createElement(
+                document
+                .createElement(
                     "div"
                 );
 
 
             div.className =
-                "memoria-item";
+                "memoria";
 
 
             div.innerHTML = `
 
-            <strong>
-            ${escapar(i.id)}
-            </strong>
+                <strong>
+                ${escapar(i.id)}
+                </strong>
 
-            <p>
-            ${escapar(i.alvo)}
-            </p>
+                <p>
+                ${escapar(i.alvo)}
+                </p>
 
-            <p class="pequeno">
+                <p class="pequeno">
 
-            Claims:
-            ${i.claims.length}
+                Microalvos:
+                ${i.microNos.length}
 
-            <br>
+                <br>
 
-            Relações:
-            ${i.relacoes.length}
+                Claims:
+                ${i.claims.length}
 
-            </p>
+                <br>
+
+                Relações:
+                ${i.relacoes.length}
+
+                </p>
 
             `;
 
@@ -2505,6 +3424,10 @@ function renderizarTudo() {
 
     atualizarStatus();
 
+    preencherSeletoresMicro();
+
+    renderizarArvoreMicro();
+
     renderizarClaims();
 
     preencherSeletoresRelacao();
@@ -2522,9 +3445,7 @@ function renderizarTudo() {
 function arquivarInvestigacao() {
 
     if (!banco.ativa) {
-
         return;
-
     }
 
 
@@ -2568,18 +3489,14 @@ function novaInvestigacao() {
 
     if (banco.ativa) {
 
-        const continuar =
+        const confirmar =
             confirm(
-
-                "A investigação atual será arquivada antes de iniciar uma nova. Continuar?"
-
+                "A investigação atual será arquivada antes de iniciar outra. Continuar?"
             );
 
 
-        if (!continuar) {
-
+        if (!confirmar) {
             return;
-
         }
 
 
@@ -2597,7 +3514,8 @@ function novaInvestigacao() {
 
         top: 0,
 
-        behavior: "smooth"
+        behavior:
+            "smooth"
 
     });
 
@@ -2611,8 +3529,6 @@ function limparCampos() {
 
         "alvo",
 
-        "microalvos",
-
         "hipoteses",
 
         "evidencias",
@@ -2621,15 +3537,22 @@ function limparCampos() {
 
         "conclusao",
 
-        "proximo"
+        "proximo",
+
+        "novoMicroTexto"
 
     ].forEach(
 
         function(nome) {
 
-            document
-            .getElementById(nome)
-            .value = "";
+            const e =
+                document
+                .getElementById(nome);
+
+
+            if (e) {
+                e.value = "";
+            }
 
         }
 
@@ -2637,6 +3560,13 @@ function limparCampos() {
 
 
     limparFormularioClaim();
+
+
+    document
+    .getElementById(
+        "relObservacao"
+    )
+    .value = "";
 
 }
 
@@ -2677,7 +3607,8 @@ function exportarBackup() {
 
 
     const link =
-        document.createElement(
+        document
+        .createElement(
             "a"
         );
 
@@ -2687,12 +3618,23 @@ function exportarBackup() {
 
 
     link.download =
-        "fractal-v05-" +
+
+        "fractal-v06-" +
+
         Date.now() +
+
         ".json";
 
 
+    document.body.appendChild(
+        link
+    );
+
+
     link.click();
+
+
+    link.remove();
 
 
     URL.revokeObjectURL(
@@ -2710,9 +3652,7 @@ function importarBackup(evento) {
 
 
     if (!arquivo) {
-
         return;
-
     }
 
 
@@ -2720,86 +3660,110 @@ function importarBackup(evento) {
         new FileReader();
 
 
-    leitor.onload = function(e) {
+    leitor.onload =
+        function(e) {
 
-        try {
+            try {
 
-            const dados =
-                JSON.parse(
-                    e.target.result
+                const dados =
+                    JSON.parse(
+                        e.target.result
+                    );
+
+
+                if (
+                    !dados ||
+                    typeof dados !==
+                    "object"
+                ) {
+
+                    throw new Error(
+                        "Estrutura inválida."
+                    );
+
+                }
+
+
+                if (
+                    !confirm(
+                        "O backup substituirá a memória atual da v0.6. Continuar?"
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                banco =
+                    dados;
+
+
+                banco.versao =
+                    "0.6";
+
+
+                if (
+                    !Array.isArray(
+                        banco.historico
+                    )
+                ) {
+
+                    banco.historico =
+                        [];
+
+                }
+
+
+                banco.ativa =
+                    normalizarInvestigacao(
+                        banco.ativa
+                    );
+
+
+                banco.historico =
+                    banco.historico.map(
+                        normalizarInvestigacao
+                    );
+
+
+                salvarBanco();
+
+
+                if (banco.ativa) {
+
+                    mostrarSistema();
+
+                    preencherCampos();
+
+                }
+
+                else {
+
+                    esconderSistema();
+
+                }
+
+
+                renderizarTudo();
+
+
+                alert(
+                    "Backup importado."
                 );
-
-
-            if (
-                !confirm(
-                    "Substituir a memória atual pelo backup?"
-                )
-            ) {
-
-                return;
 
             }
 
+            catch (erro) {
 
-            banco =
-                dados;
-
-
-            banco.versao =
-                "0.5";
-
-
-            banco.ativa =
-                normalizarInvestigacao(
-                    banco.ativa
+                alert(
+                    "Falha ao importar backup: " +
+                    erro.message
                 );
-
-
-            banco.historico =
-                (
-                    banco.historico || []
-                )
-                .map(
-                    normalizarInvestigacao
-                );
-
-
-            salvarBanco();
-
-
-            if (banco.ativa) {
-
-                mostrarSistema();
-
-                preencherCampos();
 
             }
 
-            else {
-
-                esconderSistema();
-
-            }
-
-
-            renderizarTudo();
-
-
-            alert(
-                "Backup importado."
-            );
-
-        }
-
-        catch (erro) {
-
-            alert(
-                "Backup inválido."
-            );
-
-        }
-
-    };
+        };
 
 
     leitor.readAsText(
@@ -2818,7 +3782,7 @@ function apagarTodaMemoria() {
 
     if (
         !confirm(
-            "Apagar toda a memória local da v0.5?"
+            "Apagar toda a memória local da v0.6?"
         )
     ) {
 
@@ -2828,17 +3792,20 @@ function apagarTodaMemoria() {
 
 
     localStorage.removeItem(
-        CHAVE_V05
+        CHAVE_V06
     );
 
 
     banco = {
 
-        versao: "0.5",
+        versao:
+            "0.6",
 
-        ativa: null,
+        ativa:
+            null,
 
-        historico: []
+        historico:
+            []
 
     };
 
@@ -2855,7 +3822,6 @@ function apagarTodaMemoria() {
 
 [
     "alvo",
-    "microalvos",
     "hipoteses",
     "evidencias",
     "contradicoes",

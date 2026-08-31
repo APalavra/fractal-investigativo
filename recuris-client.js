@@ -75,7 +75,10 @@ function renderAnalysis(data) {
         <p><b>Ação:</b> ${esc(p.action)}</p>
         <p><b>Razão:</b> ${esc(p.rationale)}</p>
         <div class="meta">Categoria: ${esc(p.category)} · confiança: ${esc(p.confidence)}% · validação: ${v?.accepted ? "aceita" : "rejeitada"}</div>
-        <div class="row"><button class="secondary evoCommit" data-id="${esc(p.id)}" ${v?.accepted ? "" : "disabled"}>Registrar na memória evolutiva</button></div>
+        <div class="row">
+          <button class="secondary evoCommit" data-id="${esc(p.id)}" ${v?.accepted ? "" : "disabled"}>Registrar na memória evolutiva</button>
+        </div>
+        <div class="meta evoCommitMsg" data-msg-for="${esc(p.id)}"></div>
       </div>`;
     }).join("")}
   `;
@@ -104,6 +107,8 @@ async function analyzeCurrent() {
 }
 
 async function commitProposal(id) {
+  const button = document.querySelector(`.evoCommit[data-id="${CSS.escape(id)}"]`);
+  const inline = document.querySelector(`.evoCommitMsg[data-msg-for="${CSS.escape(id)}"]`);
   try {
     if (!lastAnalysis) throw new Error("Execute uma análise primeiro.");
     const investigation = loadInvestigation();
@@ -111,17 +116,47 @@ async function commitProposal(id) {
     const validation = lastAnalysis.validations.find(x => x.proposal_id === id);
     if (!proposal || !validation) throw new Error("Proposta ou validação não encontrada.");
     if (!confirm(`Registrar ${id} na memória evolutiva do backend?`)) return;
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Registrando...";
+    }
+    if (inline) inline.textContent = "Enviando registro ao backend...";
     setStatus(`Registrando ${id}...`);
+
     const data = await request("/memory/commit", {
       method: "POST",
       body: JSON.stringify({investigation, proposal, validation}),
     });
-    setStatus(data.committed
-      ? `✓ ${data.entry_id} registrado. Memória evolutiva v${data.memory_version}.`
-      : `✗ ${data.message}`,
-      data.committed,
-    );
+
+    if (data.committed) {
+      const msg = `✓ Registrado como ${data.entry_id}. Memória evolutiva v${data.memory_version}.`;
+      if (button) button.textContent = "✓ Registrado na memória";
+      if (inline) inline.textContent = msg;
+      setStatus(msg, true);
+      return;
+    }
+
+    if (data.duplicate) {
+      const msg = `✓ Já estava registrado como ${data.entry_id}. Memória continua em v${data.memory_version}.`;
+      if (button) button.textContent = "✓ Já registrado";
+      if (inline) inline.textContent = msg;
+      setStatus(msg, true);
+      return;
+    }
+
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Registrar na memória evolutiva";
+    }
+    if (inline) inline.textContent = `✗ ${data.message}`;
+    setStatus(`✗ ${data.message}`);
   } catch (err) {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Registrar na memória evolutiva";
+    }
+    if (inline) inline.textContent = `✗ ${err.message}`;
     setStatus(`✗ ${err.message}`);
   }
 }

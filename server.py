@@ -63,6 +63,7 @@ class CommitResponse(BaseModel):
     memory_version: int
     entry_id: str | None = None
     message: str
+    duplicate: bool = False
 
 
 # ---------- Core ----------
@@ -278,13 +279,48 @@ def commit_memory(req: CommitRequest) -> CommitResponse:
         )
 
     mem = load_memory()
+    inv_hash = stable_hash(req.investigation)
+    proposal_payload = req.proposal.model_dump()
+    proposal_fingerprint = stable_hash({
+        "id": proposal_payload.get("id"),
+        "category": proposal_payload.get("category"),
+        "title": proposal_payload.get("title"),
+        "action": proposal_payload.get("action"),
+        "rationale": proposal_payload.get("rationale"),
+        "evidence": proposal_payload.get("evidence"),
+    })
+
+    # Idempotência: a mesma proposta para o mesmo estado da investigação
+    # pode ser enviada várias vezes pelo navegador, mas só vira uma memória.
+    for entry in mem.get("entries", []) or []:
+        if entry.get("investigation_hash") != inv_hash:
+            continue
+        old = entry.get("proposal") or {}
+        old_fingerprint = entry.get("proposal_fingerprint") or stable_hash({
+            "id": old.get("id"),
+            "category": old.get("category"),
+            "title": old.get("title"),
+            "action": old.get("action"),
+            "rationale": old.get("rationale"),
+            "evidence": old.get("evidence"),
+        })
+        if old_fingerprint == proposal_fingerprint:
+            return CommitResponse(
+                committed=False,
+                duplicate=True,
+                memory_version=int(mem.get("version", 0)),
+                entry_id=entry.get("id"),
+                message="Esta mesma proposta já foi registrada para este estado da investigação.",
+            )
+
     mem["version"] = int(mem.get("version", 0)) + 1
     entry_id = f"MEM-{mem['version']}"
     mem.setdefault("entries", []).append({
         "id": entry_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "investigation_hash": stable_hash(req.investigation),
-        "proposal": req.proposal.model_dump(),
+        "investigation_hash": inv_hash,
+        "proposal_fingerprint": proposal_fingerprint,
+        "proposal": proposal_payload,
         "validation": req.validation.model_dump(),
     })
     p = memory_path()
@@ -301,7 +337,7 @@ def commit_memory(req: CommitRequest) -> CommitResponse:
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="0.1.1-flat",
+    version="0.1.2-dedup",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -325,7 +361,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.1.1-flat"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.1.2-dedup"}
 
 
 @app.get("/health")

@@ -4,149 +4,174 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Fractal Investigativo — Nível 1 — v0.2</title>
+<title>Fractal Investigativo v0.3</title>
 
 <style>
-    * {
-        box-sizing: border-box;
-    }
+* {
+    box-sizing: border-box;
+}
 
-    body {
-        margin: 0;
-        background: #10110d;
-        color: #d7d7cf;
-        font-family: Arial, Helvetica, sans-serif;
-        line-height: 1.5;
-    }
+body {
+    margin: 0;
+    background: #10110d;
+    color: #d8d8d0;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+}
 
-    .container {
-        max-width: 900px;
-        margin: auto;
-        padding: 24px;
-    }
+.container {
+    max-width: 950px;
+    margin: auto;
+    padding: 22px;
+}
 
-    h1 {
-        font-size: 2.2rem;
-        margin-bottom: 10px;
-    }
+h1 {
+    font-size: 2.1rem;
+    margin-bottom: 8px;
+}
 
-    h2 {
-        margin-top: 0;
-    }
+h2 {
+    margin-top: 0;
+}
 
-    .subtitulo {
-        color: #999b92;
-        margin-bottom: 30px;
-    }
+.subtitulo {
+    color: #a0a198;
+}
 
-    .versao {
-        display: inline-block;
-        background: #26271f;
-        border: 1px solid #44463b;
-        padding: 6px 12px;
-        border-radius: 20px;
-        margin-bottom: 20px;
-    }
+.versao {
+    display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid #4c4d43;
+    border-radius: 20px;
+    background: #25261f;
+    margin-bottom: 16px;
+}
 
-    .card {
-        border: 1px solid #44463b;
-        border-radius: 14px;
-        padding: 20px;
-        margin-bottom: 22px;
-        background: #171812;
-    }
+.card {
+    background: #181912;
+    border: 1px solid #45473d;
+    border-radius: 14px;
+    padding: 19px;
+    margin-bottom: 20px;
+}
 
-    textarea,
-    input {
-        width: 100%;
-        background: #0d0e0a;
-        color: #e4e4dd;
-        border: 1px solid #55574c;
-        border-radius: 10px;
-        padding: 14px;
-        font-size: 1rem;
-        margin-top: 10px;
-        margin-bottom: 14px;
-    }
+textarea,
+input,
+select {
+    width: 100%;
+    background: #0d0e0a;
+    color: #ededE7;
+    border: 1px solid #55574d;
+    border-radius: 9px;
+    padding: 13px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
 
-    textarea {
-        min-height: 130px;
-        resize: vertical;
-    }
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
 
-    button {
-        border: 0;
-        border-radius: 10px;
-        padding: 13px 18px;
-        font-size: 1rem;
-        font-weight: bold;
-        cursor: pointer;
-        margin: 5px 5px 5px 0;
-    }
+button {
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 9px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 4px 4px 4px 0;
+}
 
-    .principal {
-        background: #deded6;
-        color: #11120e;
-    }
+.principal {
+    background: #e0e0d8;
+    color: #111;
+}
 
-    .secundario {
-        background: #313329;
-        color: #e4e4dd;
-    }
+.secundario {
+    background: #34362c;
+    color: white;
+}
 
-    .perigo {
-        background: #552c2c;
-        color: white;
-    }
+.perigo {
+    background: #572d2d;
+    color: white;
+}
 
-    .sucesso {
-        background: #26462e;
-        color: white;
-    }
+.sucesso {
+    background: #284a30;
+    color: white;
+}
 
-    .oculto {
-        display: none;
-    }
+.oculto {
+    display: none;
+}
 
-    .status {
-        padding: 12px;
-        background: #202219;
-        border-radius: 8px;
-        margin-top: 10px;
-        color: #bfc1b6;
-    }
+.status {
+    margin-top: 10px;
+    padding: 11px;
+    border-radius: 8px;
+    background: #23251d;
+}
 
-    .memoria-item {
-        border-left: 4px solid #77796b;
-        background: #202119;
-        padding: 15px;
-        margin-top: 15px;
-        border-radius: 8px;
-    }
+.claim {
+    background: #212219;
+    border: 1px solid #44463b;
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 12px;
+}
 
-    .memoria-item strong {
-        color: #ffffff;
-    }
+.claim-id {
+    font-weight: bold;
+}
 
-    .campo {
-        margin-bottom: 8px;
-    }
+.tipo {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 8px;
+    background: #35372d;
+    margin-right: 5px;
+}
 
-    .pequeno {
-        color: #92948a;
-        font-size: 0.9rem;
-    }
+.pequeno {
+    color: #999b91;
+    font-size: 0.88rem;
+}
 
-    pre {
-        white-space: pre-wrap;
-        word-break: break-word;
-    }
+.memoria-item {
+    border-left: 4px solid #747668;
+    padding: 14px;
+    margin-top: 12px;
+    background: #202119;
+    border-radius: 8px;
+}
 
-    hr {
-        border: none;
-        border-top: 1px solid #3a3b33;
-        margin: 20px 0;
+hr {
+    border: none;
+    border-top: 1px solid #3c3d34;
+    margin: 20px 0;
+}
+
+.info {
+    background: #21231b;
+    border-radius: 9px;
+    padding: 13px;
+    margin-bottom: 12px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+@media (max-width: 650px) {
+    .grid {
+        grid-template-columns: 1fr;
     }
+}
 </style>
 </head>
 
@@ -154,224 +179,268 @@
 
 <div class="container">
 
-    <div class="versao">Versão 0.2 — memória persistente</div>
+<div class="versao">
+    Versão 0.3 — estados epistêmicos
+</div>
 
-    <h1>🧠 Fractal Investigativo — Nível 1</h1>
+<h1>🧠 Fractal Investigativo</h1>
 
-    <p class="subtitulo">
-        Protótipo estrutural de investigação recursiva.
-        Esta versão preserva automaticamente a investigação ativa no navegador,
-        restaura o estado após fechar a página e mantém histórico separado.
-    </p>
+<p class="subtitulo">
+Sistema experimental de investigação recursiva,
+memória persistente e classificação epistemológica.
+</p>
 
 
-    <!-- 1 -->
-    <section class="card" id="secao1">
+<section class="card">
 
-        <h2>1. Alvo principal</h2>
+<h2>1. Alvo principal</h2>
 
-        <p>
-            Qual é o fenômeno, pergunta ou problema que queremos investigar?
-        </p>
+<textarea id="alvo"
+placeholder="Qual é a pergunta, fenômeno ou problema principal?"></textarea>
 
-        <textarea
-            id="alvo"
-            placeholder="Exemplo: O que precisa ser verdade para que determinado fenômeno exista?"
-        ></textarea>
+<button class="principal" onclick="iniciarInvestigacao()">
+Iniciar / continuar investigação
+</button>
 
-        <button class="principal" onclick="iniciarInvestigacao()">
-            Iniciar investigação
-        </button>
+<div id="statusInicial" class="status oculto"></div>
 
-        <div id="statusInicial" class="status oculto"></div>
+</section>
 
-    </section>
 
+<div id="sistema" class="oculto">
 
-    <!-- 2 -->
-    <section class="card oculto" id="secao2">
+<section class="card">
 
-        <h2>2. Microalvos</h2>
+<h2>2. Microalvos</h2>
 
-        <p>
-            Divida o alvo principal em perguntas menores.
-            Use uma linha para cada microalvo.
-        </p>
+<p>
+Divida o problema principal em partes menores.
+Uma por linha.
+</p>
 
-        <textarea
-            id="microalvos"
-            placeholder="Microalvo 1&#10;Microalvo 2&#10;Microalvo 3"
-        ></textarea>
+<textarea id="microalvos"></textarea>
 
-        <button class="principal" onclick="registrarCampo('microalvos')">
-            Registrar microalvos
-        </button>
+<button class="principal" onclick="registrarCampo('microalvos')">
+Registrar
+</button>
 
-    </section>
+</section>
 
 
-    <!-- 3 -->
-    <section class="card oculto" id="secao3">
+<section class="card">
 
-        <h2>3. Hipóteses</h2>
+<h2>3. Hipóteses</h2>
 
-        <p>
-            Registre explicações possíveis.
-            Elas ainda não devem ser tratadas como fatos.
-        </p>
+<textarea id="hipoteses"
+placeholder="Explicações possíveis. Ainda não tratá-las como fatos."></textarea>
 
-        <textarea
-            id="hipoteses"
-            placeholder="Hipótese 1&#10;Hipótese 2"
-        ></textarea>
+<button class="principal" onclick="registrarCampo('hipoteses')">
+Registrar
+</button>
 
-        <button class="principal" onclick="registrarCampo('hipoteses')">
-            Registrar hipóteses
-        </button>
+</section>
 
-    </section>
 
+<section class="card">
 
-    <!-- 4 -->
-    <section class="card oculto" id="secao4">
+<h2>4. Evidências</h2>
 
-        <h2>4. Evidências</h2>
+<textarea id="evidencias"
+placeholder="Experimentos, observações, documentos, medições, fontes..."></textarea>
 
-        <p>
-            Registre observações, experimentos, documentos,
-            dados ou outras evidências relevantes.
-        </p>
+<button class="principal" onclick="registrarCampo('evidencias')">
+Registrar
+</button>
 
-        <textarea
-            id="evidencias"
-            placeholder="Evidência 1&#10;Evidência 2"
-        ></textarea>
+</section>
 
-        <button class="principal" onclick="registrarCampo('evidencias')">
-            Registrar evidências
-        </button>
 
-    </section>
+<section class="card">
 
+<h2>5. Contradições / contraexemplos</h2>
 
-    <!-- 5 -->
-    <section class="card oculto" id="secao5">
+<textarea id="contradicoes"
+placeholder="O que pode enfraquecer ou contradizer nossas hipóteses?"></textarea>
 
-        <h2>5. Contradições e contraexemplos</h2>
+<button class="principal" onclick="registrarCampo('contradicoes')">
+Registrar
+</button>
 
-        <p>
-            Procure fatos ou argumentos que possam enfraquecer
-            ou contradizer as hipóteses.
-        </p>
+</section>
 
-        <textarea
-            id="contradicoes"
-            placeholder="Contradição, anomalia ou contraexemplo..."
-        ></textarea>
 
-        <button class="principal" onclick="registrarCampo('contradicoes')">
-            Registrar contradições
-        </button>
+<section class="card">
 
-    </section>
+<h2>6. Conclusão provisória</h2>
 
+<textarea id="conclusao"></textarea>
 
-    <!-- 6 -->
-    <section class="card oculto" id="secao6">
+<button class="principal" onclick="registrarCampo('conclusao')">
+Registrar
+</button>
 
-        <h2>6. Conclusão provisória</h2>
+</section>
 
-        <p>
-            Qual é a melhor conclusão permitida pelas informações atuais?
-        </p>
 
-        <textarea
-            id="conclusao"
-            placeholder="Conclusão provisória..."
-        ></textarea>
+<section class="card">
 
-        <button class="principal" onclick="registrarCampo('conclusao')">
-            Registrar conclusão
-        </button>
+<h2>7. Próximo microalvo</h2>
 
-    </section>
+<textarea id="proximo"></textarea>
 
+<button class="principal" onclick="registrarCampo('proximo')">
+Registrar
+</button>
 
-    <!-- 7 -->
-    <section class="card oculto" id="secao7">
+</section>
 
-        <h2>7. Próximo microalvo</h2>
 
-        <p>
-            Qual é a próxima pergunta que deve alimentar outro ciclo?
-        </p>
+<section class="card">
 
-        <textarea
-            id="proximo"
-            placeholder="Próximo microalvo..."
-        ></textarea>
+<h2>8. Registro Epistêmico</h2>
 
-        <button class="principal" onclick="registrarCampo('proximo')">
-            Registrar próximo microalvo
-        </button>
+<div class="info">
 
-    </section>
+<strong>Categorias:</strong><br><br>
 
+B = premissa/base explícita<br>
+L = dedução lógica<br>
+M = modelo matemático/formal<br>
+C = evidência/conhecimento científico ou empírico<br>
+H = hipótese/especulação
 
-    <!-- 8 -->
-    <section class="card oculto" id="secao8">
+</div>
 
-        <h2>8. Memória do sistema</h2>
+<label>Afirmação</label>
 
-        <p>
-            A investigação ativa é salva automaticamente neste navegador.
-        </p>
+<textarea id="claimTexto"
+placeholder="Exemplo: Objetos em queda livre aceleram próximos à superfície terrestre."></textarea>
 
-        <div id="statusMemoria" class="status"></div>
 
-        <div id="memoriaAtual"></div>
+<div class="grid">
 
-        <hr>
+<div>
 
-        <button class="sucesso" onclick="arquivarInvestigacao()">
-            Arquivar investigação atual
-        </button>
+<label>Tipo epistemológico</label>
 
-        <button class="secundario" onclick="novaInvestigacao()">
-            Nova investigação
-        </button>
+<select id="claimTipo">
+<option value="B">B — Premissa/base</option>
+<option value="L">L — Dedução lógica</option>
+<option value="M">M — Modelo matemático</option>
+<option value="C">C — Ciência/evidência empírica</option>
+<option value="H" selected>H — Hipótese</option>
+</select>
 
-        <button class="secundario" onclick="exportarBackup()">
-            Exportar backup JSON
-        </button>
+</div>
 
-        <button class="perigo" onclick="apagarTodaMemoria()">
-            Apagar toda a memória
-        </button>
 
-        <hr>
+<div>
 
-        <h2>Histórico</h2>
+<label>Estado</label>
 
-        <div id="historico"></div>
+<select id="claimEstado">
+<option value="pendente">Pendente</option>
+<option value="apoiada">Apoiada</option>
+<option value="contestada">Contestada</option>
+<option value="rejeitada">Rejeitada</option>
+</select>
 
-    </section>
+</div>
+
+</div>
+
+
+<label>Confiança atual: <span id="valorConfianca">50</span>%</label>
+
+<input
+type="range"
+id="claimConfianca"
+min="0"
+max="100"
+value="50"
+oninput="document.getElementById('valorConfianca').textContent=this.value"
+>
+
+
+<label>Fonte / origem</label>
+
+<input id="claimFonte"
+placeholder="Livro, artigo, experimento, raciocínio próprio, URL etc.">
+
+
+<button class="principal" onclick="adicionarClaim()">
+Adicionar afirmação
+</button>
+
+
+<div id="claims"></div>
+
+</section>
+
+
+<section class="card">
+
+<h2>9. Memória do sistema</h2>
+
+<div id="statusMemoria" class="status"></div>
+
+<div id="memoriaAtual"></div>
+
+<hr>
+
+<button class="sucesso" onclick="arquivarInvestigacao()">
+Arquivar investigação
+</button>
+
+<button class="secundario" onclick="novaInvestigacao()">
+Nova investigação
+</button>
+
+<button class="secundario" onclick="exportarBackup()">
+Exportar backup JSON
+</button>
+
+<button class="secundario" onclick="document.getElementById('arquivoBackup').click()">
+Importar backup JSON
+</button>
+
+<input
+type="file"
+id="arquivoBackup"
+accept=".json,application/json"
+class="oculto"
+onchange="importarBackup(event)"
+>
+
+<button class="perigo" onclick="apagarTodaMemoria()">
+Apagar toda a memória
+</button>
+
+<hr>
+
+<h2>Histórico</h2>
+
+<div id="historico"></div>
+
+</section>
+
+</div>
 
 </div>
 
 
 <script>
 
-const CHAVE_MEMORIA = "fractal_investigativo_v02";
+const CHAVE = "fractal_investigativo_v03";
 
 let banco = {
-    versao: "0.2",
+    versao: "0.3",
     ativa: null,
     historico: []
 };
 
 
-function criarId() {
+function idInvestigacao() {
     return "INV-" + Date.now();
 }
 
@@ -381,10 +450,10 @@ function agora() {
 }
 
 
-function criarInvestigacao(alvo) {
+function novaEstrutura(alvo) {
 
     return {
-        id: criarId(),
+        id: idInvestigacao(),
         criadoEm: agora(),
         atualizadoEm: agora(),
 
@@ -394,9 +463,11 @@ function criarInvestigacao(alvo) {
         evidencias: "",
         contradicoes: "",
         conclusao: "",
-        proximo: ""
-    };
+        proximo: "",
 
+        proximoClaim: 1,
+        claims: []
+    };
 }
 
 
@@ -405,21 +476,16 @@ function salvarBanco() {
     try {
 
         localStorage.setItem(
-            CHAVE_MEMORIA,
+            CHAVE,
             JSON.stringify(banco)
         );
 
-        atualizarStatusMemoria();
+        atualizarStatus();
 
     } catch (erro) {
 
-        alert(
-            "Não foi possível salvar a memória neste navegador.\n\n" +
-            erro
-        );
-
+        alert("Erro ao salvar memória: " + erro);
     }
-
 }
 
 
@@ -427,57 +493,62 @@ function carregarBanco() {
 
     try {
 
-        const salvo = localStorage.getItem(CHAVE_MEMORIA);
+        const dados = localStorage.getItem(CHAVE);
 
-        if (salvo) {
+        if (!dados) return;
 
-            const convertido = JSON.parse(salvo);
+        const convertido = JSON.parse(dados);
 
-            if (convertido && typeof convertido === "object") {
+        if (!convertido || typeof convertido !== "object") {
+            return;
+        }
 
-                banco = convertido;
+        banco = convertido;
 
-                if (!Array.isArray(banco.historico)) {
-                    banco.historico = [];
-                }
+        if (!Array.isArray(banco.historico)) {
+            banco.historico = [];
+        }
 
+        if (banco.ativa) {
+
+            if (!Array.isArray(banco.ativa.claims)) {
+                banco.ativa.claims = [];
             }
 
+            if (!banco.ativa.proximoClaim) {
+                banco.ativa.proximoClaim =
+                    banco.ativa.claims.length + 1;
+            }
         }
 
     } catch (erro) {
 
-        console.error("Erro ao carregar memória:", erro);
-
+        console.error(erro);
     }
-
 }
 
 
 function iniciarInvestigacao() {
 
-    const alvo = document
-        .getElementById("alvo")
+    const alvo =
+        document.getElementById("alvo")
         .value
         .trim();
 
     if (!alvo) {
 
-        alert("Digite primeiro um alvo principal.");
-
+        alert("Digite um alvo principal.");
         return;
-
     }
 
     if (!banco.ativa) {
 
-        banco.ativa = criarInvestigacao(alvo);
+        banco.ativa = novaEstrutura(alvo);
 
     } else {
 
         banco.ativa.alvo = alvo;
         banco.ativa.atualizadoEm = agora();
-
     }
 
     salvarBanco();
@@ -486,15 +557,31 @@ function iniciarInvestigacao() {
 
     preencherCampos();
 
-    renderizarMemoria();
+    renderizarTudo();
 
-    const status = document.getElementById("statusInicial");
+    const status =
+        document.getElementById("statusInicial");
 
     status.textContent =
-        "Investigação ativa. Alterações serão salvas automaticamente.";
+        "✓ Investigação ativa e salva.";
 
     status.classList.remove("oculto");
+}
 
+
+function mostrarSistema() {
+
+    document
+        .getElementById("sistema")
+        .classList.remove("oculto");
+}
+
+
+function esconderSistema() {
+
+    document
+        .getElementById("sistema")
+        .classList.add("oculto");
 }
 
 
@@ -502,15 +589,12 @@ function registrarCampo(nome) {
 
     if (!banco.ativa) {
 
-        alert("Primeiro inicie uma investigação.");
-
+        alert("Inicie primeiro uma investigação.");
         return;
-
     }
 
-    const elemento = document.getElementById(nome);
-
-    banco.ativa[nome] = elemento.value;
+    banco.ativa[nome] =
+        document.getElementById(nome).value;
 
     banco.ativa.atualizadoEm = agora();
 
@@ -518,16 +602,13 @@ function registrarCampo(nome) {
 
     renderizarMemoria();
 
-    alert("Registrado e salvo.");
-
+    alert("Registrado.");
 }
 
 
-function salvarAutomaticamente() {
+function autosalvar() {
 
-    if (!banco.ativa) {
-        return;
-    }
+    if (!banco.ativa) return;
 
     const campos = [
         "alvo",
@@ -539,84 +620,155 @@ function salvarAutomaticamente() {
         "proximo"
     ];
 
-    campos.forEach(function(campo) {
+    campos.forEach(function(nome) {
 
-        const elemento = document.getElementById(campo);
+        const elemento =
+            document.getElementById(nome);
 
         if (elemento) {
-            banco.ativa[campo] = elemento.value;
+            banco.ativa[nome] = elemento.value;
         }
-
     });
 
     banco.ativa.atualizadoEm = agora();
 
     salvarBanco();
-
-    renderizarMemoria();
-
-}
-
-
-function mostrarSistema() {
-
-    for (let i = 2; i <= 8; i++) {
-
-        document
-            .getElementById("secao" + i)
-            .classList.remove("oculto");
-
-    }
-
-}
-
-
-function esconderSistema() {
-
-    for (let i = 2; i <= 8; i++) {
-
-        document
-            .getElementById("secao" + i)
-            .classList.add("oculto");
-
-    }
-
 }
 
 
 function preencherCampos() {
 
+    if (!banco.ativa) return;
+
+    const campos = [
+        "alvo",
+        "microalvos",
+        "hipoteses",
+        "evidencias",
+        "contradicoes",
+        "conclusao",
+        "proximo"
+    ];
+
+    campos.forEach(function(nome) {
+
+        document.getElementById(nome).value =
+            banco.ativa[nome] || "";
+    });
+}
+
+
+function adicionarClaim() {
+
     if (!banco.ativa) {
+
+        alert("Inicie primeiro uma investigação.");
         return;
     }
 
-    document.getElementById("alvo").value =
-        banco.ativa.alvo || "";
+    const texto =
+        document.getElementById("claimTexto")
+        .value
+        .trim();
 
-    document.getElementById("microalvos").value =
-        banco.ativa.microalvos || "";
+    if (!texto) {
 
-    document.getElementById("hipoteses").value =
-        banco.ativa.hipoteses || "";
+        alert("Digite a afirmação.");
+        return;
+    }
 
-    document.getElementById("evidencias").value =
-        banco.ativa.evidencias || "";
+    const claim = {
 
-    document.getElementById("contradicoes").value =
-        banco.ativa.contradicoes || "";
+        id: "CLM-" + banco.ativa.proximoClaim,
 
-    document.getElementById("conclusao").value =
-        banco.ativa.conclusao || "";
+        texto: texto,
 
-    document.getElementById("proximo").value =
-        banco.ativa.proximo || "";
+        tipo:
+            document.getElementById("claimTipo").value,
 
+        estado:
+            document.getElementById("claimEstado").value,
+
+        confianca:
+            Number(
+                document.getElementById("claimConfianca").value
+            ),
+
+        fonte:
+            document.getElementById("claimFonte")
+            .value
+            .trim(),
+
+        criadoEm: agora()
+    };
+
+    banco.ativa.proximoClaim++;
+
+    banco.ativa.claims.push(claim);
+
+    banco.ativa.atualizadoEm = agora();
+
+    salvarBanco();
+
+    limparFormularioClaim();
+
+    renderizarClaims();
+
+    renderizarMemoria();
+}
+
+
+function limparFormularioClaim() {
+
+    document.getElementById("claimTexto").value = "";
+
+    document.getElementById("claimTipo").value = "H";
+
+    document.getElementById("claimEstado").value =
+        "pendente";
+
+    document.getElementById("claimConfianca").value =
+        50;
+
+    document.getElementById("valorConfianca").textContent =
+        "50";
+
+    document.getElementById("claimFonte").value = "";
+}
+
+
+function removerClaim(id) {
+
+    if (!banco.ativa) return;
+
+    const confirmar = confirm(
+        "Remover a afirmação " + id + "?"
+    );
+
+    if (!confirmar) return;
+
+    banco.ativa.claims =
+        banco.ativa.claims.filter(
+            function(claim) {
+                return claim.id !== id;
+            }
+        );
+
+    salvarBanco();
+
+    renderizarClaims();
+
+    renderizarMemoria();
 }
 
 
 function escapar(texto) {
 
-    if (!texto) {
+    if (
+        texto === null ||
+        texto === undefined ||
+        texto === ""
+    ) {
         return "—";
     }
 
@@ -627,92 +779,211 @@ function escapar(texto) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;")
         .replace(/\n/g, "<br>");
+}
 
+
+function nomeTipo(tipo) {
+
+    const nomes = {
+        B: "Premissa/base",
+        L: "Dedução lógica",
+        M: "Modelo matemático",
+        C: "Ciência/evidência",
+        H: "Hipótese"
+    };
+
+    return nomes[tipo] || tipo;
+}
+
+
+function renderizarClaims() {
+
+    const caixa =
+        document.getElementById("claims");
+
+    if (!banco.ativa) {
+
+        caixa.innerHTML = "";
+        return;
+    }
+
+    const claims = banco.ativa.claims || [];
+
+    if (claims.length === 0) {
+
+        caixa.innerHTML =
+            "<p class='pequeno'>" +
+            "Nenhuma afirmação epistemológica registrada." +
+            "</p>";
+
+        return;
+    }
+
+    caixa.innerHTML = "";
+
+    claims.forEach(function(claim) {
+
+        const div =
+            document.createElement("div");
+
+        div.className = "claim";
+
+        div.innerHTML = `
+
+            <div>
+                <span class="claim-id">
+                    ${escapar(claim.id)}
+                </span>
+
+                <span class="tipo">
+                    ${escapar(claim.tipo)}
+                </span>
+
+                ${escapar(nomeTipo(claim.tipo))}
+            </div>
+
+            <p>
+                ${escapar(claim.texto)}
+            </p>
+
+            <p class="pequeno">
+                Estado:
+                <strong>
+                    ${escapar(claim.estado)}
+                </strong>
+                <br>
+
+                Confiança:
+                <strong>
+                    ${escapar(claim.confianca)}%
+                </strong>
+                <br>
+
+                Fonte:
+                ${escapar(claim.fonte)}
+            </p>
+
+            <button
+                class="perigo"
+                onclick="removerClaim('${claim.id}')"
+            >
+                Remover
+            </button>
+        `;
+
+        caixa.appendChild(div);
+    });
 }
 
 
 function renderizarMemoria() {
 
-    const caixa = document.getElementById("memoriaAtual");
+    const caixa =
+        document.getElementById("memoriaAtual");
 
     if (!banco.ativa) {
 
         caixa.innerHTML =
             "<p>Nenhuma investigação ativa.</p>";
 
-    } else {
-
-        const i = banco.ativa;
-
-        caixa.innerHTML = `
-
-            <div class="memoria-item">
-
-                <strong>${escapar(i.id)}</strong>
-
-                <p class="campo">
-                    <strong>Alvo:</strong><br>
-                    ${escapar(i.alvo)}
-                </p>
-
-                <p class="campo">
-                    <strong>Microalvos:</strong><br>
-                    ${escapar(i.microalvos)}
-                </p>
-
-                <p class="campo">
-                    <strong>Hipóteses:</strong><br>
-                    ${escapar(i.hipoteses)}
-                </p>
-
-                <p class="campo">
-                    <strong>Evidências:</strong><br>
-                    ${escapar(i.evidencias)}
-                </p>
-
-                <p class="campo">
-                    <strong>Contradições:</strong><br>
-                    ${escapar(i.contradicoes)}
-                </p>
-
-                <p class="campo">
-                    <strong>Conclusão:</strong><br>
-                    ${escapar(i.conclusao)}
-                </p>
-
-                <p class="campo">
-                    <strong>Próximo microalvo:</strong><br>
-                    ${escapar(i.proximo)}
-                </p>
-
-                <p class="pequeno">
-                    Atualizado:
-                    ${escapar(i.atualizadoEm)}
-                </p>
-
-            </div>
-        `;
-
+        return;
     }
 
-    renderizarHistorico();
+    const i = banco.ativa;
 
-    atualizarStatusMemoria();
+    caixa.innerHTML = `
 
+        <div class="memoria-item">
+
+            <strong>${escapar(i.id)}</strong>
+
+            <p>
+                <strong>Alvo:</strong><br>
+                ${escapar(i.alvo)}
+            </p>
+
+            <p>
+                <strong>Microalvos:</strong><br>
+                ${escapar(i.microalvos)}
+            </p>
+
+            <p>
+                <strong>Hipóteses:</strong><br>
+                ${escapar(i.hipoteses)}
+            </p>
+
+            <p>
+                <strong>Evidências:</strong><br>
+                ${escapar(i.evidencias)}
+            </p>
+
+            <p>
+                <strong>Contradições:</strong><br>
+                ${escapar(i.contradicoes)}
+            </p>
+
+            <p>
+                <strong>Conclusão:</strong><br>
+                ${escapar(i.conclusao)}
+            </p>
+
+            <p>
+                <strong>Próximo microalvo:</strong><br>
+                ${escapar(i.proximo)}
+            </p>
+
+            <p class="pequeno">
+                Afirmações estruturadas:
+                ${i.claims ? i.claims.length : 0}
+            </p>
+
+        </div>
+    `;
+}
+
+
+function atualizarStatus() {
+
+    const elemento =
+        document.getElementById("statusMemoria");
+
+    if (!elemento) return;
+
+    if (banco.ativa) {
+
+        elemento.textContent =
+            "✓ Investigação salva localmente — " +
+            banco.ativa.id +
+            " — " +
+            (banco.ativa.claims
+                ? banco.ativa.claims.length
+                : 0) +
+            " afirmações estruturadas.";
+
+    } else {
+
+        elemento.textContent =
+            "Nenhuma investigação ativa.";
+    }
 }
 
 
 function renderizarHistorico() {
 
-    const caixa = document.getElementById("historico");
+    const caixa =
+        document.getElementById("historico");
 
-    if (!banco.historico || banco.historico.length === 0) {
+    if (
+        !banco.historico ||
+        banco.historico.length === 0
+    ) {
 
         caixa.innerHTML =
-            "<p class='pequeno'>Nenhuma investigação arquivada.</p>";
+            "<p class='pequeno'>" +
+            "Nenhuma investigação arquivada." +
+            "</p>";
 
         return;
-
     }
 
     caixa.innerHTML = "";
@@ -722,34 +993,50 @@ function renderizarHistorico() {
         .reverse()
         .forEach(function(i) {
 
-            const div = document.createElement("div");
+            const div =
+                document.createElement("div");
 
-            div.className = "memoria-item";
+            div.className =
+                "memoria-item";
 
             div.innerHTML = `
 
-                <strong>${escapar(i.id)}</strong>
+                <strong>
+                    ${escapar(i.id)}
+                </strong>
 
                 <p>
-                    <strong>Alvo:</strong><br>
                     ${escapar(i.alvo)}
                 </p>
 
-                <p>
-                    <strong>Conclusão:</strong><br>
-                    ${escapar(i.conclusao)}
-                </p>
-
                 <p class="pequeno">
-                    Arquivada em:
-                    ${escapar(i.arquivadoEm || "")}
+                    Claims:
+                    ${
+                        i.claims
+                        ? i.claims.length
+                        : 0
+                    }
+                    <br>
+
+                    Arquivada:
+                    ${escapar(i.arquivadoEm)}
                 </p>
             `;
 
             caixa.appendChild(div);
-
         });
+}
 
+
+function renderizarTudo() {
+
+    atualizarStatus();
+
+    renderizarClaims();
+
+    renderizarMemoria();
+
+    renderizarHistorico();
 }
 
 
@@ -757,16 +1044,16 @@ function arquivarInvestigacao() {
 
     if (!banco.ativa) {
 
-        alert("Não existe investigação ativa.");
-
+        alert("Nenhuma investigação ativa.");
         return;
-
     }
 
-    salvarAutomaticamente();
+    autosalvar();
 
     const copia =
-        JSON.parse(JSON.stringify(banco.ativa));
+        JSON.parse(
+            JSON.stringify(banco.ativa)
+        );
 
     copia.arquivadoEm = agora();
 
@@ -780,12 +1067,9 @@ function arquivarInvestigacao() {
 
     esconderSistema();
 
-    renderizarMemoria();
+    renderizarTudo();
 
-    alert(
-        "Investigação arquivada no histórico."
-    );
-
+    alert("Investigação arquivada.");
 }
 
 
@@ -793,27 +1077,25 @@ function novaInvestigacao() {
 
     if (banco.ativa) {
 
-        const confirmar = confirm(
-            "Existe uma investigação ativa.\n\n" +
-            "Ela será arquivada antes de iniciar uma nova.\n\n" +
-            "Continuar?"
+        const resposta = confirm(
+            "A investigação atual será arquivada " +
+            "antes de iniciar outra. Continuar?"
         );
 
-        if (!confirmar) {
-            return;
-        }
+        if (!resposta) return;
 
-        salvarAutomaticamente();
+        autosalvar();
 
         const copia =
-            JSON.parse(JSON.stringify(banco.ativa));
+            JSON.parse(
+                JSON.stringify(banco.ativa)
+            );
 
         copia.arquivadoEm = agora();
 
         banco.historico.push(copia);
 
         banco.ativa = null;
-
     }
 
     salvarBanco();
@@ -822,17 +1104,18 @@ function novaInvestigacao() {
 
     esconderSistema();
 
+    renderizarTudo();
+
     window.scrollTo({
         top: 0,
         behavior: "smooth"
     });
-
 }
 
 
 function limparCampos() {
 
-    const campos = [
+    [
         "alvo",
         "microalvos",
         "hipoteses",
@@ -840,50 +1123,25 @@ function limparCampos() {
         "contradicoes",
         "conclusao",
         "proximo"
-    ];
-
-    campos.forEach(function(campo) {
+    ].forEach(function(nome) {
 
         const elemento =
-            document.getElementById(campo);
+            document.getElementById(nome);
 
         if (elemento) {
             elemento.value = "";
         }
-
     });
 
-}
-
-
-function atualizarStatusMemoria() {
-
-    const elemento =
-        document.getElementById("statusMemoria");
-
-    if (!elemento) {
-        return;
-    }
-
-    if (banco.ativa) {
-
-        elemento.textContent =
-            "✓ Memória ativa salva neste navegador — " +
-            banco.ativa.id;
-
-    } else {
-
-        elemento.textContent =
-            "Nenhuma investigação ativa.";
-
-    }
-
+    limparFormularioClaim();
 }
 
 
 function exportarBackup() {
 
-    salvarAutomaticamente();
+    if (banco.ativa) {
+        autosalvar();
+    }
 
     const conteudo =
         JSON.stringify(banco, null, 2);
@@ -891,7 +1149,7 @@ function exportarBackup() {
     const blob =
         new Blob(
             [conteudo],
-            { type: "application/json" }
+            {type: "application/json"}
         );
 
     const url =
@@ -903,7 +1161,7 @@ function exportarBackup() {
     link.href = url;
 
     link.download =
-        "fractal-investigativo-backup-" +
+        "fractal-investigativo-v03-" +
         Date.now() +
         ".json";
 
@@ -911,30 +1169,113 @@ function exportarBackup() {
 
     link.click();
 
-    document.body.removeChild(link);
+    link.remove();
 
     URL.revokeObjectURL(url);
+}
 
+
+function importarBackup(evento) {
+
+    const arquivo =
+        evento.target.files[0];
+
+    if (!arquivo) return;
+
+    const leitor =
+        new FileReader();
+
+    leitor.onload = function(eventoLeitura) {
+
+        try {
+
+            const dados =
+                JSON.parse(
+                    eventoLeitura.target.result
+                );
+
+            if (
+                !dados ||
+                typeof dados !== "object" ||
+                !("historico" in dados)
+            ) {
+
+                throw new Error(
+                    "Arquivo incompatível."
+                );
+            }
+
+            const confirmar =
+                confirm(
+                    "Importar este backup substituirá " +
+                    "a memória atual deste navegador. Continuar?"
+                );
+
+            if (!confirmar) return;
+
+            banco = dados;
+
+            banco.versao = "0.3";
+
+            if (!Array.isArray(banco.historico)) {
+                banco.historico = [];
+            }
+
+            salvarBanco();
+
+            if (banco.ativa) {
+
+                if (!Array.isArray(banco.ativa.claims)) {
+                    banco.ativa.claims = [];
+                }
+
+                if (!banco.ativa.proximoClaim) {
+                    banco.ativa.proximoClaim =
+                        banco.ativa.claims.length + 1;
+                }
+
+                mostrarSistema();
+                preencherCampos();
+
+            } else {
+
+                limparCampos();
+                esconderSistema();
+            }
+
+            renderizarTudo();
+
+            alert("Backup importado.");
+
+        } catch (erro) {
+
+            alert(
+                "Não foi possível importar o backup.\n\n" +
+                erro.message
+            );
+        }
+    };
+
+    leitor.readAsText(arquivo);
+
+    evento.target.value = "";
 }
 
 
 function apagarTodaMemoria() {
 
-    const confirmar = confirm(
-        "ATENÇÃO:\n\n" +
-        "Isso apagará a investigação ativa e todo o histórico " +
-        "salvo neste navegador.\n\n" +
-        "Deseja realmente continuar?"
-    );
+    const confirmar =
+        confirm(
+            "Isso apagará toda a memória local " +
+            "e o histórico deste navegador. Continuar?"
+        );
 
-    if (!confirmar) {
-        return;
-    }
+    if (!confirmar) return;
 
-    localStorage.removeItem(CHAVE_MEMORIA);
+    localStorage.removeItem(CHAVE);
 
     banco = {
-        versao: "0.2",
+        versao: "0.3",
         ativa: null,
         historico: []
     };
@@ -943,11 +1284,35 @@ function apagarTodaMemoria() {
 
     esconderSistema();
 
-    renderizarMemoria();
+    renderizarTudo();
 
     alert("Memória apagada.");
-
 }
+
+
+[
+    "alvo",
+    "microalvos",
+    "hipoteses",
+    "evidencias",
+    "contradicoes",
+    "conclusao",
+    "proximo"
+].forEach(function(nome) {
+
+    const elemento =
+        document.getElementById(nome);
+
+    elemento.addEventListener(
+        "input",
+        function() {
+
+            if (banco.ativa) {
+                autosalvar();
+            }
+        }
+    );
+});
 
 
 function iniciarPagina() {
@@ -964,48 +1329,17 @@ function iniciarPagina() {
             document.getElementById("statusInicial");
 
         status.textContent =
-            "✓ Investigação restaurada automaticamente da memória.";
+            "✓ Investigação restaurada automaticamente.";
 
         status.classList.remove("oculto");
 
     } else {
 
         esconderSistema();
-
     }
 
-    renderizarMemoria();
-
+    renderizarTudo();
 }
-
-
-const camposAutosave = [
-    "alvo",
-    "microalvos",
-    "hipoteses",
-    "evidencias",
-    "contradicoes",
-    "conclusao",
-    "proximo"
-];
-
-camposAutosave.forEach(function(campo) {
-
-    const elemento =
-        document.getElementById(campo);
-
-    elemento.addEventListener(
-        "input",
-        function() {
-
-            if (banco.ativa) {
-                salvarAutomaticamente();
-            }
-
-        }
-    );
-
-});
 
 
 window.addEventListener(
@@ -1013,9 +1347,8 @@ window.addEventListener(
     function() {
 
         if (banco.ativa) {
-            salvarAutomaticamente();
+            autosalvar();
         }
-
     }
 );
 

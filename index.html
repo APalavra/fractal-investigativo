@@ -1,37 +1,49 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Fractal Investigativo v0.7</title>
+<title>Fractal Investigativo v0.8</title>
 
 <style>
-*{box-sizing:border-box}
+
+*{
+    box-sizing:border-box;
+}
 
 body{
     margin:0;
     background:#10110d;
     color:#d8d8d0;
     font-family:Arial,Helvetica,sans-serif;
-    line-height:1.5
+    line-height:1.5;
 }
 
 .container{
     max-width:1000px;
     margin:auto;
-    padding:20px
+    padding:20px;
 }
 
-h1{margin-bottom:8px}
-h2,h3{margin-top:0}
+h1{
+    margin-bottom:8px;
+}
 
-.subtitulo,.pequeno{
-    color:#999b91
+h2,h3{
+    margin-top:0;
+}
+
+.subtitulo,
+.pequeno{
+    color:#999b91;
 }
 
 .pequeno{
-    font-size:.88rem
+    font-size:.88rem;
 }
 
 .versao{
@@ -40,7 +52,7 @@ h2,h3{margin-top:0}
     background:#25261f;
     border:1px solid #4c4d43;
     border-radius:20px;
-    margin-bottom:16px
+    margin-bottom:16px;
 }
 
 .card{
@@ -48,24 +60,30 @@ h2,h3{margin-top:0}
     border:1px solid #45473d;
     border-radius:14px;
     padding:18px;
-    margin-bottom:20px
+    margin-bottom:20px;
 }
 
-textarea,input,select{
+textarea,
+input,
+select{
     width:100%;
     background:#0d0e0a;
-    color:#ededE7;
+    color:#edede7;
     border:1px solid #55574d;
     border-radius:9px;
     padding:12px;
     margin-top:7px;
     margin-bottom:12px;
-    font-size:1rem
+    font-size:1rem;
 }
 
 textarea{
-    min-height:105px;
-    resize:vertical
+    min-height:100px;
+    resize:vertical;
+}
+
+input[type="number"]{
+    min-height:46px;
 }
 
 button{
@@ -75,62 +93,63 @@ button{
     font-size:.94rem;
     font-weight:bold;
     cursor:pointer;
-    margin:4px 4px 4px 0
+    margin:4px 4px 4px 0;
 }
 
 .principal{
     background:#dfdfd7;
-    color:#111
+    color:#111;
 }
 
 .secundario{
     background:#35372d;
-    color:white
+    color:white;
 }
 
 .sucesso{
     background:#294a31;
-    color:white
+    color:white;
 }
 
 .perigo{
     background:#572d2d;
-    color:white
+    color:white;
 }
 
 .oculto{
-    display:none
+    display:none;
 }
 
-.status,.info{
+.status,
+.info{
     padding:12px;
     background:#23251d;
     border-radius:9px;
     margin-top:10px;
-    margin-bottom:12px
+    margin-bottom:12px;
 }
 
 .grid{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:10px
+    gap:10px;
 }
 
 .metricas{
     display:grid;
     grid-template-columns:repeat(2,1fr);
-    gap:10px
+    gap:10px;
 }
 
 .metrica{
     background:#25271f;
     border-radius:9px;
-    padding:12px
+    padding:12px;
 }
 
 .numero{
     font-size:1.45rem;
-    font-weight:bold
+    font-weight:bold;
 }
 
 .micro,
@@ -139,40 +158,41 @@ button{
 .relacao,
 .verificacao,
 .prioridade,
-.memoria{
+.memoria,
+.peso{
     background:#202119;
     border:1px solid #44463b;
     border-radius:10px;
     padding:13px;
-    margin-top:11px
+    margin-top:11px;
 }
 
 .memoria{
-    border-left:4px solid #747668
+    border-left:4px solid #747668;
 }
 
 .alerta{
-    border-left:5px solid #92753b
+    border-left:5px solid #92753b;
 }
 
 .erro{
-    border-left:5px solid #914343
+    border-left:5px solid #914343;
 }
 
 .ok{
-    border-left:5px solid #417c4c
+    border-left:5px solid #417c4c;
 }
 
 .prioridade-alta{
-    border-left:5px solid #8a783d
+    border-left:5px solid #8a783d;
 }
 
 .prioridade-media{
-    border-left:5px solid #66685c
+    border-left:5px solid #66685c;
 }
 
 .prioridade-baixa{
-    border-left:5px solid #45473e
+    border-left:5px solid #45473e;
 }
 
 .tipo{
@@ -180,41 +200,56 @@ button{
     background:#36382e;
     padding:3px 8px;
     border-radius:7px;
-    margin-left:5px
+    margin-left:5px;
 }
 
 .pontuacao{
     font-size:1.6rem;
-    font-weight:bold
+    font-weight:bold;
+}
+
+.formula{
+    background:#0d0e0a;
+    border:1px solid #55574d;
+    border-radius:10px;
+    padding:14px;
+    overflow-wrap:anywhere;
+    font-family:monospace;
 }
 
 hr{
     border:none;
     border-top:1px solid #3c3d34;
-    margin:22px 0
+    margin:22px 0;
 }
 
 @media(max-width:650px){
-    .grid,.metricas{
-        grid-template-columns:1fr
+
+    .grid,
+    .metricas{
+        grid-template-columns:1fr;
     }
+
 }
+
 </style>
+
 </head>
+
 
 <body>
 
 <div class="container">
 
 <div class="versao">
-Versão 0.7 — dependências e prioridade
+Versão 0.8 — modelo matemático de prioridade
 </div>
 
 <h1>🧠 Fractal Investigativo</h1>
 
 <p class="subtitulo">
-Árvore recursiva + grafo epistemológico + dependências entre microalvos +
-motor de prioridade + verificação estrutural.
+Árvore recursiva + grafos + verificação estrutural +
+motor de prioridade parametrizado e auditável.
 </p>
 
 
@@ -224,7 +259,7 @@ motor de prioridade + verificação estrutural.
 
 <textarea
 id="alvo"
-placeholder="Qual é a pergunta, fenômeno ou problema principal?"
+placeholder="Qual é a pergunta, problema ou fenômeno principal?"
 ></textarea>
 
 <button
@@ -242,16 +277,15 @@ class="status oculto"
 </section>
 
 
-<div id="sistema" class="oculto">
+<div
+id="sistema"
+class="oculto"
+>
 
 
 <section class="card">
 
 <h2>2. Árvore Fractal de Microalvos</h2>
-
-<div class="info">
-Cada microalvo pode possuir filhos, formando profundidade recursiva.
-</div>
 
 <label>Novo microalvo</label>
 
@@ -263,7 +297,11 @@ placeholder="Digite um novo microalvo..."
 <label>Inserir dentro de</label>
 
 <select id="microPai">
-<option value="">ALVO PRINCIPAL</option>
+
+<option value="">
+ALVO PRINCIPAL
+</option>
+
 </select>
 
 <button
@@ -286,25 +324,21 @@ Adicionar microalvo
 
 <div class="info">
 
-A relação possui direção.
+Exemplo:
 
 <br><br>
 
-Se escolher:
-
-<br>
-
-<strong>MA-2 DEPENDE DE MA-1</strong>
+<strong>MA-1.1 DEPENDE DE MA-1</strong>
 
 <br><br>
 
-significa que MA-2 não deveria ser considerado plenamente liberado
-enquanto MA-1 ainda não estiver resolvido.
+Enquanto MA-1 não estiver resolvido,
+MA-1.1 recebe penalização estrutural.
 
 </div>
 
 
-<label>Microalvo de origem</label>
+<label>Origem</label>
 
 <select id="microRelOrigem"></select>
 
@@ -332,17 +366,14 @@ Complementa
 </select>
 
 
-<label>Microalvo de destino</label>
+<label>Destino</label>
 
 <select id="microRelDestino"></select>
 
 
 <label>Observação</label>
 
-<textarea
-id="microRelObservacao"
-placeholder="Explique por que esta relação existe."
-></textarea>
+<textarea id="microRelObservacao"></textarea>
 
 
 <button
@@ -351,7 +382,6 @@ onclick="adicionarRelacaoMicro()"
 >
 Criar relação entre microalvos
 </button>
-
 
 <div id="microRelacoes"></div>
 
@@ -646,7 +676,6 @@ onclick="adicionarRelacao()"
 Criar relação
 </button>
 
-
 <div id="relacoes"></div>
 
 </section>
@@ -654,26 +683,183 @@ Criar relação
 
 <section class="card">
 
-<h2>11. Motor de Prioridade</h2>
+<h2>11. Modelo Matemático de Prioridade</h2>
 
 <div class="info">
 
-O motor não decide qual afirmação é verdadeira.
+Agora os pesos do motor são parâmetros explícitos.
 
-Ele calcula qual microalvo parece estruturalmente mais importante
-para receber atenção agora.
+Você pode alterá-los e observar como o ranking muda.
 
-<br><br>
+Nenhuma alteração desses números muda fatos ou evidências:
+ela muda somente a <strong>estratégia de escolha do próximo microalvo</strong>.
 
-Critérios atuais:
+</div>
 
-<br>
 
-• estado do microalvo<br>
-• dependências ainda não resolvidas<br>
-• quantidade de outros microalvos que dependem dele<br>
-• capacidade de desbloquear outros nós<br>
-• ausência de claims diretamente associados
+<div class="formula" id="formulaPrioridade"></div>
+
+
+<hr>
+
+
+<div class="grid">
+
+<div class="peso">
+
+<label>
+Wₐ — microalvo aberto
+</label>
+
+<input
+type="number"
+id="pesoAberto"
+step="1"
+>
+
+</div>
+
+
+<div class="peso">
+
+<label>
+Wᵢ — investigando
+</label>
+
+<input
+type="number"
+id="pesoInvestigando"
+step="1"
+>
+
+</div>
+
+
+<div class="peso">
+
+<label>
+Wᵦ — bloqueio manual
+</label>
+
+<input
+type="number"
+id="pesoBloqueado"
+step="1"
+>
+
+</div>
+
+
+<div class="peso">
+
+<label>
+W𝒹 — dependência pendente
+</label>
+
+<input
+type="number"
+id="pesoDependencia"
+step="1"
+>
+
+</div>
+
+
+<div class="peso">
+
+<label>
+W𝓰 — por microalvo dependente
+</label>
+
+<input
+type="number"
+id="pesoDependente"
+step="1"
+>
+
+</div>
+
+
+<div class="peso">
+
+<label>
+Wᵤ — por desbloqueio
+</label>
+
+<input
+type="number"
+id="pesoDesbloqueio"
+step="1"
+>
+
+</div>
+
+
+<div class="peso">
+
+<label>
+W𝒸 — ausência de claims
+</label>
+
+<input
+type="number"
+id="pesoSemClaims"
+step="1"
+>
+
+</div>
+
+
+<div class="peso">
+
+<label>
+Wₜ — por claim contestado
+</label>
+
+<input
+type="number"
+id="pesoContestado"
+step="1"
+>
+
+</div>
+
+</div>
+
+
+<button
+class="principal"
+onclick="salvarPesos()"
+>
+Salvar pesos
+</button>
+
+
+<button
+class="secundario"
+onclick="restaurarPesosPadrao()"
+>
+Restaurar pesos padrão
+</button>
+
+
+<div
+id="statusPesos"
+class="status"
+></div>
+
+</section>
+
+
+<section class="card">
+
+<h2>12. Motor de Prioridade</h2>
+
+<div class="info">
+
+O cálculo atual usa explicitamente os pesos definidos na seção anterior.
+
+Cada resultado mostra sua decomposição.
 
 </div>
 
@@ -693,15 +879,7 @@ onclick="calcularPrioridades()"
 
 <section class="card">
 
-<h2>12. Verificador estrutural</h2>
-
-<div class="info">
-
-O verificador detecta fragilidades da estrutura.
-
-Ele não substitui validação científica, histórica, lógica ou documental.
-
-</div>
+<h2>13. Verificador Estrutural</h2>
 
 <button
 class="principal"
@@ -719,7 +897,7 @@ onclick="executarVerificacao()"
 
 <section class="card">
 
-<h2>13. Memória</h2>
+<h2>14. Memória</h2>
 
 <div
 id="statusMemoria"
@@ -778,7 +956,7 @@ onchange="importarBackup(event)"
 class="perigo"
 onclick="apagarTodaMemoria()"
 >
-Apagar memória da v0.7
+Apagar memória da v0.8
 </button>
 
 
@@ -792,25 +970,61 @@ Apagar memória da v0.7
 
 
 </div>
+
 </div>
 
 
 <script>
 
+const CHAVE_V08 =
+"fractal_investigativo_v08";
+
 const CHAVE_V07 =
 "fractal_investigativo_v07";
 
-const CHAVE_V06 =
-"fractal_investigativo_v06";
+
+const PESOS_PADRAO = {
+
+    aberto:
+        10,
+
+    investigando:
+        7,
+
+    bloqueado:
+        -30,
+
+    dependenciaPendente:
+        -25,
+
+    porDependente:
+        5,
+
+    porDesbloqueio:
+        4,
+
+    semClaims:
+        3,
+
+    porContestado:
+        2
+
+};
 
 
 let banco = {
 
-    versao: "0.7",
+    versao:
+        "0.8",
 
-    ativa: null,
+    configPrioridade:
+        {...PESOS_PADRAO},
 
-    historico: []
+    ativa:
+        null,
+
+    historico:
+        []
 
 };
 
@@ -924,11 +1138,13 @@ function normalizarInvestigacao(i){
 
         let maior = 0;
 
+
         i.microNos.forEach(function(n){
 
             const m =
                 /^MA-(\d+)$/
                 .exec(n.id);
+
 
             if(m){
 
@@ -941,6 +1157,7 @@ function normalizarInvestigacao(i){
             }
 
         });
+
 
         i.proximoMicroRaiz =
             maior + 1;
@@ -1009,14 +1226,102 @@ function normalizarInvestigacao(i){
 
 
 
+function normalizarBanco(){
+
+    if(
+        !banco ||
+        typeof banco !== "object"
+    ){
+
+        banco = {
+            versao:"0.8",
+            configPrioridade:{
+                ...PESOS_PADRAO
+            },
+            ativa:null,
+            historico:[]
+        };
+
+    }
+
+
+    if(
+        !banco.configPrioridade ||
+        typeof banco.configPrioridade !==
+        "object"
+    ){
+
+        banco.configPrioridade = {
+            ...PESOS_PADRAO
+        };
+
+    }
+
+
+    Object.keys(
+        PESOS_PADRAO
+    )
+    .forEach(function(chave){
+
+        const valor =
+            Number(
+                banco.configPrioridade[
+                    chave
+                ]
+            );
+
+
+        if(
+            !Number.isFinite(valor)
+        ){
+
+            banco.configPrioridade[chave] =
+                PESOS_PADRAO[chave];
+
+        }
+
+    });
+
+
+    if(
+        !Array.isArray(
+            banco.historico
+        )
+    ){
+
+        banco.historico = [];
+
+    }
+
+
+    banco.ativa =
+        normalizarInvestigacao(
+            banco.ativa
+        );
+
+
+    banco.historico =
+        banco.historico.map(
+            normalizarInvestigacao
+        );
+
+
+    banco.versao =
+        "0.8";
+
+}
+
+
+
 function salvarBanco(){
 
     try{
 
         localStorage.setItem(
-            CHAVE_V07,
+            CHAVE_V08,
             JSON.stringify(banco)
         );
+
 
         atualizarStatus();
 
@@ -1040,7 +1345,7 @@ function carregarBanco(){
 
         const atual =
             localStorage.getItem(
-                CHAVE_V07
+                CHAVE_V08
             );
 
 
@@ -1054,7 +1359,7 @@ function carregarBanco(){
 
             const anterior =
                 localStorage.getItem(
-                    CHAVE_V06
+                    CHAVE_V07
                 );
 
 
@@ -1063,11 +1368,9 @@ function carregarBanco(){
                 banco =
                     JSON.parse(anterior);
 
-                banco.versao =
-                    "0.7";
 
                 alert(
-                    "Memória da v0.6 encontrada e migrada para a v0.7."
+                    "Memória da v0.7 encontrada e migrada para a v0.8."
                 );
 
             }
@@ -1075,24 +1378,7 @@ function carregarBanco(){
         }
 
 
-        if(!Array.isArray(banco.historico)){
-
-            banco.historico = [];
-
-        }
-
-
-        banco.ativa =
-            normalizarInvestigacao(
-                banco.ativa
-            );
-
-
-        banco.historico =
-            banco.historico.map(
-                normalizarInvestigacao
-            );
-
+        normalizarBanco();
 
         salvarBanco();
 
@@ -1216,7 +1502,9 @@ function registrarCampo(nome){
 
     renderizarMemoria();
 
-    alert("Registrado.");
+    alert(
+        "Registrado."
+    );
 
 }
 
@@ -1311,25 +1599,42 @@ function compararIdsMicro(a,b){
     const pb =
         partesId(b.id);
 
-    const t =
+    const tamanho =
         Math.max(
             pa.length,
             pb.length
         );
 
 
-    for(let i=0;i<t;i++){
+    for(
+        let i=0;
+        i<tamanho;
+        i++
+    ){
 
-        if(pa[i] === undefined){
+        if(
+            pa[i] === undefined
+        ){
             return -1;
         }
 
-        if(pb[i] === undefined){
+
+        if(
+            pb[i] === undefined
+        ){
             return 1;
         }
 
-        if(pa[i] !== pb[i]){
-            return pa[i] - pb[i];
+
+        if(
+            pa[i] !== pb[i]
+        ){
+
+            return (
+                pa[i] -
+                pb[i]
+            );
+
         }
 
     }
@@ -1347,7 +1652,10 @@ function profundidadeMicro(id){
         return 0;
     }
 
-    return id.split(".").length;
+
+    return id
+    .split(".")
+    .length;
 
 }
 
@@ -1363,7 +1671,11 @@ function microPorId(id){
     return (
         banco.ativa.microNos.find(
             function(n){
-                return n.id === id;
+
+                return (
+                    n.id === id
+                );
+
             }
         ) || null
     );
@@ -1414,15 +1726,20 @@ function adicionarMicroalvo(){
 
         id =
             "MA-" +
-            banco.ativa.proximoMicroRaiz;
+            banco.ativa
+            .proximoMicroRaiz;
 
-        banco.ativa.proximoMicroRaiz++;
+
+        banco.ativa
+        .proximoMicroRaiz++;
 
     }
     else{
 
         const pai =
-            microPorId(parentId);
+            microPorId(
+                parentId
+            );
 
 
         if(!pai){
@@ -1482,7 +1799,10 @@ function adicionarMicroalvo(){
 
 
 
-function atualizarEstadoMicro(id,estado){
+function atualizarEstadoMicro(
+    id,
+    estado
+){
 
     const micro =
         microPorId(id);
@@ -1495,6 +1815,7 @@ function atualizarEstadoMicro(id,estado){
 
     micro.estado =
         estado;
+
 
     micro.atualizadoEm =
         agora();
@@ -1534,10 +1855,12 @@ function removerMicroalvo(id){
         !confirm(
             "Remover " +
             id +
-            " e seus descendentes?"
+            " e todos os descendentes?"
         )
     ){
+
         return;
+
     }
 
 
@@ -1555,8 +1878,8 @@ function removerMicroalvo(id){
         banco.ativa.microNos.filter(
             function(n){
 
-                return !ids.has(
-                    n.id
+                return (
+                    !ids.has(n.id)
                 );
 
             }
@@ -1576,20 +1899,22 @@ function removerMicroalvo(id){
         );
 
 
-    banco.ativa.claims.forEach(
-        function(c){
+    banco.ativa.claims
+    .forEach(function(c){
 
-            if(
-                c.microalvoId &&
-                ids.has(
-                    c.microalvoId
-                )
-            ){
-                c.microalvoId = null;
-            }
+        if(
+            c.microalvoId &&
+            ids.has(
+                c.microalvoId
+            )
+        ){
+
+            c.microalvoId =
+                null;
 
         }
-    );
+
+    });
 
 
     salvarBanco();
@@ -1630,8 +1955,10 @@ function preencherSeletoresMicro(){
     pai.innerHTML =
         "<option value=''>ALVO PRINCIPAL</option>";
 
+
     claim.innerHTML =
         "<option value=''>Sem microalvo específico</option>";
+
 
     origem.innerHTML = "";
 
@@ -1645,14 +1972,18 @@ function preencherSeletoresMicro(){
 
     banco.ativa.microNos
     .slice()
-    .sort(compararIdsMicro)
+    .sort(
+        compararIdsMicro
+    )
     .forEach(function(n){
 
         const recuo =
             "↳ ".repeat(
                 Math.max(
                     0,
-                    profundidadeMicro(n.id)-1
+                    profundidadeMicro(
+                        n.id
+                    ) - 1
                 )
             );
 
@@ -1666,11 +1997,14 @@ function preencherSeletoresMicro(){
 
         const op =
             document
-            .createElement("option");
+            .createElement(
+                "option"
+            );
 
 
         op.value =
             n.id;
+
 
         op.textContent =
             texto;
@@ -1680,13 +2014,16 @@ function preencherSeletoresMicro(){
             op.cloneNode(true)
         );
 
+
         claim.appendChild(
             op.cloneNode(true)
         );
 
+
         origem.appendChild(
             op.cloneNode(true)
         );
+
 
         destino.appendChild(
             op.cloneNode(true)
@@ -1699,7 +2036,8 @@ function preencherSeletoresMicro(){
         banco.ativa.microNos.length > 1
     ){
 
-        destino.selectedIndex = 1;
+        destino.selectedIndex =
+            1;
 
     }
 
@@ -1747,12 +2085,17 @@ function adicionarRelacaoMicro(){
         .value;
 
 
-    if(!origem || !destino){
+    if(
+        !origem ||
+        !destino
+    ){
         return;
     }
 
 
-    if(origem === destino){
+    if(
+        origem === destino
+    ){
 
         alert(
             "Um microalvo não pode se relacionar consigo mesmo."
@@ -1792,7 +2135,8 @@ function adicionarRelacaoMicro(){
 
         id:
             "MR-" +
-            banco.ativa.proximaRelacaoMicro,
+            banco.ativa
+            .proximaRelacaoMicro,
 
         origem:
             origem,
@@ -1817,7 +2161,8 @@ function adicionarRelacaoMicro(){
     });
 
 
-    banco.ativa.proximaRelacaoMicro++;
+    banco.ativa
+    .proximaRelacaoMicro++;
 
 
     document
@@ -1844,14 +2189,20 @@ function removerRelacaoMicro(id){
             "?"
         )
     ){
+
         return;
+
     }
 
 
     banco.ativa.relacoesMicro =
         banco.ativa.relacoesMicro.filter(
             function(r){
-                return r.id !== id;
+
+                return (
+                    r.id !== id
+                );
+
             }
         );
 
@@ -1883,7 +2234,10 @@ function nomeRelacaoMicro(tipo){
     };
 
 
-    return mapa[tipo] || tipo;
+    return (
+        mapa[tipo] ||
+        tipo
+    );
 
 }
 
@@ -1916,12 +2270,16 @@ function renderizarArvoreMicro(){
 
     banco.ativa.microNos
     .slice()
-    .sort(compararIdsMicro)
+    .sort(
+        compararIdsMicro
+    )
     .forEach(function(n){
 
         const div =
             document
-            .createElement("div");
+            .createElement(
+                "div"
+            );
 
 
         div.className =
@@ -1929,12 +2287,14 @@ function renderizarArvoreMicro(){
 
 
         const profundidade =
-            profundidadeMicro(n.id)-1;
+            profundidadeMicro(
+                n.id
+            ) - 1;
 
 
         div.style.marginLeft =
             Math.min(
-                profundidade*16,
+                profundidade * 16,
                 96
             ) + "px";
 
@@ -1987,28 +2347,44 @@ function renderizarArvoreMicro(){
 
             <option
             value="aberto"
-            ${n.estado==="aberto"?"selected":""}
+            ${
+                n.estado === "aberto"
+                ? "selected"
+                : ""
+            }
             >
             Aberto
             </option>
 
             <option
             value="investigando"
-            ${n.estado==="investigando"?"selected":""}
+            ${
+                n.estado === "investigando"
+                ? "selected"
+                : ""
+            }
             >
             Investigando
             </option>
 
             <option
             value="resolvido"
-            ${n.estado==="resolvido"?"selected":""}
+            ${
+                n.estado === "resolvido"
+                ? "selected"
+                : ""
+            }
             >
             Resolvido
             </option>
 
             <option
             value="bloqueado"
-            ${n.estado==="bloqueado"?"selected":""}
+            ${
+                n.estado === "bloqueado"
+                ? "selected"
+                : ""
+            }
             >
             Bloqueado
             </option>
@@ -2029,7 +2405,9 @@ function renderizarArvoreMicro(){
         `;
 
 
-        caixa.appendChild(div);
+        caixa.appendChild(
+            div
+        );
 
     });
 
@@ -2052,7 +2430,7 @@ function renderizarRelacoesMicro(){
     ){
 
         caixa.innerHTML =
-            "<p class='pequeno'>Nenhuma dependência entre microalvos.</p>";
+            "<p class='pequeno'>Nenhuma relação entre microalvos.</p>";
 
         return;
 
@@ -2067,7 +2445,9 @@ function renderizarRelacoesMicro(){
 
         const div =
             document
-            .createElement("div");
+            .createElement(
+                "div"
+            );
 
 
         div.className =
@@ -2105,9 +2485,7 @@ function renderizarRelacoesMicro(){
             </p>
 
             <p class="pequeno">
-
             ${escapar(r.observacao)}
-
             </p>
 
             <button
@@ -2124,7 +2502,9 @@ function renderizarRelacoesMicro(){
         `;
 
 
-        caixa.appendChild(div);
+        caixa.appendChild(
+            div
+        );
 
     });
 
@@ -2163,7 +2543,8 @@ function adicionarClaim(){
 
         id:
             "CLM-" +
-            banco.ativa.proximoClaim,
+            banco.ativa
+            .proximoClaim,
 
         texto:
             texto,
@@ -2212,7 +2593,8 @@ function adicionarClaim(){
     });
 
 
-    banco.ativa.proximoClaim++;
+    banco.ativa
+    .proximoClaim++;
 
 
     salvarBanco();
@@ -2266,7 +2648,8 @@ function limparFormularioClaim(){
     .getElementById(
         "valorConfianca"
     )
-    .textContent = "50";
+    .textContent =
+        "50";
 
 
     document
@@ -2288,14 +2671,20 @@ function removerClaim(id){
             " e suas relações?"
         )
     ){
+
         return;
+
     }
 
 
     banco.ativa.claims =
         banco.ativa.claims.filter(
             function(c){
-                return c.id !== id;
+
+                return (
+                    c.id !== id
+                );
+
             }
         );
 
@@ -2361,7 +2750,9 @@ function adicionarRelacao(){
         .value;
 
 
-    if(origem === destino){
+    if(
+        origem === destino
+    ){
 
         alert(
             "Origem e destino não podem ser iguais."
@@ -2401,7 +2792,8 @@ function adicionarRelacao(){
 
         id:
             "REL-" +
-            banco.ativa.proximaRelacao,
+            banco.ativa
+            .proximaRelacao,
 
         origem:
             origem,
@@ -2433,7 +2825,8 @@ function adicionarRelacao(){
     });
 
 
-    banco.ativa.proximaRelacao++;
+    banco.ativa
+    .proximaRelacao++;
 
 
     document
@@ -2460,14 +2853,20 @@ function removerRelacao(id){
             "?"
         )
     ){
+
         return;
+
     }
 
 
     banco.ativa.relacoes =
         banco.ativa.relacoes.filter(
             function(r){
-                return r.id !== id;
+
+                return (
+                    r.id !== id
+                );
+
             }
         );
 
@@ -2487,6 +2886,7 @@ function preencherSeletoresRelacao(){
         .getElementById(
             "relOrigem"
         );
+
 
     const destino =
         document
@@ -2508,8 +2908,10 @@ function preencherSeletoresRelacao(){
         origem.innerHTML =
             "<option value=''>Nenhuma afirmação</option>";
 
+
         destino.innerHTML =
             "<option value=''>Nenhuma afirmação</option>";
+
 
         return;
 
@@ -2521,13 +2923,18 @@ function preencherSeletoresRelacao(){
 
         const curto =
             c.texto.length > 35
-            ? c.texto.slice(0,35) + "..."
+            ? c.texto.slice(
+                0,
+                35
+            ) + "..."
             : c.texto;
 
 
         const op =
             document
-            .createElement("option");
+            .createElement(
+                "option"
+            );
 
 
         op.value =
@@ -2544,6 +2951,7 @@ function preencherSeletoresRelacao(){
             op.cloneNode(true)
         );
 
+
         destino.appendChild(
             op.cloneNode(true)
         );
@@ -2555,7 +2963,8 @@ function preencherSeletoresRelacao(){
         banco.ativa.claims.length > 1
     ){
 
-        destino.selectedIndex = 1;
+        destino.selectedIndex =
+            1;
 
     }
 
@@ -2591,7 +3000,10 @@ function nomeRelacao(tipo){
     };
 
 
-    return mapa[tipo] || tipo;
+    return (
+        mapa[tipo] ||
+        tipo
+    );
 
 }
 
@@ -2604,23 +3016,43 @@ function escapar(texto){
         texto === undefined ||
         texto === ""
     ){
+
         return "—";
+
     }
 
 
     return String(texto)
 
-    .replace(/&/g,"&amp;")
+    .replace(
+        /&/g,
+        "&amp;"
+    )
 
-    .replace(/</g,"&lt;")
+    .replace(
+        /</g,
+        "&lt;"
+    )
 
-    .replace(/>/g,"&gt;")
+    .replace(
+        />/g,
+        "&gt;"
+    )
 
-    .replace(/"/g,"&quot;")
+    .replace(
+        /"/g,
+        "&quot;"
+    )
 
-    .replace(/'/g,"&#039;")
+    .replace(
+        /'/g,
+        "&#039;"
+    )
 
-    .replace(/\n/g,"<br>");
+    .replace(
+        /\n/g,
+        "<br>"
+    );
 
 }
 
@@ -2656,7 +3088,9 @@ function renderizarClaims(){
 
         const div =
             document
-            .createElement("div");
+            .createElement(
+                "div"
+            );
 
 
         div.className =
@@ -2713,7 +3147,9 @@ function renderizarClaims(){
         `;
 
 
-        caixa.appendChild(div);
+        caixa.appendChild(
+            div
+        );
 
     });
 
@@ -2751,7 +3187,9 @@ function renderizarRelacoes(){
 
         const div =
             document
-            .createElement("div");
+            .createElement(
+                "div"
+            );
 
 
         div.className =
@@ -2774,7 +3212,9 @@ function renderizarRelacoes(){
 
             <strong>
             ${escapar(
-                nomeRelacao(r.tipo)
+                nomeRelacao(
+                    r.tipo
+                )
             )}
             </strong>
 
@@ -2812,7 +3252,9 @@ function renderizarRelacoes(){
         `;
 
 
-        caixa.appendChild(div);
+        caixa.appendChild(
+            div
+        );
 
     });
 
@@ -2820,15 +3262,296 @@ function renderizarRelacoes(){
 
 
 
-function dependenciaPendente(microId){
+function preencherPesos(){
+
+    const p =
+        banco.configPrioridade;
+
+
+    document
+    .getElementById(
+        "pesoAberto"
+    )
+    .value =
+        p.aberto;
+
+
+    document
+    .getElementById(
+        "pesoInvestigando"
+    )
+    .value =
+        p.investigando;
+
+
+    document
+    .getElementById(
+        "pesoBloqueado"
+    )
+    .value =
+        p.bloqueado;
+
+
+    document
+    .getElementById(
+        "pesoDependencia"
+    )
+    .value =
+        p.dependenciaPendente;
+
+
+    document
+    .getElementById(
+        "pesoDependente"
+    )
+    .value =
+        p.porDependente;
+
+
+    document
+    .getElementById(
+        "pesoDesbloqueio"
+    )
+    .value =
+        p.porDesbloqueio;
+
+
+    document
+    .getElementById(
+        "pesoSemClaims"
+    )
+    .value =
+        p.semClaims;
+
+
+    document
+    .getElementById(
+        "pesoContestado"
+    )
+    .value =
+        p.porContestado;
+
+
+    renderizarFormula();
+
+}
+
+
+
+function numeroCampo(id){
+
+    const valor =
+        Number(
+            document
+            .getElementById(id)
+            .value
+        );
+
+
+    if(
+        !Number.isFinite(valor)
+    ){
+
+        throw new Error(
+            "Há um peso inválido."
+        );
+
+    }
+
+
+    return valor;
+
+}
+
+
+
+function salvarPesos(){
+
+    try{
+
+        banco.configPrioridade = {
+
+            aberto:
+                numeroCampo(
+                    "pesoAberto"
+                ),
+
+            investigando:
+                numeroCampo(
+                    "pesoInvestigando"
+                ),
+
+            bloqueado:
+                numeroCampo(
+                    "pesoBloqueado"
+                ),
+
+            dependenciaPendente:
+                numeroCampo(
+                    "pesoDependencia"
+                ),
+
+            porDependente:
+                numeroCampo(
+                    "pesoDependente"
+                ),
+
+            porDesbloqueio:
+                numeroCampo(
+                    "pesoDesbloqueio"
+                ),
+
+            semClaims:
+                numeroCampo(
+                    "pesoSemClaims"
+                ),
+
+            porContestado:
+                numeroCampo(
+                    "pesoContestado"
+                )
+
+        };
+
+
+        salvarBanco();
+
+        renderizarFormula();
+
+
+        document
+        .getElementById(
+            "statusPesos"
+        )
+        .textContent =
+            "✓ Pesos salvos. O próximo cálculo usará este modelo.";
+
+
+        calcularPrioridades();
+
+    }
+    catch(erro){
+
+        alert(
+            erro.message
+        );
+
+    }
+
+}
+
+
+
+function restaurarPesosPadrao(){
+
+    if(
+        !confirm(
+            "Restaurar os pesos matemáticos padrão?"
+        )
+    ){
+
+        return;
+
+    }
+
+
+    banco.configPrioridade = {
+        ...PESOS_PADRAO
+    };
+
+
+    salvarBanco();
+
+    preencherPesos();
+
+
+    document
+    .getElementById(
+        "statusPesos"
+    )
+    .textContent =
+        "✓ Pesos padrão restaurados.";
+
+
+    calcularPrioridades();
+
+}
+
+
+
+function renderizarFormula(){
+
+    const p =
+        banco.configPrioridade;
+
+
+    document
+    .getElementById(
+        "formulaPrioridade"
+    )
+    .innerHTML = `
+
+        <strong>
+        Função atual
+        </strong>
+
+        <br><br>
+
+        P(m) =
+
+        ${p.aberto}·A
+
+        + (${p.investigando})·I
+
+        + (${p.bloqueado})·B
+
+        + (${p.dependenciaPendente})·D
+
+        + (${p.porDependente})·G
+
+        + (${p.porDesbloqueio})·U
+
+        + (${p.semClaims})·C
+
+        + (${p.porContestado})·T
+
+        <br><br>
+
+        A = microalvo aberto (0 ou 1)<br>
+
+        I = investigando (0 ou 1)<br>
+
+        B = bloqueado manualmente (0 ou 1)<br>
+
+        D = possui dependência pendente (0 ou 1)<br>
+
+        G = número de microalvos que dependem dele<br>
+
+        U = número de relações "desbloqueia" saindo dele<br>
+
+        C = ausência de claims diretos (0 ou 1)<br>
+
+        T = quantidade de claims contestados diretamente associados
+
+    `;
+
+}
+
+
+
+function dependenciaPendente(
+    microId
+){
 
     const dependencias =
         banco.ativa.relacoesMicro.filter(
             function(r){
 
                 return (
-                    r.tipo === "depende" &&
-                    r.origem === microId
+                    r.tipo ===
+                    "depende" &&
+                    r.origem ===
+                    microId
                 );
 
             }
@@ -2857,11 +3580,12 @@ function dependenciaPendente(microId){
 
 
 
-function calcularPontuacaoMicro(micro){
+function calcularPontuacaoMicro(
+    micro
+){
 
-    let pontos = 0;
-
-    const razoes = [];
+    const p =
+        banco.configPrioridade;
 
 
     if(
@@ -2870,73 +3594,109 @@ function calcularPontuacaoMicro(micro){
     ){
 
         return {
-            pontos:-1000,
+
+            pontos:
+                -1000,
+
+            componentes:
+                [],
+
             razoes:[
-                "Microalvo já resolvido."
+                "Microalvo resolvido; removido do ranking ativo."
             ]
+
         };
 
     }
 
 
-    if(
-        micro.estado ===
-        "bloqueado"
+    const componentes = [];
+
+    const razoes = [];
+
+
+    function adicionar(
+        simbolo,
+        quantidade,
+        peso,
+        explicacao
     ){
 
-        pontos -= 30;
+        const subtotal =
+            quantidade *
+            peso;
 
-        razoes.push(
-            "Marcado manualmente como bloqueado."
-        );
+
+        componentes.push({
+
+            simbolo:
+                simbolo,
+
+            quantidade:
+                quantidade,
+
+            peso:
+                peso,
+
+            subtotal:
+                subtotal
+
+        });
+
+
+        if(
+            quantidade !== 0
+        ){
+
+            razoes.push(
+
+                simbolo +
+                ": " +
+                quantidade +
+                " × " +
+                peso +
+                " = " +
+                subtotal +
+                " — " +
+                explicacao
+
+            );
+
+        }
 
     }
 
 
-    if(
+    const A =
         micro.estado ===
         "aberto"
-    ){
-
-        pontos += 10;
-
-        razoes.push(
-            "+10 por estar aberto."
-        );
-
-    }
+        ? 1
+        : 0;
 
 
-    if(
+    const I =
         micro.estado ===
         "investigando"
-    ){
-
-        pontos += 7;
-
-        razoes.push(
-            "+7 por já estar em investigação."
-        );
-
-    }
+        ? 1
+        : 0;
 
 
-    if(
+    const B =
+        micro.estado ===
+        "bloqueado"
+        ? 1
+        : 0;
+
+
+    const D =
         dependenciaPendente(
             micro.id
         )
-    ){
-
-        pontos -= 25;
-
-        razoes.push(
-            "-25 porque depende de microalvo ainda não resolvido."
-        );
-
-    }
+        ? 1
+        : 0;
 
 
-    const dependentes =
+    const G =
         banco.ativa.relacoesMicro.filter(
             function(r){
 
@@ -2951,23 +3711,7 @@ function calcularPontuacaoMicro(micro){
         ).length;
 
 
-    if(dependentes){
-
-        pontos +=
-            dependentes * 5;
-
-        razoes.push(
-            "+" +
-            (dependentes*5) +
-            " porque " +
-            dependentes +
-            " microalvo(s) dependem dele."
-        );
-
-    }
-
-
-    const desbloqueios =
+    const U =
         banco.ativa.relacoesMicro.filter(
             function(r){
 
@@ -2980,20 +3724,6 @@ function calcularPontuacaoMicro(micro){
 
             }
         ).length;
-
-
-    if(desbloqueios){
-
-        pontos +=
-            desbloqueios * 4;
-
-        razoes.push(
-            "+" +
-            (desbloqueios*4) +
-            " por potencial de desbloqueio."
-        );
-
-    }
 
 
     const claims =
@@ -3009,18 +3739,13 @@ function calcularPontuacaoMicro(micro){
         );
 
 
-    if(claims.length === 0){
-
-        pontos += 3;
-
-        razoes.push(
-            "+3 porque ainda não possui claims diretamente associados."
-        );
-
-    }
+    const C =
+        claims.length === 0
+        ? 1
+        : 0;
 
 
-    const contestados =
+    const T =
         claims.filter(
             function(c){
 
@@ -3033,23 +3758,106 @@ function calcularPontuacaoMicro(micro){
         ).length;
 
 
-    if(contestados){
+    adicionar(
+        "A",
+        A,
+        p.aberto,
+        "estado aberto"
+    );
 
-        pontos +=
-            contestados * 2;
+
+    adicionar(
+        "I",
+        I,
+        p.investigando,
+        "em investigação"
+    );
+
+
+    adicionar(
+        "B",
+        B,
+        p.bloqueado,
+        "bloqueio manual"
+    );
+
+
+    adicionar(
+        "D",
+        D,
+        p.dependenciaPendente,
+        "dependência pendente"
+    );
+
+
+    adicionar(
+        "G",
+        G,
+        p.porDependente,
+        "microalvos dependentes"
+    );
+
+
+    adicionar(
+        "U",
+        U,
+        p.porDesbloqueio,
+        "potencial de desbloqueio"
+    );
+
+
+    adicionar(
+        "C",
+        C,
+        p.semClaims,
+        "ausência de claims"
+    );
+
+
+    adicionar(
+        "T",
+        T,
+        p.porContestado,
+        "claims contestados"
+    );
+
+
+    const pontos =
+        componentes.reduce(
+            function(total,c){
+
+                return (
+                    total +
+                    c.subtotal
+                );
+
+            },
+            0
+        );
+
+
+    if(
+        razoes.length === 0
+    ){
 
         razoes.push(
-            "+" +
-            (contestados*2) +
-            " porque possui claims contestados que exigem atenção."
+            "Nenhum componente ativo."
         );
 
     }
 
 
     return {
-        pontos:pontos,
-        razoes:razoes
+
+        pontos:
+            pontos,
+
+        componentes:
+            componentes,
+
+        razoes:
+            razoes
+
     };
 
 }
@@ -3071,7 +3879,8 @@ function calcularPrioridades(){
 
 
     if(
-        banco.ativa.microNos.length === 0
+        banco.ativa.microNos.length ===
+        0
     ){
 
         caixa.innerHTML =
@@ -3087,7 +3896,9 @@ function calcularPrioridades(){
         .map(function(m){
 
             const calculo =
-                calcularPontuacaoMicro(m);
+                calcularPontuacaoMicro(
+                    m
+                );
 
 
             return {
@@ -3097,6 +3908,9 @@ function calcularPrioridades(){
 
                 pontos:
                     calculo.pontos,
+
+                componentes:
+                    calculo.componentes,
 
                 razoes:
                     calculo.razoes
@@ -3117,9 +3931,22 @@ function calcularPrioridades(){
         .sort(
             function(a,b){
 
-                return (
-                    b.pontos -
+                if(
+                    b.pontos !==
                     a.pontos
+                ){
+
+                    return (
+                        b.pontos -
+                        a.pontos
+                    );
+
+                }
+
+
+                return compararIdsMicro(
+                    a.micro,
+                    b.micro
                 );
 
             }
@@ -3127,7 +3954,54 @@ function calcularPrioridades(){
 
 
     caixa.innerHTML =
-        "<h3>Ranking atual</h3>";
+        "<h3>Ranking calculado</h3>";
+
+
+    if(
+        ranking.length === 0
+    ){
+
+        caixa.innerHTML +=
+            "<p>Todos os microalvos estão resolvidos.</p>";
+
+        return;
+
+    }
+
+
+    const destaque =
+        document
+        .createElement(
+            "div"
+        );
+
+
+    destaque.className =
+        "status";
+
+
+    destaque.innerHTML =
+
+        "<strong>Foco estrutural sugerido:</strong><br>" +
+
+        escapar(
+            ranking[0].micro.id
+        ) +
+
+        " — " +
+
+        escapar(
+            ranking[0].micro.titulo
+        ) +
+
+        "<br><br>Pontuação: " +
+
+        ranking[0].pontos;
+
+
+    caixa.appendChild(
+        destaque
+    );
 
 
     ranking.forEach(
@@ -3135,7 +4009,9 @@ function calcularPrioridades(){
 
             const div =
                 document
-                .createElement("div");
+                .createElement(
+                    "div"
+                );
 
 
             let classe =
@@ -3164,10 +4040,13 @@ function calcularPrioridades(){
             div.innerHTML = `
 
                 <strong>
-                #${index+1} —
+
+                #${index+1}
+                —
                 ${escapar(
                     item.micro.id
                 )}
+
                 </strong>
 
                 <p>
@@ -3192,43 +4071,12 @@ function calcularPrioridades(){
             `;
 
 
-            caixa.appendChild(div);
+            caixa.appendChild(
+                div
+            );
 
         }
     );
-
-
-    if(ranking.length){
-
-        const topo =
-            ranking[0];
-
-
-        const destaque =
-            document
-            .createElement("div");
-
-
-        destaque.className =
-            "status";
-
-
-        destaque.innerHTML =
-
-            "<strong>Próximo foco estrutural sugerido:</strong><br>" +
-
-            escapar(topo.micro.id) +
-
-            " — " +
-
-            escapar(topo.micro.titulo);
-
-
-        caixa.prepend(
-            destaque
-        );
-
-    }
 
 }
 
@@ -3244,11 +4092,14 @@ function executarVerificacao(){
     const claims =
         banco.ativa.claims;
 
+
     const relacoes =
         banco.ativa.relacoes;
 
+
     const micros =
         banco.ativa.microNos;
+
 
     const microRel =
         banco.ativa.relacoesMicro;
@@ -3260,7 +4111,11 @@ function executarVerificacao(){
     const semFonte =
         claims.filter(
             function(c){
-                return !c.fonte;
+
+                return (
+                    !c.fonte
+                );
+
             }
         );
 
@@ -3269,7 +4124,8 @@ function executarVerificacao(){
 
         resultados.push({
 
-            classe:"alerta",
+            classe:
+                "alerta",
 
             texto:
                 semFonte.length +
@@ -3299,11 +4155,14 @@ function executarVerificacao(){
         );
 
 
-    if(microsSemClaims.length){
+    if(
+        microsSemClaims.length
+    ){
 
         resultados.push({
 
-            classe:"alerta",
+            classe:
+                "alerta",
 
             texto:
                 microsSemClaims.length +
@@ -3317,7 +4176,11 @@ function executarVerificacao(){
     claims
     .filter(
         function(c){
-            return c.tipo === "H";
+
+            return (
+                c.tipo === "H"
+            );
+
         }
     )
     .forEach(
@@ -3328,14 +4191,22 @@ function executarVerificacao(){
                     function(r){
 
                         return (
+
                             r.destino ===
-                            h.id &&
+                            h.id
+
+                            &&
+
                             (
                                 r.tipo ===
-                                "sustenta" ||
+                                "sustenta"
+
+                                ||
+
                                 r.tipo ===
                                 "explica"
                             )
+
                         );
 
                     }
@@ -3346,7 +4217,8 @@ function executarVerificacao(){
 
                 resultados.push({
 
-                    classe:"alerta",
+                    classe:
+                        "alerta",
 
                     texto:
                         h.id +
@@ -3375,13 +4247,17 @@ function executarVerificacao(){
             const a =
                 relacoes[i];
 
+
             const b =
                 relacoes[j];
 
 
             if(
                 a.origem ===
-                b.origem &&
+                b.origem
+
+                &&
+
                 a.destino ===
                 b.destino
             ){
@@ -3389,14 +4265,22 @@ function executarVerificacao(){
                 const conflito =
                     (
                         a.tipo ===
-                        "sustenta" &&
+                        "sustenta"
+
+                        &&
+
                         b.tipo ===
                         "contradiz"
                     )
+
                     ||
+
                     (
                         a.tipo ===
-                        "contradiz" &&
+                        "contradiz"
+
+                        &&
+
                         b.tipo ===
                         "sustenta"
                     );
@@ -3406,7 +4290,8 @@ function executarVerificacao(){
 
                     resultados.push({
 
-                        classe:"erro",
+                        classe:
+                            "erro",
 
                         texto:
                             "Possível inconsistência: " +
@@ -3426,12 +4311,18 @@ function executarVerificacao(){
     }
 
 
+    const paresCirculares =
+        new Set();
+
+
     microRel
     .filter(
         function(r){
 
-            return r.tipo ===
-                "depende";
+            return (
+                r.tipo ===
+                "depende"
+            );
 
         }
     )
@@ -3443,12 +4334,20 @@ function executarVerificacao(){
                     function(x){
 
                         return (
+
                             x.tipo ===
-                            "depende" &&
+                            "depende"
+
+                            &&
+
                             x.origem ===
-                            r.destino &&
+                            r.destino
+
+                            &&
+
                             x.destino ===
                             r.origem
+
                         );
 
                     }
@@ -3467,24 +4366,20 @@ function executarVerificacao(){
 
 
                 if(
-                    !resultados.some(
-                        function(x){
-
-                            return (
-                                x.chave ===
-                                chave
-                            );
-
-                        }
+                    !paresCirculares.has(
+                        chave
                     )
                 ){
 
+                    paresCirculares.add(
+                        chave
+                    );
+
+
                     resultados.push({
 
-                        classe:"erro",
-
-                        chave:
-                            chave,
+                        classe:
+                            "erro",
 
                         texto:
                             "Dependência circular simples detectada entre " +
@@ -3509,18 +4404,22 @@ function executarVerificacao(){
             if(
                 dependenciaPendente(
                     m.id
-                ) &&
+                )
+
+                &&
+
                 m.estado ===
                 "resolvido"
             ){
 
                 resultados.push({
 
-                    classe:"alerta",
+                    classe:
+                        "alerta",
 
                     texto:
                         m.id +
-                        " está marcado como resolvido, mas possui dependência ainda não resolvida."
+                        " está resolvido, mas ainda possui dependência não resolvida."
 
                 });
 
@@ -3530,11 +4429,14 @@ function executarVerificacao(){
     );
 
 
-    if(resultados.length === 0){
+    if(
+        resultados.length === 0
+    ){
 
         resultados.push({
 
-            classe:"ok",
+            classe:
+                "ok",
 
             texto:
                 "Nenhuma inconsistência estrutural simples foi detectada."
@@ -3559,17 +4461,21 @@ function renderizarMetricas(){
     const micros =
         banco.ativa.microNos;
 
+
     const claims =
         banco.ativa.claims;
 
+
     const relacoes =
         banco.ativa.relacoes;
+
 
     const microRel =
         banco.ativa.relacoesMicro;
 
 
-    let profundidade = 0;
+    let profundidade =
+        0;
 
 
     micros.forEach(
@@ -3587,7 +4493,7 @@ function renderizarMetricas(){
     );
 
 
-    const bloqueadosDependencia =
+    const dependenciasPendentes =
         micros.filter(
             function(m){
 
@@ -3612,45 +4518,68 @@ function renderizarMetricas(){
         <div class="metricas">
 
         <div class="metrica">
+
         <div class="numero">
         ${micros.length}
         </div>
+
         Microalvos
+
         </div>
 
+
         <div class="metrica">
+
         <div class="numero">
         ${profundidade}
         </div>
+
         Profundidade máxima
+
         </div>
 
+
         <div class="metrica">
+
         <div class="numero">
         ${microRel.length}
         </div>
-        Relações entre microalvos
+
+        Relações operacionais
+
         </div>
 
+
         <div class="metrica">
+
         <div class="numero">
-        ${bloqueadosDependencia}
-        </div>
-        Com dependências pendentes
+        ${dependenciasPendentes}
         </div>
 
+        Dependências pendentes
+
+        </div>
+
+
         <div class="metrica">
+
         <div class="numero">
         ${claims.length}
         </div>
+
         Claims
+
         </div>
 
+
         <div class="metrica">
+
         <div class="numero">
         ${relacoes.length}
         </div>
+
         Relações epistemológicas
+
         </div>
 
         </div>
@@ -3661,7 +4590,9 @@ function renderizarMetricas(){
 
 
 
-function renderizarVerificacoes(resultados){
+function renderizarVerificacoes(
+    resultados
+){
 
     const caixa =
         document
@@ -3679,7 +4610,9 @@ function renderizarVerificacoes(resultados){
 
             const div =
                 document
-                .createElement("div");
+                .createElement(
+                    "div"
+                );
 
 
             div.className =
@@ -3691,7 +4624,9 @@ function renderizarVerificacoes(resultados){
                 r.texto;
 
 
-            caixa.appendChild(div);
+            caixa.appendChild(
+                div
+            );
 
         }
     );
@@ -3730,11 +4665,15 @@ function renderizarMemoria(){
         </strong>
 
         <p>
+
         <strong>Alvo:</strong>
+
         <br>
+
         ${escapar(
             banco.ativa.alvo
         )}
+
         </p>
 
         <p class="pequeno">
@@ -3744,7 +4683,7 @@ function renderizarMemoria(){
 
         <br>
 
-        Dependências:
+        Relações operacionais:
         ${banco.ativa.relacoesMicro.length}
 
         <br>
@@ -3756,6 +4695,11 @@ function renderizarMemoria(){
 
         Relações epistemológicas:
         ${banco.ativa.relacoes.length}
+
+        <br>
+
+        Modelo de prioridade:
+        parametrizado
 
         </p>
 
@@ -3789,15 +4733,7 @@ function atualizarStatus(){
 
             banco.ativa.id +
 
-            " — " +
-
-            banco.ativa.microNos.length +
-
-            " microalvos — " +
-
-            banco.ativa.relacoesMicro.length +
-
-            " dependências.";
+            " — modelo v0.8 salvo.";
 
     }
     else{
@@ -3844,7 +4780,9 @@ function renderizarHistorico(){
 
             const div =
                 document
-                .createElement("div");
+                .createElement(
+                    "div"
+                );
 
 
             div.className =
@@ -3868,11 +4806,6 @@ function renderizarHistorico(){
 
                 <br>
 
-                Dependências:
-                ${i.relacoesMicro.length}
-
-                <br>
-
                 Claims:
                 ${i.claims.length}
 
@@ -3881,7 +4814,9 @@ function renderizarHistorico(){
             `;
 
 
-            caixa.appendChild(div);
+            caixa.appendChild(
+                div
+            );
 
         }
     );
@@ -3909,6 +4844,8 @@ function renderizarTudo(){
     renderizarMemoria();
 
     renderizarHistorico();
+
+    preencherPesos();
 
 }
 
@@ -3966,7 +4903,9 @@ function novaInvestigacao(){
                 "A investigação atual será arquivada antes de iniciar outra. Continuar?"
             )
         ){
+
             return;
+
         }
 
 
@@ -3981,8 +4920,13 @@ function novaInvestigacao(){
 
 
     window.scrollTo({
-        top:0,
-        behavior:"smooth"
+
+        top:
+            0,
+
+        behavior:
+            "smooth"
+
     });
 
 }
@@ -4001,28 +4945,37 @@ function limparCampos(){
         "novoMicroTexto",
         "microRelObservacao"
     ]
-    .forEach(function(nome){
+    .forEach(
+        function(nome){
 
-        const e =
-            document
-            .getElementById(nome);
+            const e =
+                document
+                .getElementById(nome);
 
 
-        if(e){
-            e.value = "";
+            if(e){
+                e.value = "";
+            }
+
         }
-
-    });
+    );
 
 
     limparFormularioClaim();
 
 
-    document
-    .getElementById(
-        "relObservacao"
-    )
-    .value = "";
+    const observacao =
+        document
+        .getElementById(
+            "relObservacao"
+        );
+
+
+    if(observacao){
+
+        observacao.value = "";
+
+    }
 
 }
 
@@ -4031,12 +4984,15 @@ function limparCampos(){
 function exportarBackup(){
 
     if(banco.ativa){
+
         autosalvar();
+
     }
 
 
     const blob =
         new Blob(
+
             [
                 JSON.stringify(
                     banco,
@@ -4044,10 +5000,12 @@ function exportarBackup(){
                     2
                 )
             ],
+
             {
                 type:
                     "application/json"
             }
+
         );
 
 
@@ -4059,7 +5017,9 @@ function exportarBackup(){
 
     const link =
         document
-        .createElement("a");
+        .createElement(
+            "a"
+        );
 
 
     link.href =
@@ -4067,7 +5027,7 @@ function exportarBackup(){
 
 
     link.download =
-        "fractal-v07-" +
+        "fractal-v08-" +
         Date.now() +
         ".json";
 
@@ -4090,7 +5050,9 @@ function exportarBackup(){
 
 
 
-function importarBackup(evento){
+function importarBackup(
+    evento
+){
 
     const arquivo =
         evento.target.files[0];
@@ -4131,10 +5093,12 @@ function importarBackup(evento){
 
                 if(
                     !confirm(
-                        "O backup substituirá a memória atual da v0.7. Continuar?"
+                        "O backup substituirá a memória atual da v0.8. Continuar?"
                     )
                 ){
+
                     return;
+
                 }
 
 
@@ -4142,33 +5106,7 @@ function importarBackup(evento){
                     dados;
 
 
-                banco.versao =
-                    "0.7";
-
-
-                if(
-                    !Array.isArray(
-                        banco.historico
-                    )
-                ){
-
-                    banco.historico =
-                        [];
-
-                }
-
-
-                banco.ativa =
-                    normalizarInvestigacao(
-                        banco.ativa
-                    );
-
-
-                banco.historico =
-                    banco.historico.map(
-                        normalizarInvestigacao
-                    );
-
+                normalizarBanco();
 
                 salvarBanco();
 
@@ -4222,25 +5160,34 @@ function apagarTodaMemoria(){
 
     if(
         !confirm(
-            "Apagar toda a memória local da v0.7?"
+            "Apagar toda a memória local da v0.8?"
         )
     ){
+
         return;
+
     }
 
 
     localStorage.removeItem(
-        CHAVE_V07
+        CHAVE_V08
     );
 
 
     banco = {
 
-        versao:"0.7",
+        versao:
+            "0.8",
 
-        ativa:null,
+        configPrioridade:{
+            ...PESOS_PADRAO
+        },
 
-        historico:[]
+        ativa:
+            null,
+
+        historico:
+            []
 
     };
 
@@ -4269,14 +5216,19 @@ function apagarTodaMemoria(){
         document
         .getElementById(nome)
         .addEventListener(
+
             "input",
+
             function(){
 
                 if(banco.ativa){
+
                     autosalvar();
+
                 }
 
             }
+
         );
 
     }
@@ -4287,6 +5239,8 @@ function apagarTodaMemoria(){
 function iniciarPagina(){
 
     carregarBanco();
+
+    preencherPesos();
 
 
     if(banco.ativa){
@@ -4326,14 +5280,19 @@ function iniciarPagina(){
 
 
 window.addEventListener(
+
     "beforeunload",
+
     function(){
 
         if(banco.ativa){
+
             autosalvar();
+
         }
 
     }
+
 );
 
 
@@ -4342,4 +5301,5 @@ iniciarPagina();
 </script>
 
 </body>
+
 </html>

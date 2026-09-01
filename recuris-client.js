@@ -173,6 +173,37 @@ async function commitProposal(id) {
   }
 }
 
+
+async function showMemorySummary() {
+  try {
+    setStatus("Consultando memória evolutiva...");
+    const data = await request("/memory/summary");
+    const target = $("evoMemoryPanel");
+    const cats = Object.entries(data.by_category || {})
+      .map(([k,v]) => `${esc(k)}: ${v}`)
+      .join(" · ") || "nenhuma categoria";
+
+    const latest = (data.latest || []).map(e => `
+      <div class="card compact">
+        <strong>${esc(e.id || "MEM")}</strong> — ${esc(e.title || e.proposal_id || "registro")}
+        <div class="meta">${esc(e.category || "—")} · ${esc(e.created_at || "")}</div>
+      </div>
+    `).join("");
+
+    target.innerHTML = `
+      <div class="card">
+        <strong>Memória evolutiva persistente</strong>
+        <div class="meta">PostgreSQL · versão v${data.version} · ${data.total_entries} registro(s)</div>
+        <div class="meta">${cats}</div>
+      </div>
+      ${latest || '<div class="meta">Nenhum registro ainda.</div>'}
+    `;
+    setStatus(`✓ Memória consultada. ${data.total_entries} registro(s) persistente(s).`, true);
+  } catch (err) {
+    setStatus(`✗ ${err.message}`);
+  }
+}
+
 function init() {
   const input = $("evoBackendUrl");
   if (!input) return;

@@ -68,6 +68,41 @@ class CommitResponse(BaseModel):
     duplicate: bool = False
 
 
+
+def memory_guidance_for(inv: dict[str, Any]) -> tuple[list[str], set[str]]:
+    notes = []
+    known = set()
+    try:
+        mem = load_memory()
+    except Exception:
+        return notes, known
+
+    inv_hash = stable_hash(inv)
+    entries = mem.get("entries", []) or []
+    same_state = [e for e in entries if e.get("investigation_hash") == inv_hash]
+
+    if entries:
+        notes.append(f"Memória evolutiva contém {len(entries)} registro(s) persistente(s) de ciclos anteriores.")
+    if same_state:
+        notes.append(f"{len(same_state)} registro(s) pertencem exatamente ao estado atual da investigação.")
+        for e in same_state:
+            if e.get("proposal_fingerprint"):
+                known.add(e["proposal_fingerprint"])
+    return notes, known
+
+
+def proposal_fingerprint_from_model(proposal: Proposal) -> str:
+    p = proposal.model_dump()
+    return stable_hash({
+        "id": p.get("id"),
+        "category": p.get("category"),
+        "title": p.get("title"),
+        "action": p.get("action"),
+        "rationale": p.get("rationale"),
+        "evidence": p.get("evidence"),
+    })
+
+
 # ---------- Core ----------
 
 ENGINE_NAME = "Fractal Evolution Engine 0.1 — ciclo inspirado no Recuris"
@@ -144,7 +179,8 @@ def analyze(inv: dict[str, Any], context: dict[str, Any] | None = None) -> Analy
     links = _source_links(inv)
     dependents = _dependents(inv)
 
-    diagnostics, proposals = [], []
+    memory_notes, prior_fingerprints = memory_guidance_for(inv)
+    diagnostics, proposals = list(memory_notes), []
     n = 1
 
     unsupported = [c for c in claims if not links.get(str(c.get("id")))]
@@ -235,6 +271,20 @@ def analyze(inv: dict[str, Any], context: dict[str, Any] | None = None) -> Analy
                 evidence=[EvidenceRef(kind="sistema", id="SYSTEM", reason="investigação sem microalvos")],
                 confidence=95,
             ))
+
+    if prior_fingerprints:
+        filtered = []
+        skipped = 0
+        for p in proposals:
+            if proposal_fingerprint_from_model(p) in prior_fingerprints:
+                skipped += 1
+            else:
+                filtered.append(p)
+        proposals = filtered
+        if skipped:
+            diagnostics.append(
+                f"{skipped} proposta(s) idêntica(s) já registradas para este estado foram suprimidas pela memória."
+            )
 
     validations = [validate_proposal(inv, p) for p in proposals]
     for p, v in zip(proposals, validations):
@@ -416,7 +466,7 @@ def commit_memory(req: CommitRequest) -> CommitResponse:
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="0.2.0-postgres",
+    version="0.3.0-memory-aware",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -440,7 +490,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.2.0-postgres"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.3.0-memory-aware"}
 
 
 @app.get("/health")
@@ -477,3 +527,34 @@ def commit_route(req: CommitRequest):
 def memory_route():
     mem = load_memory()
     return {"schema": mem.get("schema"), "version": mem.get("version", 0), "entries": mem.get("entries", [])}
+
+
+@app.get("/memory/summary")
+def memory_summary_route():
+    mem = load_memory()
+    entries = mem.get("entries", []) or []
+    by_category = {}
+    for e in entries:
+        p = e.get("proposal") or {}
+        cat = p.get("category") or "outro"
+        by_category[cat] = by_category.get(cat, 0) + 1
+
+    latest = []
+    for e in entries[-10:]:
+        p = e.get("proposal") or {}
+        latest.append({
+            "id": e.get("id"),
+            "created_at": e.get("created_at"),
+            "proposal_id": p.get("id"),
+            "title": p.get("title"),
+            "category": p.get("category"),
+        })
+
+    return {
+        "persistent": True,
+        "storage": "postgresql",
+        "version": mem.get("version", 0),
+        "total_entries": len(entries),
+        "by_category": by_category,
+        "latest": latest,
+    }

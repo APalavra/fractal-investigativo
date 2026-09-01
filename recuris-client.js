@@ -303,6 +303,102 @@ function buildSafeDraft(micro) {
 }
 
 
+
+function cleanClaimText(value) {
+  return String(value || "")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function priorityScore(inv, micro) {
+  const w = inv?.configPrioridade || {
+    aberto:10, investigando:7, bloqueado:-30,
+    dependenciaPendente:-25, porDependente:5,
+    porDesbloqueio:4, semClaims:3, porContestado:2
+  };
+
+  let score = 0;
+  const parts = [];
+  const add = (value, label) => {
+    const n = Number(value || 0);
+    if (n) { score += n; parts.push(`${label}: ${n >= 0 ? "+" : ""}${n}`); }
+  };
+
+  if (micro.estado === "aberto") add(w.aberto, "aberto");
+  if (micro.estado === "investigando") add(w.investigando, "investigando");
+  if (micro.estado === "bloqueado") add(w.bloqueado, "bloqueado");
+
+  const relMicro = Array.isArray(inv?.relacoesMicro) ? inv.relacoesMicro : [];
+  const byId = Object.fromEntries((inv?.microNos || []).map(m => [m.id, m]));
+
+  const pendingDeps = relMicro.filter(r =>
+    r.origem === micro.id &&
+    r.tipo === "depende" &&
+    !["concluido","resolvido","fechado"].includes(String(byId[r.destino]?.estado || "").toLowerCase())
+  ).length;
+  if (pendingDeps) add(Number(w.dependenciaPendente || 0) * pendingDeps, `${pendingDeps} dependência(s) pendente(s)`);
+
+  const dependents = relMicro.filter(r => r.destino === micro.id && r.tipo === "depende").length;
+  if (dependents) add(Number(w.porDependente || 0) * dependents, `${dependents} dependente(s)`);
+
+  const unlocks = relMicro.filter(r => r.origem === micro.id && r.tipo === "desbloqueia").length;
+  if (unlocks) add(Number(w.porDesbloqueio || 0) * unlocks, `${unlocks} desbloqueio(s)`);
+
+  const linkedClaims = (inv?.claims || []).filter(c => c.microalvoId === micro.id);
+  if (!linkedClaims.length) add(w.semClaims, "sem claims");
+
+  const contestedIds = new Set(
+    (inv?.relacoes || [])
+      .filter(r => r.estado === "contestada")
+      .flatMap(r => [r.origem, r.destino])
+  );
+  const contested = linkedClaims.filter(c => contestedIds.has(c.id) || c.estado === "contestada").length;
+  if (contested) add(Number(w.porContestado || 0) * contested, `${contested} claim(s) contestado(s)`);
+
+  return { score, parts };
+}
+
+function pickPriorityTarget(inv) {
+  const active = (inv?.microNos || []).filter(m =>
+    ["aberto", "investigando"].includes(String(m.estado || "").toLowerCase())
+  );
+  if (!active.length) return null;
+
+  return active
+    .map(m => ({ micro:m, ...priorityScore(inv, m) }))
+    .sort((a,b) =>
+      b.score - a.score ||
+      String(a.micro.id).localeCompare(String(b.micro.id), undefined, {numeric:true})
+    )[0];
+}
+
+function contradictionPairs(inv) {
+  const claims = Object.fromEntries((inv?.claims || []).map(c => [c.id, c]));
+  return (inv?.relacoes || [])
+    .filter(r => r.tipo === "contradiz")
+    .map(r => ({
+      relation:r,
+      left:claims[r.origem] || null,
+      right:claims[r.destino] || null
+    }));
+}
+
+function sourceCountForClaim(inv, claimId) {
+  return (inv?.fonteClaims || []).filter(x => x.claimId === claimId).length;
+}
+
+async function recordSafeExecution(decisionId, action) {
+  try {
+    await request("/memory/action-execution", {
+      method: "POST",
+      body: JSON.stringify({ decision_id: decisionId, action }),
+    });
+  } catch (err) {
+    console.warn("Falha ao registrar evidência causal no backend:", err);
+  }
+}
+
 function syncSafeActionButton() {
   const btn = $("btnEvoAplicarSeguro");
   if (!btn) return;
@@ -314,8 +410,10 @@ function syncSafeActionButton() {
 
   if (!rec) {
     btn.title = "Consultar a decisão pendente no backend e aplicar somente se for seguro.";
-  } else if (rec.category === "decomposicao") {
-    btn.title = "Aplicar a decisão pendente de decomposição.";
+  } else if (["decomposicao","prioridade"].includes(rec.category)) {
+    btn.title = "Aplicar somente a parte operacional segura desta decisão.";
+  } else if (["evidencia","contradicao"].includes(rec.category)) {
+    btn.title = "Abrir orientação segura sem decidir fatos automaticamente.";
   } else {
     btn.title = "Ver a justificativa de segurança para esta recomendação.";
   }
@@ -386,122 +484,210 @@ async function applySafeRecommendedAction() {
     }
 
     const rec = cycle.decision.recommendation;
-    if (rec.category !== "decomposicao") {
-      let detail = "O protótipo não resolverá contradições nem elevará confiança automaticamente. Essas ações exigem julgamento humano.";
+    const decisionId = cycle.decision.decision_id || null;
+
+    if (rec.category === "evidencia") {
+      const inv = loadInvestigation();
+      const missing = claimsWithoutSources(inv);
       let operational = "";
 
-      if (rec.category === "evidencia") {
-        const inv = loadInvestigation();
-        const missing = claimsWithoutSources(inv);
+      if (missing.length) {
+        const items = missing.map(c => {
+          const text = cleanClaimText(c.texto);
+          const short = text.length > 120 ? text.slice(0, 117) + "..." : text;
+          return `<li><strong>${esc(c.id)}</strong>${short ? ` — ${esc(short)}` : ""}</li>`;
+        }).join("");
 
-        detail = "A recomendação exige uma fonte real. O sistema não inventará referências nem criará evidência fictícia.";
-
-        if (missing.length) {
-          const items = missing.map(c => {
-            const text = String(c.texto || "").replace(/<br\s*\/?>/gi, " ").replace(/\s+/g, " ").trim();
-            const short = text.length > 120 ? text.slice(0, 117) + "..." : text;
-            return `<li><strong>${esc(c.id)}</strong>${short ? ` — ${esc(short)}` : ""}</li>`;
-          }).join("");
-
-          operational = `
-            <div class="card">
-              <strong>Claims sem rastreabilidade detectados: ${missing.length}</strong>
-              <ul>${items}</ul>
-              <p><strong>Próxima ação humana:</strong> adicione ou selecione uma fonte real na seção 5 e vincule-a ao claim desejado na seção 6.</p>
-            </div>`;
-        } else {
-          operational = `
-            <div class="card">
-              <strong>Nenhum claim sem fonte foi encontrado localmente.</strong>
-              <p>Reexecute o ciclo automático para recalcular a decisão com o estado atual.</p>
-            </div>`;
-        }
+        operational = `
+          <div class="card">
+            <strong>Claims sem rastreabilidade detectados: ${missing.length}</strong>
+            <ul>${items}</ul>
+            <p><strong>Próxima ação humana:</strong> adicione ou selecione uma fonte real na seção 5 e vincule-a ao claim desejado na seção 6.</p>
+          </div>`;
+      } else {
+        operational = `
+          <div class="card">
+            <strong>Nenhum claim sem fonte foi encontrado localmente.</strong>
+            <p>Reexecute o ciclo automático para recalcular a decisão com o estado atual.</p>
+          </div>`;
       }
 
       panel.innerHTML = `
         <div class="card">
           <strong>Ação automática bloqueada com segurança</strong>
-          <p>A categoria atual é <strong>${esc(rec.category || "-")}</strong>.</p>
-          <p>${esc(detail)}</p>
-          <p><strong>Nenhuma alteração foi feita na investigação.</strong></p>
+          <p>A categoria atual é <strong>evidencia</strong>.</p>
+          <p>A recomendação exige uma fonte real. O sistema não inventará referências nem criará evidência fictícia.</p>
+          <p><strong>Nenhuma alteração epistemológica foi feita.</strong></p>
         </div>
         ${operational}`;
-      setStatus("✓ Ação automática recusada com segurança; orientação operacional exibida.", true);
+      setStatus("✓ Evidência: automação recusada com segurança; orientação operacional exibida.", true);
       return;
     }
 
-    const db = loadWholeDB();
-    const inv = db.ativa;
-    const micro = pickDecompositionTarget(inv);
-    if (!micro) throw new Error("Nenhum microalvo ativo disponível para decomposição.");
+    if (rec.category === "contradicao") {
+      const inv = loadInvestigation();
+      const pairs = contradictionPairs(inv);
 
-    const text = buildSafeDraft(micro);
+      if (!pairs.length) {
+        panel.innerHTML = `
+          <div class="card">
+            <strong>Nenhuma relação explícita de contradição encontrada</strong>
+            <p>O motor recomendou revisão de contradições, mas o estado local não contém relação do tipo <strong>contradiz</strong>.</p>
+            <p>Reexecute o verificador estrutural ou o próximo ciclo antes de qualquer alteração.</p>
+          </div>`;
+        setStatus("✓ Contradição: nenhuma resolução automática foi realizada.", true);
+        return;
+      }
 
-    const duplicate = (inv.claims || []).some(c =>
-      c.microalvoId === micro.id &&
-      String(c.texto || "").trim().toLowerCase() === text.toLowerCase()
-    );
-    if (duplicate) {
-      panel.innerHTML = `<div class="card"><strong>Nenhuma alteração feita.</strong><p>Essa hipótese automática já existe para ${esc(micro.id)}.</p></div>`;
-      setStatus("✓ Duplicação evitada.", true);
+      const items = pairs.map(({relation,left,right}) => {
+        const lt = cleanClaimText(left?.texto);
+        const rt = cleanClaimText(right?.texto);
+        return `
+          <div class="card">
+            <strong>${esc(relation.id)} — ${esc(relation.origem)} contradiz ${esc(relation.destino)}</strong>
+            <p><b>${esc(relation.origem)}</b>: ${esc(lt || "claim não encontrado")}</p>
+            <div class="meta">Fontes ligadas: ${sourceCountForClaim(inv, relation.origem)}</div>
+            <p><b>${esc(relation.destino)}</b>: ${esc(rt || "claim não encontrado")}</p>
+            <div class="meta">Fontes ligadas: ${sourceCountForClaim(inv, relation.destino)}</div>
+            <p><strong>Revisão humana:</strong> compare definições, condições, escopo e evidências de cada lado. Não marque vencedor sem evidência explícita.</p>
+          </div>`;
+      }).join("");
+
+      panel.innerHTML = `
+        <div class="card">
+          <strong>Checklist seguro de contradição</strong>
+          <p>Foram encontradas ${pairs.length} relação(ões) explícita(s) de contradição.</p>
+          <p><strong>O sistema não resolveu nenhuma delas automaticamente.</strong></p>
+        </div>
+        ${items}`;
+      setStatus("✓ Contradição mapeada; decisão de verdade preservada para revisão baseada em evidências.", true);
       return;
     }
 
-    if (!confirm(
-      `Aplicar uma decomposição segura em ${micro.id}?\n\n` +
-      `Será criado apenas um claim H pendente, confiança 30%, sem apagar nem validar nada automaticamente.`
-    )) return;
+    if (rec.category === "prioridade") {
+      const db = loadWholeDB();
+      const inv = db.ativa;
+      const picked = pickPriorityTarget(inv);
+      if (!picked) throw new Error("Nenhum microalvo ativo disponível para priorização.");
 
-    inv.claims = inv.claims || [];
-    const id = nextClaimId(inv);
-    const now = new Date().toISOString();
-    inv.claims.push({
-      id,
-      texto: text,
-      tipo: "H",
-      estado: "pendente",
-      microalvoId: micro.id,
-      confianca: 0,
-      criadoEm: now,
-      atualizadoEm: now,
-      geradoAutomaticamente: true,
-      origemAutomatica: cycle.decision.decision_id || null
-    });
+      const micro = picked.micro;
+      const scoreText = `${picked.score} ponto(s)`;
+      const parts = picked.parts.length ? picked.parts.join(" · ") : "sem componentes adicionais";
 
-    // Atualiza o banco persistente e também o estado em memória do app.js.
-    // Isso evita que o beforeunload do app.js regrave uma cópia antiga e apague o claim recém-criado.
-    saveWholeDB(db);
-    window.dispatchEvent(new CustomEvent("fractal:external-db-update", {
-      detail: { db }
-    }));
-    if ($("btnEvoAplicarSeguro")) $("btnEvoAplicarSeguro").disabled = true;
+      if (!confirm(
+        `Focar operacionalmente ${micro.id}?\n\n` +
+        `Score estrutural: ${scoreText}.\n` +
+        `Isso NÃO altera nenhum claim, fonte, relação epistemológica ou confiança.`
+      )) return;
 
-    try {
-      await request("/memory/action-execution", {
-        method: "POST",
-        body: JSON.stringify({
-          decision_id: cycle.decision.decision_id,
-          action: {
-            type: "create_claim",
-            claim_id: id,
-            microalvo_id: micro.id,
-            generated_at: now
-          }
-        }),
+      const previousState = micro.estado;
+      if (String(micro.estado).toLowerCase() === "aberto") {
+        micro.estado = "investigando";
+        micro.atualizadoEm = new Date().toISOString();
+      }
+
+      inv.focoEvolutivo = {
+        microalvoId: micro.id,
+        decisionId,
+        score: picked.score,
+        selecionadoEm: new Date().toISOString()
+      };
+
+      saveWholeDB(db);
+      window.dispatchEvent(new CustomEvent("fractal:external-db-update", { detail: { db } }));
+
+      await recordSafeExecution(decisionId, {
+        type: "focus_microtarget",
+        microalvo_id: micro.id,
+        previous_state: previousState,
+        new_state: micro.estado,
+        priority_score: picked.score,
+        generated_at: new Date().toISOString()
       });
-    } catch (err) {
-      console.warn("Falha ao registrar evidência causal no backend:", err);
+
+      panel.innerHTML = `
+        <div class="card">
+          <strong>Foco operacional aplicado com segurança</strong>
+          <p><strong>${esc(micro.id)}</strong> — ${esc(micro.titulo || "")}</p>
+          <div class="meta">Score: ${esc(scoreText)} · ${esc(parts)}</div>
+          <div class="meta">Estado: ${esc(previousState)} → ${esc(micro.estado)}</div>
+          <p>Nenhum claim, fonte, confiança ou relação de verdade foi modificado.</p>
+        </div>`;
+      setStatus(`✓ Prioridade operacional focada em ${micro.id}, sem alterar conteúdo epistemológico.`, true);
+      return;
+    }
+
+    if (rec.category === "decomposicao") {
+      const db = loadWholeDB();
+      const inv = db.ativa;
+      const micro = pickDecompositionTarget(inv);
+      if (!micro) throw new Error("Nenhum microalvo ativo disponível para decomposição.");
+
+      const text = buildSafeDraft(micro);
+      const duplicate = (inv.claims || []).some(c =>
+        c.microalvoId === micro.id &&
+        String(c.texto || "").trim().toLowerCase() === text.toLowerCase()
+      );
+
+      if (duplicate) {
+        panel.innerHTML = `<div class="card"><strong>Nenhuma alteração feita.</strong><p>Esse rascunho estrutural já existe para ${esc(micro.id)}.</p></div>`;
+        setStatus("✓ Duplicação de rascunho evitada.", true);
+        return;
+      }
+
+      if (!confirm(
+        `Aplicar uma decomposição segura em ${micro.id}?\n\n` +
+        `Será criado apenas um claim H pendente e estrutural, confiança 0%, sem inventar fatos, apagar ou validar nada automaticamente.`
+      )) return;
+
+      inv.claims = inv.claims || [];
+      const id = nextClaimId(inv);
+      const now = new Date().toISOString();
+      inv.claims.push({
+        id,
+        texto: text,
+        tipo: "H",
+        estado: "pendente",
+        microalvoId: micro.id,
+        confianca: 0,
+        criadoEm: now,
+        atualizadoEm: now,
+        geradoAutomaticamente: true,
+        rascunhoEstrutural: true,
+        origemAutomatica: decisionId
+      });
+
+      saveWholeDB(db);
+      window.dispatchEvent(new CustomEvent("fractal:external-db-update", { detail: { db } }));
+      if ($("btnEvoAplicarSeguro")) $("btnEvoAplicarSeguro").disabled = true;
+
+      await recordSafeExecution(decisionId, {
+        type: "create_structural_draft",
+        claim_id: id,
+        microalvo_id: micro.id,
+        confidence: 0,
+        generated_at: now
+      });
+
+      panel.innerHTML = `
+        <div class="card">
+          <strong>Alteração segura aplicada</strong>
+          <p>${esc(id)} foi criado e ligado a ${esc(micro.id)}.</p>
+          <div class="meta">Tipo H · pendente · confiança 0% · rascunho estrutural · nenhum fato ou fonte inventados · nenhuma conclusão validada automaticamente.</div>
+          <div class="meta">A execução foi registrada para avaliação causal no próximo ciclo.</div>
+          <p>O claim já foi sincronizado com a investigação atual.</p>
+        </div>`;
+      setStatus(`✓ ${id} criado como rascunho estrutural 0% e registrado causalmente.`, true);
+      return;
     }
 
     panel.innerHTML = `
       <div class="card">
-        <strong>Alteração segura aplicada</strong>
-        <p>${esc(id)} foi criado e ligado a ${esc(micro.id)}.</p>
-        <div class="meta">Tipo H · pendente · confiança 0% · rascunho estrutural · nenhum fato ou fonte inventados · nenhuma conclusão validada automaticamente.</div>
-        <div class="meta">A execução foi registrada para avaliação causal no próximo ciclo.</div>
-        <p>O claim já foi sincronizado com a investigação atual.</p>
+        <strong>Categoria ainda sem executor seguro</strong>
+        <p>Categoria recebida: <strong>${esc(rec.category || "-")}</strong>.</p>
+        <p>Nenhuma alteração foi feita.</p>
       </div>`;
-    setStatus(`✓ ${id} criado, sincronizado e registrado causalmente.`, true);
+    setStatus("✓ Categoria desconhecida recusada com segurança.", true);
   } catch (err) {
     setStatus(`✗ ${err.message}`);
   }

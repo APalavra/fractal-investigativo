@@ -373,15 +373,51 @@ function pickPriorityTarget(inv) {
     )[0];
 }
 
-function contradictionPairs(inv) {
+function semanticRelationStatus(relation) {
+  const raw = String(relation?.validacaoSemantica || relation?.statusSemantico || "nao_avaliada").trim().toLowerCase();
+  const aliases = {
+    "real":"contradicao_real",
+    "confirmada":"contradicao_real",
+    "contradicao":"contradicao_real",
+    "contradição_real":"contradicao_real",
+    "tensão":"tensao",
+    "contestacao":"tensao",
+    "contestação":"tensao",
+    "compatível":"compativel",
+    "compativeis":"compativel",
+    "compatíveis":"compativel",
+    "nao_avaliado":"nao_avaliada",
+    "não_avaliada":"nao_avaliada",
+    "não_avaliado":"nao_avaliada"
+  };
+  return aliases[raw] || raw;
+}
+
+function contradictionPairs(inv, { onlyConfirmed = false, onlyUnreviewed = false } = {}) {
   const claims = Object.fromEntries((inv?.claims || []).map(c => [c.id, c]));
   return (inv?.relacoes || [])
     .filter(r => r.tipo === "contradiz")
+    .filter(r => {
+      const status = semanticRelationStatus(r);
+      if (onlyConfirmed) return status === "contradicao_real";
+      if (onlyUnreviewed) return status === "nao_avaliada";
+      return true;
+    })
     .map(r => ({
       relation:r,
+      semanticStatus: semanticRelationStatus(r),
       left:claims[r.origem] || null,
       right:claims[r.destino] || null
     }));
+}
+
+function semanticStatusLabel(status) {
+  return ({
+    contradicao_real:"contradição real confirmada",
+    tensao:"tensão/contestação",
+    compativel:"compatíveis",
+    nao_avaliada:"não avaliada"
+  })[status] || status || "não avaliada";
 }
 
 function sourceCountForClaim(inv, claimId) {
@@ -412,8 +448,8 @@ function syncSafeActionButton() {
     btn.title = "Consultar a decisão pendente no backend e aplicar somente se for seguro.";
   } else if (["decomposicao","prioridade"].includes(rec.category)) {
     btn.title = "Aplicar somente a parte operacional segura desta decisão.";
-  } else if (["evidencia","contradicao"].includes(rec.category)) {
-    btn.title = "Abrir orientação segura sem decidir fatos automaticamente.";
+  } else if (["evidencia","contradicao","qualidade"].includes(rec.category)) {
+    btn.title = "Abrir orientação segura ou revisão humana sem decidir fatos automaticamente.";
   } else {
     btn.title = "Ver a justificativa de segurança para esta recomendação.";
   }
@@ -524,15 +560,109 @@ async function applySafeRecommendedAction() {
       return;
     }
 
-    if (rec.category === "contradicao") {
-      const inv = loadInvestigation();
-      const pairs = contradictionPairs(inv);
+    if (rec.category === "qualidade") {
+      const db = loadWholeDB();
+      const inv = db.ativa;
+      const pairs = contradictionPairs(inv, { onlyUnreviewed: true });
 
       if (!pairs.length) {
         panel.innerHTML = `
           <div class="card">
-            <strong>Nenhuma relação explícita de contradição encontrada</strong>
-            <p>O motor recomendou revisão de contradições, mas o estado local não contém relação do tipo <strong>contradiz</strong>.</p>
+            <strong>Nenhuma relação 'contradiz' aguarda revisão semântica</strong>
+            <p>O estado local não possui relação não avaliada. Reexecute o ciclo para recalcular a recomendação.</p>
+            <p>Nenhuma alteração epistemológica foi feita.</p>
+          </div>`;
+        setStatus("✓ Qualidade: nenhuma relação pendente de revisão semântica.", true);
+        return;
+      }
+
+      const items = pairs.map(({relation,left,right}) => {
+        const lt = cleanClaimText(left?.texto);
+        const rt = cleanClaimText(right?.texto);
+        return `
+          <div class="card semantic-review" data-relation-id="${esc(relation.id)}">
+            <strong>${esc(relation.id)} — ${esc(relation.origem)} contradiz ${esc(relation.destino)}</strong>
+            <p><b>${esc(relation.origem)}</b>: ${esc(lt || "claim não encontrado")}</p>
+            <div class="meta">Fontes ligadas: ${sourceCountForClaim(inv, relation.origem)}</div>
+            <p><b>${esc(relation.destino)}</b>: ${esc(rt || "claim não encontrado")}</p>
+            <div class="meta">Fontes ligadas: ${sourceCountForClaim(inv, relation.destino)}</div>
+            <p><strong>Classificação humana:</strong> escolha apenas depois de comparar condições, escopo e significado das duas proposições.</p>
+            <div class="meta"><b>Contradição real:</b> as duas proposições não podem ser verdadeiras ao mesmo tempo sob as mesmas condições.</div>
+            <div class="meta"><b>Tensão/contestação:</b> há conflito aparente ou dependente de interpretação/condições.</div>
+            <div class="meta"><b>Compatíveis:</b> as duas proposições podem ser verdadeiras simultaneamente; o vínculo 'contradiz' foi semanticamente inadequado.</div>
+            <div class="row">
+              <button type="button" class="secondary semanticChoice" data-status="contradicao_real">Contradição real</button>
+              <button type="button" class="secondary semanticChoice" data-status="tensao">Tensão/contestação</button>
+              <button type="button" class="secondary semanticChoice" data-status="compativel">Compatíveis</button>
+            </div>
+            <div class="meta semanticChoiceMsg"></div>
+          </div>`;
+      }).join("");
+
+      panel.innerHTML = `
+        <div class="card">
+          <strong>Validação semântica humana de relações</strong>
+          <p>Foram encontradas ${pairs.length} relação(ões) 'contradiz' que ainda não foram semanticamente avaliadas.</p>
+          <p><strong>O sistema não classificará nenhuma delas sozinho.</strong> A escolha abaixo registra apenas a sua revisão humana.</p>
+        </div>
+        ${items}`;
+
+      panel.querySelectorAll(".semanticChoice").forEach(button => {
+        button.addEventListener("click", async () => {
+          const card = button.closest(".semantic-review");
+          const relationId = card?.dataset?.relationId;
+          const status = button.dataset.status;
+          const relation = (inv.relacoes || []).find(r => r.id === relationId);
+          if (!relation) return;
+
+          const label = semanticStatusLabel(status);
+          if (!confirm(
+            `Registrar ${relationId} como “${label}”?
+
+` +
+            `Essa classificação foi escolhida por você. O sistema não está decidindo qual claim é verdadeiro.`
+          )) return;
+
+          const now = new Date().toISOString();
+          relation.validacaoSemantica = status;
+          relation.revisaoSemantica = {
+            status,
+            origem: "revisao_humana",
+            decisionId,
+            revisadoEm: now
+          };
+          relation.atualizadoEm = now;
+
+          saveWholeDB(db);
+          window.dispatchEvent(new CustomEvent("fractal:external-db-update", { detail: { db } }));
+
+          await recordSafeExecution(decisionId, {
+            type: "classify_relation_semantics",
+            relation_id: relationId,
+            semantic_status: status,
+            human_selected: true,
+            generated_at: now
+          });
+
+          card.querySelectorAll(".semanticChoice").forEach(b => b.disabled = true);
+          const msg = card.querySelector(".semanticChoiceMsg");
+          if (msg) msg.textContent = `✓ ${relationId}: ${label}. Classificação humana registrada.`;
+          setStatus(`✓ ${relationId} recebeu revisão semântica humana: ${label}.`, true);
+        });
+      });
+      setStatus("✓ Relações não avaliadas exibidas para classificação humana; nenhuma decisão automática de verdade foi feita.", true);
+      return;
+    }
+
+    if (rec.category === "contradicao") {
+      const inv = loadInvestigation();
+      const pairs = contradictionPairs(inv, { onlyConfirmed: true });
+
+      if (!pairs.length) {
+        panel.innerHTML = `
+          <div class="card">
+            <strong>Nenhuma contradição semanticamente confirmada encontrada</strong>
+            <p>O motor recomendou revisão de contradições, mas o estado local não contém relação <strong>contradiz</strong> validada por uma pessoa como <strong>contradição real</strong>.</p>
             <p>Reexecute o verificador estrutural ou o próximo ciclo antes de qualquer alteração.</p>
           </div>`;
         setStatus("✓ Contradição: nenhuma resolução automática foi realizada.", true);
@@ -556,7 +686,7 @@ async function applySafeRecommendedAction() {
       panel.innerHTML = `
         <div class="card">
           <strong>Checklist seguro de contradição</strong>
-          <p>Foram encontradas ${pairs.length} relação(ões) explícita(s) de contradição.</p>
+          <p>Foram encontradas ${pairs.length} contradição(ões) semanticamente confirmada(s) por revisão humana.</p>
           <p><strong>O sistema não resolveu nenhuma delas automaticamente.</strong></p>
         </div>
         ${items}`;

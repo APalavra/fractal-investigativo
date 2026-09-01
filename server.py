@@ -188,7 +188,7 @@ def proposal_fingerprint_from_model(proposal: Proposal) -> str:
 
 # ---------- Core ----------
 
-ENGINE_NAME = "Fractal Evolution Engine 0.1 — ciclo inspirado no Recuris"
+ENGINE_NAME = "Fractal Evolution Engine 0.2 — validação semântica humana de relações"
 
 
 def stable_hash(value: Any) -> str:
@@ -675,9 +675,44 @@ def investigation_metrics(inv: dict[str, Any]) -> dict[str, Any]:
     fonte_claims = inv.get("fonteClaims", []) or []
 
     contested = sum(1 for c in claims if c.get("estado") == "contestada")
-    explicit_contradictions = sum(
-        1 for r in rels
-        if r.get("tipo") == "contradiz" and r.get("estado") not in ("resolvida", "resolvido", "rejeitada", "rejeitado")
+
+    def semantic_status(rel: dict[str, Any]) -> str:
+        raw = rel.get("validacaoSemantica") or rel.get("statusSemantico") or "nao_avaliada"
+        value = str(raw).strip().lower()
+        aliases = {
+            "real": "contradicao_real",
+            "confirmada": "contradicao_real",
+            "contradicao": "contradicao_real",
+            "contradição_real": "contradicao_real",
+            "tensão": "tensao",
+            "contestacao": "tensao",
+            "contestação": "tensao",
+            "compatível": "compativel",
+            "compativeis": "compativel",
+            "compatíveis": "compativel",
+            "nao_avaliado": "nao_avaliada",
+            "não_avaliada": "nao_avaliada",
+            "não_avaliado": "nao_avaliada",
+        }
+        return aliases.get(value, value)
+
+    open_contradiction_relations = [
+        r for r in rels
+        if r.get("tipo") == "contradiz"
+        and r.get("estado") not in ("resolvida", "resolvido", "rejeitada", "rejeitado")
+    ]
+    explicit_contradictions = len(open_contradiction_relations)
+    confirmed_contradictions = sum(
+        1 for r in open_contradiction_relations if semantic_status(r) == "contradicao_real"
+    )
+    unreviewed_contradictions = sum(
+        1 for r in open_contradiction_relations if semantic_status(r) == "nao_avaliada"
+    )
+    semantic_tensions = sum(
+        1 for r in open_contradiction_relations if semantic_status(r) == "tensao"
+    )
+    semantic_compatible = sum(
+        1 for r in open_contradiction_relations if semantic_status(r) == "compativel"
     )
     resolved_micros = sum(1 for m in micros if m.get("estado") == "resolvido")
     active_micro_ids = {str(m.get("id")) for m in micros if m.get("estado") in ("aberto", "investigando")}
@@ -696,6 +731,10 @@ def investigation_metrics(inv: dict[str, Any]) -> dict[str, Any]:
         "vinculos_fonte_claim": len(fonte_claims),
         "claims_contestados": contested,
         "contradicoes_explicitas": explicit_contradictions,
+        "contradicoes_confirmadas": confirmed_contradictions,
+        "contradicoes_nao_avaliadas": unreviewed_contradictions,
+        "tensoes_semanticas": semantic_tensions,
+        "relacoes_compativeis": semantic_compatible,
         "microalvos_resolvidos": resolved_micros,
         "microalvos_ativos": active_micros,
         "microalvos_ativos_sem_claim": active_micros_without_claims,
@@ -753,10 +792,15 @@ def compute_delta(current: dict[str, Any], previous: dict[str, Any] | None) -> t
     elif delta["claims_contestados"] > 0:
         notes.append(f"Nova tensão: {delta['claims_contestados']} claim(s) passaram a estado contestado.")
 
-    if delta["contradicoes_explicitas"] < 0:
-        notes.append(f"Melhora: {-delta['contradicoes_explicitas']} relação(ões) explícita(s) de contradição deixaram de estar abertas.")
-    elif delta["contradicoes_explicitas"] > 0:
-        notes.append(f"Nova tensão estrutural: +{delta['contradicoes_explicitas']} relação(ões) explícita(s) 'contradiz'.")
+    if delta["contradicoes_confirmadas"] < 0:
+        notes.append(f"Revisão semântica: {-delta['contradicoes_confirmadas']} contradição(ões) confirmada(s) deixaram de estar abertas.")
+    elif delta["contradicoes_confirmadas"] > 0:
+        notes.append(f"Contradição confirmada: +{delta['contradicoes_confirmadas']} relação(ões) foi(ram) validada(s) semanticamente como contradição real.")
+
+    if delta["contradicoes_nao_avaliadas"] < 0:
+        notes.append(f"Qualidade estrutural: {-delta['contradicoes_nao_avaliadas']} relação(ões) 'contradiz' recebeu(ram) revisão semântica.")
+    elif delta["contradicoes_nao_avaliadas"] > 0:
+        notes.append(f"Revisão necessária: +{delta['contradicoes_nao_avaliadas']} relação(ões) 'contradiz' ainda não avaliada(s) semanticamente.")
 
     if delta["microalvos_resolvidos"] > 0:
         notes.append(f"Progresso: {delta['microalvos_resolvidos']} microalvo(s) adicional(is) foram resolvidos.")
@@ -798,6 +842,7 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
         "decomposicao": 0,
         "prioridade": 0,
         "contradicao": 0,
+        "qualidade": 0,
     }
     reasons: dict[str, list[str]] = {k: [] for k in scores}
 
@@ -826,12 +871,28 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
         scores["contradicao"] += v
         reasons["contradicao"].append(f"{metrics['claims_contestados']} claim(s) contestado(s) (+{v}).")
 
-    # Relações explícitas 'contradiz' também contam, mesmo que os claims ainda estejam em estado pendente/proposto.
-    if metrics["contradicoes_explicitas"] > 0:
-        v = 12 + 4 * metrics["contradicoes_explicitas"]
+    # v24: o rótulo estrutural 'contradiz' não basta para afirmar contradição lógica.
+    # Relações ainda não revisadas pressionam QUALIDADE; só contradições semanticamente
+    # confirmadas pressionam CONTRADIÇÃO. A classificação é humana, nunca automática.
+    if metrics["contradicoes_nao_avaliadas"] > 0:
+        v = 12 + 2 * metrics["contradicoes_nao_avaliadas"]
+        scores["qualidade"] += v
+        reasons["qualidade"].append(
+            f"{metrics['contradicoes_nao_avaliadas']} relação(ões) 'contradiz' sem validação semântica (+{v})."
+        )
+
+    if metrics["contradicoes_confirmadas"] > 0:
+        v = 12 + 4 * metrics["contradicoes_confirmadas"]
         scores["contradicao"] += v
         reasons["contradicao"].append(
-            f"{metrics['contradicoes_explicitas']} relação(ões) explícita(s) de contradição aberta(s) (+{v})."
+            f"{metrics['contradicoes_confirmadas']} contradição(ões) semanticamente confirmada(s) e aberta(s) (+{v})."
+        )
+
+    if metrics["tensoes_semanticas"] > 0:
+        v = min(12, 4 * metrics["tensoes_semanticas"])
+        scores["contradicao"] += v
+        reasons["contradicao"].append(
+            f"{metrics['tensoes_semanticas']} relação(ões) classificada(s) como tensão/contestação (+{v})."
         )
 
     # Delta: reward unresolved deterioration, reduce pressure when improving.
@@ -853,12 +914,19 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
         scores["contradicao"] -= 6
         reasons["contradicao"].append("Δ mostra redução de contestações (-6).")
 
-    if delta.get("contradicoes_explicitas", 0) > 0:
+    if delta.get("contradicoes_confirmadas", 0) > 0:
         scores["contradicao"] += 8
-        reasons["contradicao"].append("Δ mostra novas relações explícitas de contradição (+8).")
-    elif delta.get("contradicoes_explicitas", 0) < 0:
+        reasons["contradicao"].append("Δ mostra novas contradições semanticamente confirmadas (+8).")
+    elif delta.get("contradicoes_confirmadas", 0) < 0:
         scores["contradicao"] -= 6
-        reasons["contradicao"].append("Δ mostra redução de relações explícitas de contradição (-6).")
+        reasons["contradicao"].append("Δ mostra redução de contradições confirmadas (-6).")
+
+    if delta.get("contradicoes_nao_avaliadas", 0) > 0:
+        scores["qualidade"] += 8
+        reasons["qualidade"].append("Δ mostra novas relações 'contradiz' sem revisão semântica (+8).")
+    elif delta.get("contradicoes_nao_avaliadas", 0) < 0:
+        scores["qualidade"] -= 4
+        reasons["qualidade"].append("Δ mostra relações semânticas revisadas (-4).")
 
     if delta.get("microalvos_resolvidos", 0) > 0:
         scores["decomposicao"] -= 5
@@ -878,9 +946,10 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
         scores["prioridade"] += v
         reasons["prioridade"].append(f"{dep_count} dependência(s) estrutural(is) ativa(s) (+{v}).")
 
+    tie_order = {"prioridade": 0, "evidencia": 1, "qualidade": 2, "decomposicao": 3, "contradicao": 4}
     ranked = sorted(
         [{"category": k, "score": int(v), "reasons": reasons[k]} for k, v in scores.items()],
-        key=lambda x: (-x["score"], x["category"])
+        key=lambda x: (-x["score"], tie_order.get(x["category"], 99), x["category"])
     )
     winner = ranked[0]
 
@@ -888,7 +957,8 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
         "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
         "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
         "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
-        "contradicao": "Isole a contestação dominante e registre evidências pró e contra antes de avançar.",
+        "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
+        "qualidade": "Revise semanticamente as relações 'contradiz' ainda não avaliadas antes de tratá-las como contradições reais.",
     }
     recommendation = {
         "category": winner["category"],
@@ -1000,6 +1070,13 @@ def evaluate_decision_outcome(current_inv: dict[str, Any]) -> dict[str, Any]:
         if d.get("claims_contestados", 0) < 0:
             score += 4
             outcome_notes.append("Contestações diminuíram (+4).")
+        if d.get("contradicoes_confirmadas", 0) < 0:
+            score += 4
+            outcome_notes.append("Contradições confirmadas abertas diminuíram (+4).")
+    elif category == "qualidade":
+        if d.get("contradicoes_nao_avaliadas", 0) < 0:
+            score += 4
+            outcome_notes.append("Relações 'contradiz' receberam revisão semântica humana (+4).")
 
     executed = row.get("executed_action") or {}
     if executed:
@@ -1016,6 +1093,15 @@ def evaluate_decision_outcome(current_inv: dict[str, Any]) -> dict[str, Any]:
                 outcome_notes.append(
                     "Ação registrada, mas o claim criado não pôde ser confirmado no estado atual."
                 )
+
+    if executed.get("type") == "classify_relation_semantics":
+        relation_id = str(executed.get("relation_id") or "")
+        expected = str(executed.get("semantic_status") or "")
+        current_rel = next((r for r in (current_inv.get("relacoes", []) or []) if str(r.get("id")) == relation_id), None)
+        current_status = str((current_rel or {}).get("validacaoSemantica") or "")
+        if relation_id and expected and current_status == expected:
+            score += 3
+            outcome_notes.append(f"Ação causal confirmada: {relation_id} recebeu classificação semântica humana (+3).")
 
     # Generic quality signals
     if d.get("claims_sem_fonte", 0) > 0:
@@ -1153,13 +1239,14 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
             for item in ranked:
                 avg = float(historical_scores.get(item["category"], 0))
                 item["score"] += round(avg)
-            ranked.sort(key=lambda x: (-x["score"], x["category"]))
+            ranked.sort(key=lambda x: (-x["score"], {"prioridade":0,"evidencia":1,"qualidade":2,"decomposicao":3,"contradicao":4}.get(x["category"],99), x["category"]))
             winner = ranked[0]
             actions = {
                 "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
                 "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
                 "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
-                "contradicao": "Isole a contestação dominante e registre evidências pró e contra antes de avançar.",
+                "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
+                "qualidade": "Revise semanticamente as relações 'contradiz' ainda não avaliadas antes de tratá-las como contradições reais.",
             }
             recommendation = {
                 "category": winner["category"],
@@ -1256,7 +1343,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.1.0-causal-action"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.2.0-semantic-review"}
 
 
 @app.get("/health")
@@ -1347,7 +1434,7 @@ def memory_adaptive_route(req: AdaptiveRequest):
             avg = float(historical_scores.get(item["category"], 0))
             item["score"] += round(avg)
 
-        ranked.sort(key=lambda x: (-x["score"], x["category"]))
+        ranked.sort(key=lambda x: (-x["score"], {"prioridade":0,"evidencia":1,"qualidade":2,"decomposicao":3,"contradicao":4}.get(x["category"],99), x["category"]))
         winner = ranked[0]
         recommendation = {
             "category": winner["category"],
@@ -1356,7 +1443,8 @@ def memory_adaptive_route(req: AdaptiveRequest):
                 "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
                 "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
                 "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
-                "contradicao": "Isole a contestação dominante e registre evidências pró e contra antes de avançar.",
+                "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
+                "qualidade": "Revise semanticamente as relações 'contradiz' ainda não avaliadas antes de tratá-las como contradições reais.",
             }[winner["category"]],
         }
         rationale.append(

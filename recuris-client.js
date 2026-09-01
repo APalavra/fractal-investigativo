@@ -246,6 +246,70 @@ async function compareWithMemory() {
 
 
 
+
+async function runAutomaticCycle() {
+  const button = $("btnEvoCiclo");
+  try {
+    button.disabled = true;
+    button.textContent = "Executando ciclo...";
+    setStatus("Executando ciclo automático completo...");
+
+    const investigation = loadInvestigation();
+    const data = await request("/memory/cycle", {
+      method: "POST",
+      body: JSON.stringify({ investigation }),
+    });
+
+    const target = $("evoCyclePanel");
+    const decision = data.decision || {};
+    const rec = decision.recommendation || {};
+    const outcome = data.outcome || null;
+
+    const scores = (decision.adaptive_scores || []).map(x =>
+      `<div class="meta"><strong>${esc(x.category)}</strong>: ${esc(x.score)}</div>`
+    ).join("");
+
+    const rationale = (decision.rationale || []).map(x => `<li>${esc(x)}</li>`).join("");
+    const historical = (data.comparison?.guidance || []).map(x => `<li>${esc(x)}</li>`).join("");
+    const deltaNotes = (data.delta?.interpretation || []).map(x => `<li>${esc(x)}</li>`).join("");
+
+    const outcomeHtml = outcome ? `
+      <div class="card">
+        <strong>Resultado anterior avaliado automaticamente</strong>
+        <div class="meta">${esc(outcome.decision_id)} · ${esc(outcome.outcome_label)} · score ${esc(outcome.outcome_score)}</div>
+      </div>
+    ` : `
+      <div class="meta">Nenhum resultado anterior precisou ser avaliado neste ciclo.</div>
+    `;
+
+    target.innerHTML = `
+      <div class="card">
+        <strong>Ciclo automático</strong>
+        <div class="meta">${esc(data.message)}</div>
+        <div class="meta">Memória evolutiva v${esc(data.memory_version)}</div>
+        ${outcomeHtml}
+        <div class="card">
+          <strong>${data.decision_created ? "Nova decisão" : "Decisão pendente preservada"}</strong>
+          <div class="meta">${esc(decision.decision_id || "-")}</div>
+          <div class="meta">Categoria: <strong>${esc(rec.category || "-")}</strong> · score ${esc(rec.score ?? "-")}</div>
+          <p><strong>Próxima ação:</strong> ${esc(rec.action || "-")}</p>
+          ${scores}
+        </div>
+        ${historical ? `<div><strong>Histórico</strong><ul>${historical}</ul></div>` : ""}
+        ${deltaNotes ? `<div><strong>Δ</strong><ul>${deltaNotes}</ul></div>` : ""}
+        ${rationale ? `<div><strong>Justificativa</strong><ul>${rationale}</ul></div>` : ""}
+      </div>
+    `;
+
+    setStatus("✓ Ciclo automático concluído.", true);
+  } catch (err) {
+    setStatus(`✗ ${err.message}`);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Executar ciclo automático";
+  }
+}
+
 async function evaluateLastDecision() {
   try {
     setStatus("Avaliando resultado da última decisão adaptativa...");
@@ -358,6 +422,7 @@ function init() {
   $("btnEvoDelta").addEventListener("click", measureDelta);
   $("btnEvoAdaptativo").addEventListener("click", runAdaptiveDecision);
   $("btnEvoResultado").addEventListener("click", evaluateLastDecision);
+  $("btnEvoCiclo").addEventListener("click", runAutomaticCycle);
   setStatus(input.value ? "Backend configurado; teste a conexão." : "Backend ainda não configurado.");
 }
 

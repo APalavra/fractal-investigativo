@@ -126,6 +126,21 @@ class OutcomeResponse(BaseModel):
     notes: list[str]
 
 
+class AutoCycleRequest(BaseModel):
+    investigation: dict[str, Any]
+
+
+class AutoCycleResponse(BaseModel):
+    memory_version: int
+    outcome_evaluated: bool
+    outcome: dict[str, Any] | None = None
+    comparison: dict[str, Any]
+    delta: dict[str, Any]
+    decision_created: bool
+    decision: dict[str, Any] | None = None
+    message: str
+
+
 
 def memory_guidance_for(inv: dict[str, Any]) -> tuple[list[str], set[str]]:
     notes = []
@@ -1017,11 +1032,119 @@ def outcome_history_summary() -> dict[str, Any]:
     }
 
 
+
+def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
+    init_db()
+    current_hash = stable_hash(inv)
+
+    pending = latest_unevaluated_decision()
+    outcome = None
+    if pending and pending.get("baseline_hash") != current_hash:
+        outcome = evaluate_decision_outcome(inv)
+
+    pending_same_state = latest_unevaluated_decision()
+    same_state_pending = bool(
+        pending_same_state and pending_same_state.get("baseline_hash") == current_hash
+    )
+
+    comparison_model = compare_with_memory(inv)
+    comparison = comparison_model.model_dump()
+
+    previous_row = latest_snapshot()
+    previous_inv = previous_row["investigation"] if previous_row else None
+    changes, interpretation = compute_delta(inv, previous_inv)
+    saved_snapshot_id = None
+    if not previous_row or previous_row["investigation_hash"] != current_hash:
+        saved_snapshot_id = save_snapshot(inv)
+
+    delta = {
+        "baseline_found": previous_row is not None,
+        "baseline_snapshot_id": f"SNP-{previous_row['id']}" if previous_row else None,
+        "saved_snapshot_id": saved_snapshot_id,
+        "changes": changes,
+        "interpretation": interpretation,
+    }
+
+    decision = None
+    decision_created = False
+
+    if not same_state_pending:
+        memory_rows = load_memory_rows(limit=100)
+        ranked, recommendation, rationale, _ = adaptive_feedback(
+            inv, previous_inv, memory_rows
+        )
+
+        outcome_summary = outcome_history_summary()
+        historical_scores = outcome_summary.get("average_score_by_category", {})
+        if historical_scores:
+            rationale.append(
+                "Aprendizado por resultado disponível: " +
+                ", ".join(f"{k}={v}" for k, v in historical_scores.items())
+            )
+            for item in ranked:
+                avg = float(historical_scores.get(item["category"], 0))
+                item["score"] += round(avg)
+            ranked.sort(key=lambda x: (-x["score"], x["category"]))
+            winner = ranked[0]
+            actions = {
+                "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
+                "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
+                "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
+                "contradicao": "Isole a contestação dominante e registre evidências pró e contra antes de avançar.",
+            }
+            recommendation = {
+                "category": winner["category"],
+                "score": winner["score"],
+                "action": actions[winner["category"]],
+            }
+            rationale.append(
+                f"Score reajustado pelo histórico de resultados; vencedor atual: "
+                f"{winner['category']} ({winner['score']})."
+            )
+
+        decision_id = save_adaptive_decision(inv, recommendation, ranked)
+        decision = {
+            "decision_id": decision_id,
+            "recommendation": recommendation,
+            "adaptive_scores": ranked,
+            "rationale": rationale,
+        }
+        decision_created = True
+    else:
+        decision = {
+            "decision_id": f"DEC-{pending_same_state['id']}",
+            "recommendation": pending_same_state.get("recommendation") or {},
+            "adaptive_scores": pending_same_state.get("adaptive_scores") or [],
+            "rationale": [
+                "Já existe uma decisão pendente para este mesmo estado.",
+                "Altere a investigação conforme a recomendação antes de gerar outra decisão."
+            ],
+        }
+
+    mem = load_memory()
+    return {
+        "memory_version": int(mem.get("version", 0)),
+        "outcome_evaluated": outcome is not None,
+        "outcome": outcome,
+        "comparison": comparison,
+        "delta": delta,
+        "decision_created": decision_created,
+        "decision": decision,
+        "message": (
+            "Ciclo automático concluído: resultado anterior avaliado e nova decisão criada."
+            if outcome is not None and decision_created else
+            "Ciclo automático concluído: nova decisão criada."
+            if decision_created else
+            "Ciclo automático concluído: decisão pendente preservada até a investigação mudar."
+        ),
+    }
+
+
 # ---------- HTTP app ----------
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="0.8.0-outcome-learning",
+    version="0.9.0-auto-cycle",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -1045,7 +1168,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.8.0-outcome-learning"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.9.0-auto-cycle"}
 
 
 @app.get("/health")
@@ -1093,6 +1216,13 @@ def memory_outcome_route(req: OutcomeRequest):
         return OutcomeResponse(**result)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
+
+
+@app.post("/memory/cycle", response_model=AutoCycleResponse)
+def memory_auto_cycle_route(req: AutoCycleRequest):
+    if not req.investigation or not isinstance(req.investigation, dict):
+        raise HTTPException(status_code=400, detail="investigation ausente ou inválida")
+    return AutoCycleResponse(**run_automatic_cycle(req.investigation))
 
 
 @app.post("/memory/adaptive", response_model=AdaptiveResponse)

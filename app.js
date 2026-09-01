@@ -179,10 +179,11 @@ window.removeSource=id=>{
 function addFS(){
   if(!ensureInv())return;
   const fonteId=$("fsFonte").value, claimId=$("fsClaim").value, tipo=$("fsTipo").value;
+  const natureza=$("fsNatureza")?.value || "nao_classificada";
   if(!fonteId||!claimId){alert("Crie ao menos uma fonte e um claim.");return;}
   if(db.ativa.fonteClaims.some(x=>x.fonteId===fonteId&&x.claimId===claimId&&x.tipo===tipo)){alert("Vínculo duplicado.");return;}
   db.ativa.fonteClaims.push({
-    id:`FS-${db.ativa.counters.fonteClaim++}`,fonteId,claimId,tipo,
+    id:`FS-${db.ativa.counters.fonteClaim++}`,fonteId,claimId,tipo,natureza,
     observacao:$("fsObs").value.trim(),criadoEm:now()
   });
   $("fsObs").value="";persist();renderAll();
@@ -365,6 +366,7 @@ function renderFS(){
   for(const x of db.ativa.fonteClaims){
     $("fsLista").insertAdjacentHTML("beforeend",`
       <div class="item"><strong>${esc(x.id)}</strong><p>${esc(x.fonteId)} → <b>${esc(x.tipo)}</b> → ${esc(x.claimId)}</p>
+      <div class="meta"><b>Evidência:</b> ${esc(({teorica:"teórica",experimental:"experimental",observacional:"observacional",documental:"documental",argumentativa:"argumentativa",nao_classificada:"não classificada"})[x.natureza||"nao_classificada"] || x.natureza)}</div>
       <div class="meta">${esc(x.observacao)}</div><button class="danger" onclick="removeFS('${x.id}')">Remover</button></div>`);
   }
 }

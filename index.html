@@ -156,6 +156,15 @@
         </div>
         <label>Claim</label>
         <select id="fsClaim"></select>
+        <label>Natureza da evidência</label>
+        <select id="fsNatureza">
+          <option value="nao_classificada">Não classificada</option>
+          <option value="teorica">Teórica</option>
+          <option value="experimental">Experimental</option>
+          <option value="observacional">Observacional</option>
+          <option value="documental">Documental</option>
+          <option value="argumentativa">Argumentativa</option>
+        </select>
         <label>Observação</label>
         <textarea id="fsObs"></textarea>
         <button id="btnAddFS" class="primary">Adicionar vínculo</button>
@@ -226,7 +235,7 @@
 
       <section class="card">
         <h2>10. Motor evolutivo — ponte Recuris</h2>
-      <div class="meta" id="evoBuildVersion">Frontend Recuris v27 · limiar positivo e estado estável</div>
+      <div class="meta" id="evoBuildVersion">Frontend Recuris v28 · tipologia de evidência</div>
         <p class="muted">Analisa a investigação atual, propõe mudanças rastreáveis, valida antes de registrar e mantém uma memória evolutiva separada no backend Python.</p>
         <label>URL HTTPS do backend</label>
         <input id="evoBackendUrl" placeholder="https://seu-backend.exemplo.com">
@@ -270,7 +279,7 @@
     </div>
   </main>
 
-  <script type="module" src="./app.js?v=20"></script>
-  <script type="module" src="./recuris-client.js?v=27"></script>
+  <script type="module" src="./app.js?v=28"></script>
+  <script type="module" src="./recuris-client.js?v=28"></script>
 </body>
 </html>

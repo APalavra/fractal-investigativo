@@ -1199,7 +1199,7 @@ def register_executed_action(decision_id: str, action: dict[str, Any]) -> bool:
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="1.2.1-restore-pending-init",
+    version="1.3.0-synchronized-safe-action",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -1223,7 +1223,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.2.1-restore-pending-init"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.3.0-synchronized-safe-action"}
 
 
 @app.get("/health")

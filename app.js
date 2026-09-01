@@ -445,6 +445,19 @@ $("btnApagarTudo").onclick=eraseEverything;
 $("claimConf").oninput=e=>$("claimConfVal").textContent=e.target.value;
 $("srcConf").oninput=e=>$("srcConfVal").textContent=e.target.value;
 
+
+window.addEventListener("fractal:external-db-update", (event) => {
+  try {
+    if(!event.detail?.db) return;
+    db = normalizeDB(event.detail.db);
+    save(db);
+    renderAll();
+    window.dispatchEvent(new CustomEvent("fractal:external-db-applied"));
+  } catch (err) {
+    console.error("Falha ao aplicar atualização externa do banco Fractal:", err);
+  }
+});
+
 window.addEventListener("beforeunload",()=>{if(db.ativa)persist();});
 
 load();

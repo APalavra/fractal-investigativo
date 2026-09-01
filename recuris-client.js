@@ -381,7 +381,12 @@ async function applySafeRecommendedAction() {
       origemAutomatica: cycle.decision.decision_id || null
     });
 
+    // Atualiza o banco persistente e também o estado em memória do app.js.
+    // Isso evita que o beforeunload do app.js regrave uma cópia antiga e apague o claim recém-criado.
     saveWholeDB(db);
+    window.dispatchEvent(new CustomEvent("fractal:external-db-update", {
+      detail: { db }
+    }));
     if ($("btnEvoAplicarSeguro")) $("btnEvoAplicarSeguro").disabled = true;
 
     try {
@@ -405,12 +410,11 @@ async function applySafeRecommendedAction() {
       <div class="card">
         <strong>Alteração segura aplicada</strong>
         <p>${esc(id)} foi criado e ligado a ${esc(micro.id)}.</p>
-        <div class="meta">Tipo H · pendente · confiança 30% · nenhuma fonte inventada · nenhuma conclusão validada automaticamente.</div><div class="meta">A execução foi registrada para avaliação causal no próximo ciclo.</div>
-        <p>A página será recarregada para sincronizar toda a interface.</p>
+        <div class="meta">Tipo H · pendente · confiança 30% · nenhuma fonte inventada · nenhuma conclusão validada automaticamente.</div>
+        <div class="meta">A execução foi registrada para avaliação causal no próximo ciclo.</div>
+        <p>O claim já foi sincronizado com a investigação atual.</p>
       </div>`;
-    setStatus(`✓ ${id} criado com rastreabilidade automática.`, true);
-
-    setTimeout(() => location.reload(), 1200);
+    setStatus(`✓ ${id} criado, sincronizado e registrado causalmente.`, true);
   } catch (err) {
     setStatus(`✗ ${err.message}`);
   }

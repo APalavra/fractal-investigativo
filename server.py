@@ -104,12 +104,26 @@ class AdaptiveRequest(BaseModel):
 class AdaptiveResponse(BaseModel):
     current_hash: str
     snapshot_id: str | None = None
+    decision_id: str | None = None
     memory_records: int
     baseline_found: bool
     delta: dict[str, Any]
     adaptive_scores: list[dict[str, Any]]
     recommendation: dict[str, Any]
     rationale: list[str]
+
+
+class OutcomeRequest(BaseModel):
+    investigation: dict[str, Any]
+
+
+class OutcomeResponse(BaseModel):
+    decision_id: str
+    recommendation: dict[str, Any]
+    outcome_score: int
+    outcome_label: str
+    changes: dict[str, Any]
+    notes: list[str]
 
 
 
@@ -404,6 +418,22 @@ def init_db() -> None:
                     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                     investigation_hash TEXT NOT NULL,
                     investigation JSONB NOT NULL
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS adaptive_decisions (
+                    id BIGSERIAL PRIMARY KEY,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    baseline_hash TEXT NOT NULL,
+                    baseline_investigation JSONB NOT NULL,
+                    recommendation JSONB NOT NULL,
+                    adaptive_scores JSONB NOT NULL,
+                    evaluated_at TIMESTAMPTZ,
+                    outcome_investigation_hash TEXT,
+                    outcome_investigation JSONB,
+                    outcome_score INTEGER,
+                    outcome_label TEXT,
+                    outcome_notes JSONB
                 )
             """)
         conn.commit()
@@ -820,11 +850,178 @@ def load_memory_rows(limit: int = 100) -> list[dict[str, Any]]:
             return list(cur.fetchall())
 
 
+
+def save_adaptive_decision(inv: dict[str, Any], recommendation: dict[str, Any], scores: list[dict[str, Any]]) -> str:
+    init_db()
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO adaptive_decisions (
+                    baseline_hash,
+                    baseline_investigation,
+                    recommendation,
+                    adaptive_scores
+                )
+                VALUES (%s, %s::jsonb, %s::jsonb, %s::jsonb)
+                RETURNING id
+            """, (
+                stable_hash(inv),
+                json.dumps(inv, ensure_ascii=False),
+                json.dumps(recommendation, ensure_ascii=False),
+                json.dumps(scores, ensure_ascii=False),
+            ))
+            did = int(cur.fetchone()["id"])
+        conn.commit()
+    return f"DEC-{did}"
+
+
+def latest_unevaluated_decision() -> dict[str, Any] | None:
+    init_db()
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, baseline_hash, baseline_investigation,
+                       recommendation, adaptive_scores
+                FROM adaptive_decisions
+                WHERE evaluated_at IS NULL
+                ORDER BY id DESC
+                LIMIT 1
+            """)
+            return cur.fetchone()
+
+
+def evaluate_decision_outcome(current_inv: dict[str, Any]) -> dict[str, Any]:
+    row = latest_unevaluated_decision()
+    if not row:
+        raise ValueError("Não há decisão adaptativa pendente para avaliar.")
+
+    baseline = row["baseline_investigation"]
+    recommendation = row["recommendation"] or {}
+    category = recommendation.get("category")
+    changes, notes = compute_delta(current_inv, baseline)
+    d = changes.get("delta", {}) or {}
+
+    score = 0
+    outcome_notes: list[str] = []
+
+    if category == "evidencia":
+        if d.get("claims_sem_fonte", 0) < 0:
+            score += 3
+            outcome_notes.append("Menos claims ficaram sem fonte (+3).")
+        if d.get("vinculos_fonte_claim", 0) > 0:
+            score += 3
+            outcome_notes.append("Novos vínculos fonte→claim foram criados (+3).")
+        if d.get("fontes", 0) > 0:
+            score += 1
+            outcome_notes.append("A base de fontes aumentou (+1).")
+    elif category == "decomposicao":
+        if d.get("claims", 0) > 0:
+            score += 2
+            outcome_notes.append("Novos claims foram criados (+2).")
+        if d.get("microalvos_resolvidos", 0) > 0:
+            score += 3
+            outcome_notes.append("Microalvos foram resolvidos (+3).")
+    elif category == "prioridade":
+        if d.get("microalvos_resolvidos", 0) > 0:
+            score += 4
+            outcome_notes.append("Microalvos foram resolvidos após a priorização (+4).")
+        if d.get("microalvos_ativos", 0) < 0:
+            score += 2
+            outcome_notes.append("O número de microalvos ativos caiu (+2).")
+    elif category == "contradicao":
+        if d.get("claims_contestados", 0) < 0:
+            score += 4
+            outcome_notes.append("Contestações diminuíram (+4).")
+
+    # Generic quality signals
+    if d.get("claims_sem_fonte", 0) > 0:
+        score -= 2
+        outcome_notes.append("Aumentaram claims sem fonte (-2).")
+    if d.get("claims_contestados", 0) > 0:
+        score -= 2
+        outcome_notes.append("Aumentaram claims contestados (-2).")
+
+    if score >= 4:
+        label = "melhorou"
+    elif score >= 1:
+        label = "melhora_parcial"
+    elif score == 0:
+        label = "neutro"
+    else:
+        label = "piorou"
+
+    if not outcome_notes:
+        outcome_notes.append("Nenhuma métrica diretamente ligada à recomendação mudou.")
+
+    init_db()
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE adaptive_decisions
+                SET evaluated_at = NOW(),
+                    outcome_investigation_hash = %s,
+                    outcome_investigation = %s::jsonb,
+                    outcome_score = %s,
+                    outcome_label = %s,
+                    outcome_notes = %s::jsonb
+                WHERE id = %s
+            """, (
+                stable_hash(current_inv),
+                json.dumps(current_inv, ensure_ascii=False),
+                score,
+                label,
+                json.dumps(outcome_notes, ensure_ascii=False),
+                row["id"],
+            ))
+        conn.commit()
+
+    return {
+        "decision_id": f"DEC-{row['id']}",
+        "recommendation": recommendation,
+        "outcome_score": score,
+        "outcome_label": label,
+        "changes": d,
+        "notes": outcome_notes,
+    }
+
+
+def outcome_history_summary() -> dict[str, Any]:
+    init_db()
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT recommendation, outcome_score, outcome_label
+                FROM adaptive_decisions
+                WHERE evaluated_at IS NOT NULL
+                ORDER BY id
+            """)
+            rows = cur.fetchall()
+
+    by_category: dict[str, list[int]] = {}
+    labels: dict[str, int] = {}
+    for row in rows:
+        cat = str((row["recommendation"] or {}).get("category") or "outro")
+        by_category.setdefault(cat, []).append(int(row["outcome_score"] or 0))
+        label = str(row["outcome_label"] or "neutro")
+        labels[label] = labels.get(label, 0) + 1
+
+    averages = {
+        cat: round(sum(vals) / len(vals), 2)
+        for cat, vals in by_category.items()
+        if vals
+    }
+    return {
+        "evaluated": len(rows),
+        "average_score_by_category": averages,
+        "labels": labels,
+    }
+
+
 # ---------- HTTP app ----------
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="0.7.0-adaptive-feedback",
+    version="0.8.0-outcome-learning",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -848,7 +1045,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.7.0-adaptive-feedback"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.8.0-outcome-learning"}
 
 
 @app.get("/health")
@@ -887,6 +1084,17 @@ def memory_route():
     return {"schema": mem.get("schema"), "version": mem.get("version", 0), "entries": mem.get("entries", [])}
 
 
+@app.post("/memory/outcome", response_model=OutcomeResponse)
+def memory_outcome_route(req: OutcomeRequest):
+    if not req.investigation or not isinstance(req.investigation, dict):
+        raise HTTPException(status_code=400, detail="investigation ausente ou inválida")
+    try:
+        result = evaluate_decision_outcome(req.investigation)
+        return OutcomeResponse(**result)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+
+
 @app.post("/memory/adaptive", response_model=AdaptiveResponse)
 def memory_adaptive_route(req: AdaptiveRequest):
     if not req.investigation or not isinstance(req.investigation, dict):
@@ -900,6 +1108,37 @@ def memory_adaptive_route(req: AdaptiveRequest):
         req.investigation, previous_inv, memory_rows
     )
 
+    outcome_summary = outcome_history_summary()
+    historical_scores = outcome_summary.get("average_score_by_category", {})
+    if historical_scores:
+        rationale.append(
+            "Aprendizado por resultado disponível: " +
+            ", ".join(f"{k}={v}" for k, v in historical_scores.items())
+        )
+
+        # Small reward/penalty based on proven historical outcomes.
+        for item in ranked:
+            avg = float(historical_scores.get(item["category"], 0))
+            item["score"] += round(avg)
+
+        ranked.sort(key=lambda x: (-x["score"], x["category"]))
+        winner = ranked[0]
+        recommendation = {
+            "category": winner["category"],
+            "score": winner["score"],
+            "action": {
+                "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
+                "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
+                "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
+                "contradicao": "Isole a contestação dominante e registre evidências pró e contra antes de avançar.",
+            }[winner["category"]],
+        }
+        rationale.append(
+            f"Score reajustado pelo histórico de resultados; vencedor atual: {winner['category']} ({winner['score']})."
+        )
+
+    decision_id = save_adaptive_decision(req.investigation, recommendation, ranked)
+
     saved_id = None
     current_hash = stable_hash(req.investigation)
     if req.save_snapshot and (not previous_row or previous_row["investigation_hash"] != current_hash):
@@ -908,6 +1147,7 @@ def memory_adaptive_route(req: AdaptiveRequest):
     return AdaptiveResponse(
         current_hash=current_hash,
         snapshot_id=saved_id,
+        decision_id=decision_id,
         memory_records=len(memory_rows),
         baseline_found=previous_row is not None,
         delta=changes.get("delta", {}) or {},

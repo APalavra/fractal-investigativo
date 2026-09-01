@@ -245,6 +245,39 @@ async function compareWithMemory() {
 
 
 
+
+async function evaluateLastDecision() {
+  try {
+    setStatus("Avaliando resultado da última decisão adaptativa...");
+    const investigation = loadInvestigation();
+    const data = await request("/memory/outcome", {
+      method: "POST",
+      body: JSON.stringify({ investigation }),
+    });
+
+    const target = $("evoOutcomePanel");
+    const delta = Object.entries(data.changes || {})
+      .map(([k,v]) => `<div class="meta">${esc(k)}: ${v >= 0 ? "+" : ""}${v}</div>`)
+      .join("");
+    const notes = (data.notes || []).map(x => `<li>${esc(x)}</li>`).join("");
+
+    target.innerHTML = `
+      <div class="card">
+        <strong>Aprendizado por resultado</strong>
+        <div class="meta">Decisão avaliada: ${esc(data.decision_id)}</div>
+        <div class="meta">Resultado: <strong>${esc(data.outcome_label)}</strong> · score ${esc(data.outcome_score)}</div>
+        <p><strong>Recomendação avaliada:</strong> ${esc(data.recommendation?.action || "-")}</p>
+        ${delta}
+        ${notes ? `<ul>${notes}</ul>` : ""}
+      </div>
+    `;
+
+    setStatus(`✓ Resultado avaliado: ${data.outcome_label}.`, true);
+  } catch (err) {
+    setStatus(`✗ ${err.message}`);
+  }
+}
+
 async function runAdaptiveDecision() {
   try {
     setStatus("Executando ciclo adaptativo: memória + Δ + estado atual...");
@@ -265,7 +298,7 @@ async function runAdaptiveDecision() {
     target.innerHTML = `
       <div class="card">
         <strong>Decisão adaptativa</strong>
-        <div class="meta">Memórias consultadas: ${esc(data.memory_records)}</div>
+        <div class="meta">Decisão: ${esc(data.decision_id || "-")} · Memórias consultadas: ${esc(data.memory_records)}</div>
         <div class="meta">Categoria escolhida: <strong>${esc(rec.category || "-")}</strong></div>
         <div class="meta">Score: ${esc(rec.score ?? "-")}</div>
         <p><strong>Próxima ação:</strong> ${esc(rec.action || "-")}</p>
@@ -324,6 +357,7 @@ function init() {
   $("btnEvoComparar").addEventListener("click", compareWithMemory);
   $("btnEvoDelta").addEventListener("click", measureDelta);
   $("btnEvoAdaptativo").addEventListener("click", runAdaptiveDecision);
+  $("btnEvoResultado").addEventListener("click", evaluateLastDecision);
   setStatus(input.value ? "Backend configurado; teste a conexão." : "Backend ainda não configurado.");
 }
 

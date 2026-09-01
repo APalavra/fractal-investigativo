@@ -151,6 +151,19 @@ class ActionExecutionResponse(BaseModel):
     registered: bool
 
 
+class ReconcileDecisionRequest(BaseModel):
+    decision_id: str
+    investigation: dict[str, Any]
+
+
+class ReconcileDecisionResponse(BaseModel):
+    decision_id: str
+    reconciled: bool
+    status: str
+    message: str
+    category: str | None = None
+
+
 
 def memory_guidance_for(inv: dict[str, Any]) -> tuple[list[str], set[str]]:
     notes = []
@@ -188,7 +201,7 @@ def proposal_fingerprint_from_model(proposal: Proposal) -> str:
 
 # ---------- Core ----------
 
-ENGINE_NAME = "Fractal Evolution Engine 0.2 — validação semântica humana de relações"
+ENGINE_NAME = "Fractal Evolution Engine 0.3 — reconciliação de decisões pendentes"
 
 
 def stable_hash(value: Any) -> str:
@@ -825,6 +838,27 @@ def compute_delta(current: dict[str, Any], previous: dict[str, Any] | None) -> t
 
 
 
+def category_applicability(inv: dict[str, Any]) -> dict[str, bool]:
+    metrics = investigation_metrics(inv)
+    dep_count = sum(1 for r in (inv.get("relacoesMicro", []) or []) if r.get("tipo") == "depende")
+    return {
+        "evidencia": metrics["claims_sem_fonte"] > 0,
+        "decomposicao": metrics["microalvos_ativos_sem_claim"] > 0,
+        "qualidade": metrics["contradicoes_nao_avaliadas"] > 0,
+        "contradicao": (
+            metrics["claims_contestados"] > 0
+            or metrics["contradicoes_confirmadas"] > 0
+            or metrics["tensoes_semanticas"] > 0
+        ),
+        "prioridade": dep_count > 0 or metrics["microalvos_ativos"] > 0,
+    }
+
+
+def recommendation_still_applicable(inv: dict[str, Any], recommendation: dict[str, Any]) -> bool:
+    category = str((recommendation or {}).get("category") or "")
+    return bool(category_applicability(inv).get(category, False))
+
+
 def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, memory_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any], list[str], dict[str, Any]]:
     metrics = investigation_metrics(inv)
     changes, delta_notes = compute_delta(inv, previous_inv)
@@ -1236,9 +1270,19 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
                 "Aprendizado por resultado disponível: " +
                 ", ".join(f"{k}={v}" for k, v in historical_scores.items())
             )
+            applicability = category_applicability(inv)
             for item in ranked:
-                avg = float(historical_scores.get(item["category"], 0))
-                item["score"] += round(avg)
+                cat = item["category"]
+                avg = float(historical_scores.get(cat, 0))
+                if applicability.get(cat, False):
+                    item["score"] += round(avg)
+                else:
+                    # Histórico pode modular uma necessidade existente, nunca ressuscitar
+                    # uma categoria sem gatilho no estado atual.
+                    item["score"] = min(item["score"], 0)
+                    item.setdefault("reasons", []).append(
+                        "Categoria sem gatilho no estado atual; bônus histórico bloqueado."
+                    )
             ranked.sort(key=lambda x: (-x["score"], {"prioridade":0,"evidencia":1,"qualidade":2,"decomposicao":3,"contradicao":4}.get(x["category"],99), x["category"]))
             winner = ranked[0]
             actions = {
@@ -1297,6 +1341,78 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
 
 
 
+def reconcile_pending_decision(decision_id: str, current_inv: dict[str, Any]) -> dict[str, Any]:
+    try:
+        numeric_id = int(str(decision_id).replace("DEC-", ""))
+    except Exception:
+        raise ValueError("decision_id inválido")
+
+    init_db()
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, recommendation, evaluated_at
+                FROM adaptive_decisions
+                WHERE id = %s
+                LIMIT 1
+            """, (numeric_id,))
+            row = cur.fetchone()
+
+    if not row:
+        raise ValueError("Decisão não encontrada.")
+    if row.get("evaluated_at") is not None:
+        return {
+            "decision_id": f"DEC-{numeric_id}",
+            "reconciled": False,
+            "status": "already_closed",
+            "message": "A decisão já estava encerrada.",
+            "category": (row.get("recommendation") or {}).get("category"),
+        }
+
+    recommendation = row.get("recommendation") or {}
+    category = str(recommendation.get("category") or "")
+    if recommendation_still_applicable(current_inv, recommendation):
+        return {
+            "decision_id": f"DEC-{numeric_id}",
+            "reconciled": False,
+            "status": "still_applicable",
+            "message": "A recomendação ainda possui gatilho real no estado atual.",
+            "category": category or None,
+        }
+
+    notes = [
+        f"Decisão reconciliada: a categoria '{category}' não possui mais gatilho no estado atual.",
+        "A decisão foi encerrada como obsoleta/satisfeita sem fabricar alteração epistemológica.",
+    ]
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE adaptive_decisions
+                SET evaluated_at = NOW(),
+                    outcome_investigation_hash = %s,
+                    outcome_investigation = %s::jsonb,
+                    outcome_score = 0,
+                    outcome_label = 'obsoleta',
+                    outcome_notes = %s::jsonb
+                WHERE id = %s AND evaluated_at IS NULL
+            """, (
+                stable_hash(current_inv),
+                json.dumps(current_inv, ensure_ascii=False),
+                json.dumps(notes, ensure_ascii=False),
+                numeric_id,
+            ))
+            changed = cur.rowcount > 0
+        conn.commit()
+
+    return {
+        "decision_id": f"DEC-{numeric_id}",
+        "reconciled": changed,
+        "status": "obsolete",
+        "message": "Decisão pendente encerrada porque o gatilho já não existe no estado atual.",
+        "category": category or None,
+    }
+
+
 def register_executed_action(decision_id: str, action: dict[str, Any]) -> bool:
     try:
         numeric_id = int(str(decision_id).replace("DEC-", ""))
@@ -1319,7 +1435,7 @@ def register_executed_action(decision_id: str, action: dict[str, Any]) -> bool:
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="1.1.0-causal-action",
+    version="1.2.0-decision-reconciliation",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -1393,6 +1509,17 @@ def memory_outcome_route(req: OutcomeRequest):
         raise HTTPException(status_code=409, detail=str(exc))
 
 
+@app.post("/memory/reconcile-decision", response_model=ReconcileDecisionResponse)
+def reconcile_decision_route(req: ReconcileDecisionRequest):
+    if not req.investigation or not isinstance(req.investigation, dict):
+        raise HTTPException(status_code=400, detail="investigation ausente ou inválida")
+    try:
+        result = reconcile_pending_decision(req.decision_id, req.investigation)
+        return ReconcileDecisionResponse(**result)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
 @app.post("/memory/action-execution", response_model=ActionExecutionResponse)
 def action_execution_route(req: ActionExecutionRequest):
     ok = register_executed_action(req.decision_id, req.action)
@@ -1429,10 +1556,19 @@ def memory_adaptive_route(req: AdaptiveRequest):
             ", ".join(f"{k}={v}" for k, v in historical_scores.items())
         )
 
-        # Small reward/penalty based on proven historical outcomes.
+        # Small reward/penalty based on proven historical outcomes, but only
+        # for categories that still have a real trigger in the current state.
+        applicability = category_applicability(req.investigation)
         for item in ranked:
-            avg = float(historical_scores.get(item["category"], 0))
-            item["score"] += round(avg)
+            cat = item["category"]
+            avg = float(historical_scores.get(cat, 0))
+            if applicability.get(cat, False):
+                item["score"] += round(avg)
+            else:
+                item["score"] = min(item["score"], 0)
+                item.setdefault("reasons", []).append(
+                    "Categoria sem gatilho no estado atual; bônus histórico bloqueado."
+                )
 
         ranked.sort(key=lambda x: (-x["score"], {"prioridade":0,"evidencia":1,"qualidade":2,"decomposicao":3,"contradicao":4}.get(x["category"],99), x["category"]))
         winner = ranked[0]

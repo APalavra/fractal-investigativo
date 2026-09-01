@@ -435,6 +435,19 @@ async function recordSafeExecution(decisionId, action) {
   }
 }
 
+async function reconcileDecisionIfObsolete(decisionId, inv) {
+  if (!decisionId) return null;
+  try {
+    return await request("/memory/reconcile-decision", {
+      method: "POST",
+      body: JSON.stringify({ decision_id: decisionId, investigation: inv }),
+    });
+  } catch (err) {
+    console.warn("Falha ao reconciliar decisão pendente:", err);
+    return null;
+  }
+}
+
 function syncSafeActionButton() {
   const btn = $("btnEvoAplicarSeguro");
   if (!btn) return;
@@ -541,11 +554,23 @@ async function applySafeRecommendedAction() {
             <p><strong>Próxima ação humana:</strong> adicione ou selecione uma fonte real na seção 5 e vincule-a ao claim desejado na seção 6.</p>
           </div>`;
       } else {
-        operational = `
-          <div class="card">
-            <strong>Nenhum claim sem fonte foi encontrado localmente.</strong>
-            <p>Reexecute o ciclo automático para recalcular a decisão com o estado atual.</p>
-          </div>`;
+        const reconciled = await reconcileDecisionIfObsolete(decisionId, inv);
+        if (reconciled?.reconciled || reconciled?.status === "already_closed") {
+          lastAutomaticCycle = null;
+          syncSafeActionButton();
+          operational = `
+            <div class="card">
+              <strong>Nenhum claim sem fonte foi encontrado localmente.</strong>
+              <p><strong>${esc(decisionId || "Decisão")}</strong> foi reconciliada e encerrada porque a recomendação já não possui gatilho real no estado atual.</p>
+              <p>Agora execute um novo ciclo automático para obter uma decisão realmente aplicável.</p>
+            </div>`;
+        } else {
+          operational = `
+            <div class="card">
+              <strong>Nenhum claim sem fonte foi encontrado localmente.</strong>
+              <p>O backend não encerrou automaticamente a decisão; nenhuma alteração epistemológica foi feita.</p>
+            </div>`;
+        }
       }
 
       panel.innerHTML = `
@@ -566,13 +591,18 @@ async function applySafeRecommendedAction() {
       const pairs = contradictionPairs(inv, { onlyUnreviewed: true });
 
       if (!pairs.length) {
+        const reconciled = await reconcileDecisionIfObsolete(decisionId, inv);
+        if (reconciled?.reconciled || reconciled?.status === "already_closed") {
+          lastAutomaticCycle = null;
+          syncSafeActionButton();
+        }
         panel.innerHTML = `
           <div class="card">
             <strong>Nenhuma relação 'contradiz' aguarda revisão semântica</strong>
-            <p>O estado local não possui relação não avaliada. Reexecute o ciclo para recalcular a recomendação.</p>
-            <p>Nenhuma alteração epistemológica foi feita.</p>
+            <p>O estado local não possui relação não avaliada.</p>
+            <p>${reconciled?.reconciled ? `${esc(decisionId || "A decisão")} foi reconciliada e encerrada como obsoleta.` : "Nenhuma alteração epistemológica foi feita."}</p>
           </div>`;
-        setStatus("✓ Qualidade: nenhuma relação pendente de revisão semântica.", true);
+        setStatus("✓ Qualidade: nenhuma relação pendente; decisão reconciliada quando aplicável.", true);
         return;
       }
 
@@ -659,13 +689,18 @@ async function applySafeRecommendedAction() {
       const pairs = contradictionPairs(inv, { onlyConfirmed: true });
 
       if (!pairs.length) {
+        const reconciled = await reconcileDecisionIfObsolete(decisionId, inv);
+        if (reconciled?.reconciled || reconciled?.status === "already_closed") {
+          lastAutomaticCycle = null;
+          syncSafeActionButton();
+        }
         panel.innerHTML = `
           <div class="card">
             <strong>Nenhuma contradição semanticamente confirmada encontrada</strong>
-            <p>O motor recomendou revisão de contradições, mas o estado local não contém relação <strong>contradiz</strong> validada por uma pessoa como <strong>contradição real</strong>.</p>
-            <p>Reexecute o verificador estrutural ou o próximo ciclo antes de qualquer alteração.</p>
+            <p>O estado local não contém relação <strong>contradiz</strong> validada por uma pessoa como <strong>contradição real</strong>.</p>
+            <p>${reconciled?.reconciled ? `${esc(decisionId || "A decisão")} foi reconciliada e encerrada; o próximo ciclo poderá escolher outra necessidade.` : "Nenhuma alteração epistemológica foi feita."}</p>
           </div>`;
-        setStatus("✓ Contradição: nenhuma resolução automática foi realizada.", true);
+        setStatus("✓ Contradição: nenhuma resolução automática; decisão reconciliada quando obsoleta.", true);
         return;
       }
 

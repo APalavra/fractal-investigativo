@@ -151,11 +151,6 @@ class ActionExecutionResponse(BaseModel):
     registered: bool
 
 
-class PendingDecisionResponse(BaseModel):
-    found: bool
-    decision: dict[str, Any] | None = None
-
-
 
 def memory_guidance_for(inv: dict[str, Any]) -> tuple[list[str], set[str]]:
     notes = []
@@ -680,8 +675,15 @@ def investigation_metrics(inv: dict[str, Any]) -> dict[str, Any]:
     fonte_claims = inv.get("fonteClaims", []) or []
 
     contested = sum(1 for c in claims if c.get("estado") == "contestada")
+    explicit_contradictions = sum(
+        1 for r in rels
+        if r.get("tipo") == "contradiz" and r.get("estado") not in ("resolvida", "resolvido", "rejeitada", "rejeitado")
+    )
     resolved_micros = sum(1 for m in micros if m.get("estado") == "resolvido")
-    active_micros = sum(1 for m in micros if m.get("estado") in ("aberto", "investigando"))
+    active_micro_ids = {str(m.get("id")) for m in micros if m.get("estado") in ("aberto", "investigando")}
+    active_micros = len(active_micro_ids)
+    micros_with_claims = {str(c.get("microalvoId")) for c in claims if c.get("microalvoId")}
+    active_micros_without_claims = sum(1 for mid in active_micro_ids if mid not in micros_with_claims)
     linked_claim_ids = {str(x.get("claimId")) for x in fonte_claims if x.get("claimId")}
     unsupported_claims = sum(1 for c in claims if str(c.get("id")) not in linked_claim_ids)
 
@@ -693,8 +695,10 @@ def investigation_metrics(inv: dict[str, Any]) -> dict[str, Any]:
         "relacoes_micro": len(micro_rels),
         "vinculos_fonte_claim": len(fonte_claims),
         "claims_contestados": contested,
+        "contradicoes_explicitas": explicit_contradictions,
         "microalvos_resolvidos": resolved_micros,
         "microalvos_ativos": active_micros,
+        "microalvos_ativos_sem_claim": active_micros_without_claims,
         "claims_sem_fonte": unsupported_claims,
     }
 
@@ -749,6 +753,11 @@ def compute_delta(current: dict[str, Any], previous: dict[str, Any] | None) -> t
     elif delta["claims_contestados"] > 0:
         notes.append(f"Nova tensão: {delta['claims_contestados']} claim(s) passaram a estado contestado.")
 
+    if delta["contradicoes_explicitas"] < 0:
+        notes.append(f"Melhora: {-delta['contradicoes_explicitas']} relação(ões) explícita(s) de contradição deixaram de estar abertas.")
+    elif delta["contradicoes_explicitas"] > 0:
+        notes.append(f"Nova tensão estrutural: +{delta['contradicoes_explicitas']} relação(ões) explícita(s) 'contradiz'.")
+
     if delta["microalvos_resolvidos"] > 0:
         notes.append(f"Progresso: {delta['microalvos_resolvidos']} microalvo(s) adicional(is) foram resolvidos.")
 
@@ -798,15 +807,32 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
         scores["evidencia"] += v
         reasons["evidencia"].append(f"{metrics['claims_sem_fonte']} claim(s) ainda sem fonte (+{v}).")
 
-    if metrics["microalvos_ativos"] > 0:
-        v = min(18, 3 * metrics["microalvos_ativos"])
+    # Decomposição só recebe pressão quando há microalvos ativos ainda sem nenhum claim.
+    # A mera quantidade de microalvos ativos não é evidência de que mais decomposição seja necessária.
+    if metrics["microalvos_ativos_sem_claim"] > 0:
+        v = min(18, 6 * metrics["microalvos_ativos_sem_claim"])
         scores["decomposicao"] += v
-        reasons["decomposicao"].append(f"{metrics['microalvos_ativos']} microalvo(s) ativos (+{v}).")
+        reasons["decomposicao"].append(
+            f"{metrics['microalvos_ativos_sem_claim']} microalvo(s) ativo(s) ainda sem claim (+{v})."
+        )
+    elif metrics["microalvos_ativos"] > 0:
+        scores["decomposicao"] -= 4
+        reasons["decomposicao"].append(
+            "Todos os microalvos ativos já possuem ao menos um claim; evita decomposição redundante (-4)."
+        )
 
     if metrics["claims_contestados"] > 0:
         v = 10 + 5 * metrics["claims_contestados"]
         scores["contradicao"] += v
         reasons["contradicao"].append(f"{metrics['claims_contestados']} claim(s) contestado(s) (+{v}).")
+
+    # Relações explícitas 'contradiz' também contam, mesmo que os claims ainda estejam em estado pendente/proposto.
+    if metrics["contradicoes_explicitas"] > 0:
+        v = 12 + 4 * metrics["contradicoes_explicitas"]
+        scores["contradicao"] += v
+        reasons["contradicao"].append(
+            f"{metrics['contradicoes_explicitas']} relação(ões) explícita(s) de contradição aberta(s) (+{v})."
+        )
 
     # Delta: reward unresolved deterioration, reduce pressure when improving.
     if delta.get("claims_sem_fonte", 0) > 0:
@@ -826,6 +852,13 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
     elif delta.get("claims_contestados", 0) < 0:
         scores["contradicao"] -= 6
         reasons["contradicao"].append("Δ mostra redução de contestações (-6).")
+
+    if delta.get("contradicoes_explicitas", 0) > 0:
+        scores["contradicao"] += 8
+        reasons["contradicao"].append("Δ mostra novas relações explícitas de contradição (+8).")
+    elif delta.get("contradicoes_explicitas", 0) < 0:
+        scores["contradicao"] -= 6
+        reasons["contradicao"].append("Δ mostra redução de relações explícitas de contradição (-6).")
 
     if delta.get("microalvos_resolvidos", 0) > 0:
         scores["decomposicao"] -= 5
@@ -1199,7 +1232,7 @@ def register_executed_action(decision_id: str, action: dict[str, Any]) -> bool:
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="1.4.0-evidence-guidance",
+    version="1.1.0-causal-action",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -1223,7 +1256,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.4.0-evidence-guidance"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.1.0-causal-action"}
 
 
 @app.get("/health")
@@ -1271,20 +1304,6 @@ def memory_outcome_route(req: OutcomeRequest):
         return OutcomeResponse(**result)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
-
-
-@app.get("/memory/pending-decision", response_model=PendingDecisionResponse)
-def pending_decision_route():
-    row = latest_unevaluated_decision()
-    if not row:
-        return PendingDecisionResponse(found=False, decision=None)
-    decision = {
-        "decision_id": f"DEC-{row['id']}",
-        "recommendation": row.get("recommendation") or {},
-        "adaptive_scores": row.get("adaptive_scores") or [],
-        "baseline_hash": row.get("baseline_hash"),
-    }
-    return PendingDecisionResponse(found=True, decision=decision)
 
 
 @app.post("/memory/action-execution", response_model=ActionExecutionResponse)

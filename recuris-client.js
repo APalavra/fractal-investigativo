@@ -356,6 +356,14 @@ async function refreshPendingDecisionFromBackend() {
   return null;
 }
 
+
+function claimsWithoutSources(inv) {
+  const claims = Array.isArray(inv?.claims) ? inv.claims : [];
+  const links = Array.isArray(inv?.fonteClaims) ? inv.fonteClaims : [];
+  const linked = new Set(links.map(x => x.claimId).filter(Boolean));
+  return claims.filter(c => c?.id && !linked.has(c.id));
+}
+
 async function applySafeRecommendedAction() {
   const panel = $("evoSafeActionPanel");
   try {
@@ -379,9 +387,36 @@ async function applySafeRecommendedAction() {
 
     const rec = cycle.decision.recommendation;
     if (rec.category !== "decomposicao") {
-      const detail = rec.category === "evidencia"
-        ? "A recomendação exige uma fonte real. O sistema não inventará referências nem criará evidência fictícia. Adicione ou selecione uma fonte verdadeira e vincule-a ao claim correspondente."
-        : "O protótipo não resolverá contradições nem elevará confiança automaticamente. Essas ações exigem julgamento humano.";
+      let detail = "O protótipo não resolverá contradições nem elevará confiança automaticamente. Essas ações exigem julgamento humano.";
+      let operational = "";
+
+      if (rec.category === "evidencia") {
+        const inv = loadInvestigation();
+        const missing = claimsWithoutSources(inv);
+
+        detail = "A recomendação exige uma fonte real. O sistema não inventará referências nem criará evidência fictícia.";
+
+        if (missing.length) {
+          const items = missing.map(c => {
+            const text = String(c.texto || "").replace(/<br\s*\/?>/gi, " ").replace(/\s+/g, " ").trim();
+            const short = text.length > 120 ? text.slice(0, 117) + "..." : text;
+            return `<li><strong>${esc(c.id)}</strong>${short ? ` — ${esc(short)}` : ""}</li>`;
+          }).join("");
+
+          operational = `
+            <div class="card">
+              <strong>Claims sem rastreabilidade detectados: ${missing.length}</strong>
+              <ul>${items}</ul>
+              <p><strong>Próxima ação humana:</strong> adicione ou selecione uma fonte real na seção 5 e vincule-a ao claim desejado na seção 6.</p>
+            </div>`;
+        } else {
+          operational = `
+            <div class="card">
+              <strong>Nenhum claim sem fonte foi encontrado localmente.</strong>
+              <p>Reexecute o ciclo automático para recalcular a decisão com o estado atual.</p>
+            </div>`;
+        }
+      }
 
       panel.innerHTML = `
         <div class="card">
@@ -389,8 +424,9 @@ async function applySafeRecommendedAction() {
           <p>A categoria atual é <strong>${esc(rec.category || "-")}</strong>.</p>
           <p>${esc(detail)}</p>
           <p><strong>Nenhuma alteração foi feita na investigação.</strong></p>
-        </div>`;
-      setStatus("✓ Ação automática recusada com segurança; nenhuma evidência foi inventada.", true);
+        </div>
+        ${operational}`;
+      setStatus("✓ Ação automática recusada com segurança; orientação operacional exibida.", true);
       return;
     }
 

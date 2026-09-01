@@ -193,7 +193,11 @@ def analyze(inv: dict[str, Any], context: dict[str, Any] | None = None) -> Analy
     dependents = _dependents(inv)
 
     memory_notes, prior_fingerprints = memory_guidance_for(inv)
+    comparison = compare_with_memory(inv)
     diagnostics, proposals = list(memory_notes), []
+    for note in comparison.guidance:
+        if note not in diagnostics:
+            diagnostics.append("Histórico: " + note)
     n = 1
 
     unsupported = [c for c in claims if not links.get(str(c.get("id")))]
@@ -304,7 +308,27 @@ def analyze(inv: dict[str, Any], context: dict[str, Any] | None = None) -> Analy
         p.status = "validada" if v.accepted else "rejeitada"
 
     valid = [p for p, v in zip(proposals, validations) if v.accepted]
-    recommended = max(valid, key=lambda p: p.confidence).id if valid else None
+
+    recommended = None
+    if valid:
+        dominant_category = None
+        if comparison.prior_categories:
+            dominant_category = max(
+                comparison.prior_categories,
+                key=comparison.prior_categories.get
+            )
+
+        alternatives = [p for p in valid if p.category != dominant_category]
+        pool = alternatives or valid
+
+        def score_for_recommendation(p: Proposal) -> tuple[int, int]:
+            recurrence_penalty = 0
+            evidence_ids = {ref.id for ref in p.evidence}
+            if any(rid in evidence_ids for rid in comparison.repeated_targets):
+                recurrence_penalty = 8
+            return (p.confidence - recurrence_penalty, p.confidence)
+
+        recommended = max(pool, key=score_for_recommendation).id
 
     return AnalyzeResponse(
         engine=ENGINE_NAME,
@@ -546,7 +570,7 @@ def compare_with_memory(inv: dict[str, Any]) -> CompareResponse:
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="0.4.0-cycle-compare",
+    version="0.5.0-auto-memory",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -570,7 +594,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.4.0-cycle-compare"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.5.0-auto-memory"}
 
 
 @app.get("/health")

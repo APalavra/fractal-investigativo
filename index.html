@@ -231,10 +231,11 @@
         <input id="evoBackendUrl" placeholder="https://seu-backend.exemplo.com">
         <div class="row">
           <button id="btnEvoTestar" class="secondary">Testar backend</button>
-          <button id="btnEvoAnalisar" class="primary">Analisar investigação atual</button>
+          <button id="btnEvoAnalisar" class="primary">Analisar investigação atual com memória</button>
           <button id="btnEvoMemoria" class="secondary">Consultar memória evolutiva</button>
           <button id="btnEvoComparar" class="secondary">Comparar com ciclos anteriores</button>
         </div>
+        <div class="meta">Cada análise agora consulta automaticamente os ciclos persistentes antes de recomendar o próximo passo.</div>
         <div id="evoStatus" class="status">Backend ainda não configurado.</div>
         <div id="evoMemoryPanel"></div>
           <div id="evoComparePanel"></div>
@@ -259,6 +260,6 @@
   </main>
 
   <script type="module" src="./app.js"></script>
-  <script type="module" src="./recuris-client.js?v=7"></script>
+  <script type="module" src="./recuris-client.js?v=8"></script>
 </body>
 </html>

@@ -201,7 +201,7 @@ def proposal_fingerprint_from_model(proposal: Proposal) -> str:
 
 # ---------- Core ----------
 
-ENGINE_NAME = "Fractal Evolution Engine 0.3 — reconciliação de decisões pendentes"
+ENGINE_NAME = "Fractal Evolution Engine 0.4 — aprendizado causal de prioridade"
 
 
 def stable_hash(value: Any) -> str:
@@ -980,6 +980,22 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
         scores["prioridade"] += v
         reasons["prioridade"].append(f"{dep_count} dependência(s) estrutural(is) ativa(s) (+{v}).")
 
+    # v26: não repetir o mesmo foco já ativo. O sistema pode continuar usando a categoria
+    # prioridade, mas deve avançar para outro microalvo quando houver alternativa.
+    focus = inv.get("focoEvolutivo") or {}
+    focused_id = str(focus.get("microalvoId") or "")
+    if focused_id:
+        focused_micro = next(
+            (m for m in (inv.get("microNos", []) or []) if str(m.get("id")) == focused_id),
+            None,
+        )
+        focused_state = str((focused_micro or {}).get("estado") or "").lower()
+        if focused_state == "investigando":
+            scores["prioridade"] -= 3
+            reasons["prioridade"].append(
+                f"{focused_id} já está como foco operacional em investigação; penalidade anti-loop (-3)."
+            )
+
     tie_order = {"prioridade": 0, "evidencia": 1, "qualidade": 2, "decomposicao": 3, "contradicao": 4}
     ranked = sorted(
         [{"category": k, "score": int(v), "reasons": reasons[k]} for k, v in scores.items()],
@@ -1100,6 +1116,38 @@ def evaluate_decision_outcome(current_inv: dict[str, Any]) -> dict[str, Any]:
         if d.get("microalvos_ativos", 0) < 0:
             score += 2
             outcome_notes.append("O número de microalvos ativos caiu (+2).")
+
+        # v26: foco operacional é um efeito causal válido mesmo sem alterar conteúdo epistemológico.
+        # A ação segura muda apenas o estado operacional do microalvo e registra focoEvolutivo.
+        executed_focus = row.get("executed_action") or {}
+        if executed_focus.get("type") == "focus_microtarget":
+            micro_id = str(executed_focus.get("microalvo_id") or "")
+            expected_state = str(executed_focus.get("new_state") or "").lower()
+            previous_state = str(executed_focus.get("previous_state") or "").lower()
+            current_micro = next(
+                (m for m in (current_inv.get("microNos", []) or []) if str(m.get("id")) == micro_id),
+                None,
+            )
+            current_state = str((current_micro or {}).get("estado") or "").lower()
+            focus = current_inv.get("focoEvolutivo") or {}
+            focus_matches = (
+                str(focus.get("microalvoId") or "") == micro_id
+                and str(focus.get("decisionId") or "") == f"DEC-{row['id']}"
+            )
+            if micro_id and expected_state and current_state == expected_state and focus_matches:
+                score += 3
+                outcome_notes.append(
+                    f"Ação causal confirmada: foco operacional aplicado em {micro_id} (+3)."
+                )
+                if previous_state == "aberto" and expected_state == "investigando":
+                    score += 1
+                    outcome_notes.append(
+                        f"{micro_id} avançou operacionalmente de aberto para investigando (+1)."
+                    )
+            else:
+                outcome_notes.append(
+                    "Ação de prioridade foi registrada, mas o foco operacional não pôde ser confirmado integralmente no estado atual."
+                )
     elif category == "contradicao":
         if d.get("claims_contestados", 0) < 0:
             score += 4
@@ -1435,7 +1483,7 @@ def register_executed_action(decision_id: str, action: dict[str, Any]) -> bool:
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="1.2.0-decision-reconciliation",
+    version="1.3.0-priority-causal",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -1459,7 +1507,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.2.0-semantic-review"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.3.0-priority-causal"}
 
 
 @app.get("/health")

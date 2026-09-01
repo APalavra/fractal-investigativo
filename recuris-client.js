@@ -365,7 +365,18 @@ function pickPriorityTarget(inv) {
   );
   if (!active.length) return null;
 
-  return active
+  const currentFocusId = String(inv?.focoEvolutivo?.microalvoId || "");
+  const currentFocus = active.find(m => String(m.id) === currentFocusId);
+
+  // v26: se o foco atual já está investigando, não selecionar o mesmo microalvo
+  // novamente quando existe qualquer alternativa ativa. Isso evita loop de foco.
+  const candidates = (
+    currentFocusId &&
+    String(currentFocus?.estado || "").toLowerCase() === "investigando" &&
+    active.some(m => String(m.id) !== currentFocusId)
+  ) ? active.filter(m => String(m.id) !== currentFocusId) : active;
+
+  return candidates
     .map(m => ({ micro:m, ...priorityScore(inv, m) }))
     .sort((a,b) =>
       b.score - a.score ||
@@ -777,6 +788,7 @@ async function applySafeRecommendedAction() {
           <div class="meta">Score: ${esc(scoreText)} · ${esc(parts)}</div>
           <div class="meta">Estado: ${esc(previousState)} → ${esc(micro.estado)}</div>
           <p>Nenhum claim, fonte, confiança ou relação de verdade foi modificado.</p>
+          <div class="meta">v26: este foco será reconhecido como efeito causal no próximo ciclo; o mesmo microalvo não será refocado se houver alternativa ativa.</div>
         </div>`;
       setStatus(`✓ Prioridade operacional focada em ${micro.id}, sem alterar conteúdo epistemológico.`, true);
       return;

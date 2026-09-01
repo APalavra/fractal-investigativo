@@ -355,11 +355,28 @@ async function applySafeRecommendedAction() {
 
     saveWholeDB(db);
 
+    try {
+      await request("/memory/action-execution", {
+        method: "POST",
+        body: JSON.stringify({
+          decision_id: cycle.decision.decision_id,
+          action: {
+            type: "create_claim",
+            claim_id: id,
+            microalvo_id: micro.id,
+            generated_at: now
+          }
+        }),
+      });
+    } catch (err) {
+      console.warn("Falha ao registrar evidência causal no backend:", err);
+    }
+
     panel.innerHTML = `
       <div class="card">
         <strong>Alteração segura aplicada</strong>
         <p>${esc(id)} foi criado e ligado a ${esc(micro.id)}.</p>
-        <div class="meta">Tipo H · pendente · confiança 30% · nenhuma fonte inventada · nenhuma conclusão validada automaticamente.</div>
+        <div class="meta">Tipo H · pendente · confiança 30% · nenhuma fonte inventada · nenhuma conclusão validada automaticamente.</div><div class="meta">A execução foi registrada para avaliação causal no próximo ciclo.</div>
         <p>A página será recarregada para sincronizar toda a interface.</p>
       </div>`;
     setStatus(`✓ ${id} criado com rastreabilidade automática.`, true);

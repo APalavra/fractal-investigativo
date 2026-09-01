@@ -141,6 +141,16 @@ class AutoCycleResponse(BaseModel):
     message: str
 
 
+class ActionExecutionRequest(BaseModel):
+    decision_id: str
+    action: dict[str, Any]
+
+
+class ActionExecutionResponse(BaseModel):
+    decision_id: str
+    registered: bool
+
+
 
 def memory_guidance_for(inv: dict[str, Any]) -> tuple[list[str], set[str]]:
     notes = []
@@ -448,8 +458,13 @@ def init_db() -> None:
                     outcome_investigation JSONB,
                     outcome_score INTEGER,
                     outcome_label TEXT,
-                    outcome_notes JSONB
+                    outcome_notes JSONB,
+                    executed_action JSONB
                 )
+            """)
+            cur.execute("""
+                ALTER TABLE adaptive_decisions
+                ADD COLUMN IF NOT EXISTS executed_action JSONB
             """)
         conn.commit()
 
@@ -896,7 +911,7 @@ def latest_unevaluated_decision() -> dict[str, Any] | None:
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT id, baseline_hash, baseline_investigation,
-                       recommendation, adaptive_scores
+                       recommendation, adaptive_scores, executed_action
                 FROM adaptive_decisions
                 WHERE evaluated_at IS NULL
                 ORDER BY id DESC
@@ -947,6 +962,22 @@ def evaluate_decision_outcome(current_inv: dict[str, Any]) -> dict[str, Any]:
         if d.get("claims_contestados", 0) < 0:
             score += 4
             outcome_notes.append("Contestações diminuíram (+4).")
+
+    executed = row.get("executed_action") or {}
+    if executed:
+        if executed.get("type") == "create_claim":
+            claim_id = str(executed.get("claim_id") or "")
+            baseline_ids = {str(c.get("id")) for c in (baseline.get("claims", []) or [])}
+            current_ids = {str(c.get("id")) for c in (current_inv.get("claims", []) or [])}
+            if claim_id and claim_id not in baseline_ids and claim_id in current_ids:
+                score += 4
+                outcome_notes.append(
+                    f"Ação causal confirmada: {claim_id} foi criado após a decisão (+4)."
+                )
+            else:
+                outcome_notes.append(
+                    "Ação registrada, mas o claim criado não pôde ser confirmado no estado atual."
+                )
 
     # Generic quality signals
     if d.get("claims_sem_fonte", 0) > 0:
@@ -1140,11 +1171,30 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+
+def register_executed_action(decision_id: str, action: dict[str, Any]) -> bool:
+    try:
+        numeric_id = int(str(decision_id).replace("DEC-", ""))
+    except Exception:
+        return False
+    init_db()
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE adaptive_decisions
+                SET executed_action = %s::jsonb
+                WHERE id = %s
+            """, (json.dumps(action, ensure_ascii=False), numeric_id))
+            changed = cur.rowcount > 0
+        conn.commit()
+    return changed
+
+
 # ---------- HTTP app ----------
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="1.0.0-safe-action",
+    version="1.1.0-causal-action",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -1168,7 +1218,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.0.0-safe-action"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.1.0-causal-action"}
 
 
 @app.get("/health")
@@ -1216,6 +1266,14 @@ def memory_outcome_route(req: OutcomeRequest):
         return OutcomeResponse(**result)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
+
+
+@app.post("/memory/action-execution", response_model=ActionExecutionResponse)
+def action_execution_route(req: ActionExecutionRequest):
+    ok = register_executed_action(req.decision_id, req.action)
+    if not ok:
+        raise HTTPException(status_code=404, detail="decisão não encontrada")
+    return ActionExecutionResponse(decision_id=req.decision_id, registered=True)
 
 
 @app.post("/memory/cycle", response_model=AutoCycleResponse)

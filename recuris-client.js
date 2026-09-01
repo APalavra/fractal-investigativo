@@ -243,6 +243,42 @@ async function compareWithMemory() {
   }
 }
 
+
+async function measureDelta() {
+  try {
+    setStatus("Medindo evolução temporal Δ...");
+    const investigation = loadInvestigation();
+    const data = await request("/memory/delta", {
+      method: "POST",
+      body: JSON.stringify({ investigation, save_snapshot: true }),
+    });
+
+    const target = $("evoDeltaPanel");
+    const d = data.changes?.delta || {};
+    const metrics = Object.entries(d)
+      .map(([k,v]) => `<div class="meta">${esc(k)}: ${v >= 0 ? "+" : ""}${v}</div>`)
+      .join("");
+
+    const notes = (data.interpretation || [])
+      .map(x => `<li>${esc(x)}</li>`)
+      .join("");
+
+    target.innerHTML = `
+      <div class="card">
+        <strong>Evolução temporal Δ</strong>
+        <div class="meta">Linha de base anterior: ${data.baseline_found ? esc(data.baseline_snapshot_id || "sim") : "não havia"}</div>
+        <div class="meta">Novo snapshot: ${esc(data.saved_snapshot_id || "estado já idêntico ao último")}</div>
+        ${metrics || '<div class="meta">Sem delta numérico ainda.</div>'}
+        ${notes ? `<ul>${notes}</ul>` : ""}
+      </div>
+    `;
+
+    setStatus("✓ Evolução temporal Δ calculada.", true);
+  } catch (err) {
+    setStatus(`✗ ${err.message}`);
+  }
+}
+
 function init() {
   const input = $("evoBackendUrl");
   if (!input) return;
@@ -251,6 +287,7 @@ function init() {
   $("btnEvoAnalisar").addEventListener("click", analyzeCurrent);
   $("btnEvoMemoria").addEventListener("click", showMemorySummary);
   $("btnEvoComparar").addEventListener("click", compareWithMemory);
+  $("btnEvoDelta").addEventListener("click", measureDelta);
   setStatus(input.value ? "Backend configurado; teste a conexão." : "Backend ainda não configurado.");
 }
 

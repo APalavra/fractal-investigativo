@@ -81,6 +81,21 @@ class CompareResponse(BaseModel):
     guidance: list[str]
 
 
+class DeltaRequest(BaseModel):
+    investigation: dict[str, Any]
+    save_snapshot: bool = True
+
+
+class DeltaResponse(BaseModel):
+    baseline_found: bool
+    baseline_snapshot_id: str | None = None
+    current_hash: str
+    previous_hash: str | None = None
+    changes: dict[str, Any]
+    interpretation: list[str]
+    saved_snapshot_id: str | None = None
+
+
 
 def memory_guidance_for(inv: dict[str, Any]) -> tuple[list[str], set[str]]:
     notes = []
@@ -367,6 +382,14 @@ def init_db() -> None:
                     UNIQUE (investigation_hash, proposal_fingerprint)
                 )
             """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS investigation_snapshots (
+                    id BIGSERIAL PRIMARY KEY,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    investigation_hash TEXT NOT NULL,
+                    investigation JSONB NOT NULL
+                )
+            """)
         conn.commit()
 
 
@@ -566,11 +589,112 @@ def compare_with_memory(inv: dict[str, Any]) -> CompareResponse:
     )
 
 
+
+def investigation_metrics(inv: dict[str, Any]) -> dict[str, Any]:
+    claims = inv.get("claims", []) or []
+    micros = inv.get("microNos", []) or []
+    fontes = inv.get("fontes", []) or []
+    rels = inv.get("relacoes", []) or []
+    micro_rels = inv.get("relacoesMicro", []) or []
+    fonte_claims = inv.get("fonteClaims", []) or []
+
+    contested = sum(1 for c in claims if c.get("estado") == "contestada")
+    resolved_micros = sum(1 for m in micros if m.get("estado") == "resolvido")
+    active_micros = sum(1 for m in micros if m.get("estado") in ("aberto", "investigando"))
+    linked_claim_ids = {str(x.get("claimId")) for x in fonte_claims if x.get("claimId")}
+    unsupported_claims = sum(1 for c in claims if str(c.get("id")) not in linked_claim_ids)
+
+    return {
+        "claims": len(claims),
+        "microalvos": len(micros),
+        "fontes": len(fontes),
+        "relacoes_claims": len(rels),
+        "relacoes_micro": len(micro_rels),
+        "vinculos_fonte_claim": len(fonte_claims),
+        "claims_contestados": contested,
+        "microalvos_resolvidos": resolved_micros,
+        "microalvos_ativos": active_micros,
+        "claims_sem_fonte": unsupported_claims,
+    }
+
+
+def latest_snapshot() -> dict[str, Any] | None:
+    init_db()
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, created_at, investigation_hash, investigation
+                FROM investigation_snapshots
+                ORDER BY id DESC
+                LIMIT 1
+            """)
+            return cur.fetchone()
+
+
+def save_snapshot(inv: dict[str, Any]) -> str:
+    init_db()
+    inv_hash = stable_hash(inv)
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO investigation_snapshots (investigation_hash, investigation)
+                VALUES (%s, %s::jsonb)
+                RETURNING id
+            """, (inv_hash, json.dumps(inv, ensure_ascii=False)))
+            sid = int(cur.fetchone()["id"])
+        conn.commit()
+    return f"SNP-{sid}"
+
+
+def compute_delta(current: dict[str, Any], previous: dict[str, Any] | None) -> tuple[dict[str, Any], list[str]]:
+    cur = investigation_metrics(current)
+    if previous is None:
+        return {
+            "current": cur,
+            "delta": {},
+        }, ["Nenhum snapshot anterior disponível; este estado será usado como linha de base."]
+
+    prev = investigation_metrics(previous)
+    delta = {k: cur[k] - prev.get(k, 0) for k in cur}
+    notes: list[str] = []
+
+    if delta["claims_sem_fonte"] < 0:
+        notes.append(f"Melhora: {-delta['claims_sem_fonte']} claim(s) deixaram de estar sem fonte.")
+    elif delta["claims_sem_fonte"] > 0:
+        notes.append(f"Atenção: surgiram {delta['claims_sem_fonte']} claim(s) adicionais sem fonte.")
+
+    if delta["claims_contestados"] < 0:
+        notes.append(f"Melhora: {-delta['claims_contestados']} contestação(ões) foram resolvidas ou reclassificadas.")
+    elif delta["claims_contestados"] > 0:
+        notes.append(f"Nova tensão: {delta['claims_contestados']} claim(s) passaram a estado contestado.")
+
+    if delta["microalvos_resolvidos"] > 0:
+        notes.append(f"Progresso: {delta['microalvos_resolvidos']} microalvo(s) adicional(is) foram resolvidos.")
+
+    if delta["vinculos_fonte_claim"] > 0:
+        notes.append(f"Rastreabilidade aumentou: +{delta['vinculos_fonte_claim']} vínculo(s) fonte→claim.")
+
+    if delta["fontes"] > 0:
+        notes.append(f"Base empírica/documental ampliada: +{delta['fontes']} fonte(s).")
+
+    if delta["claims"] == 0 and delta["microalvos"] == 0 and delta["fontes"] == 0 and delta["vinculos_fonte_claim"] == 0:
+        notes.append("Estrutura principal praticamente inalterada desde o snapshot anterior.")
+
+    if not notes:
+        notes.append("Houve mudança estrutural, mas sem um sinal simples de melhora/piora nas métricas atuais.")
+
+    return {
+        "previous": prev,
+        "current": cur,
+        "delta": delta,
+    }, notes
+
+
 # ---------- HTTP app ----------
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="0.5.0-auto-memory",
+    version="0.6.0-temporal-delta",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -594,7 +718,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.5.0-auto-memory"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.6.0-temporal-delta"}
 
 
 @app.get("/health")
@@ -631,6 +755,32 @@ def commit_route(req: CommitRequest):
 def memory_route():
     mem = load_memory()
     return {"schema": mem.get("schema"), "version": mem.get("version", 0), "entries": mem.get("entries", [])}
+
+
+@app.post("/memory/delta", response_model=DeltaResponse)
+def memory_delta_route(req: DeltaRequest):
+    if not req.investigation or not isinstance(req.investigation, dict):
+        raise HTTPException(status_code=400, detail="investigation ausente ou inválida")
+
+    previous_row = latest_snapshot()
+    previous_inv = previous_row["investigation"] if previous_row else None
+    changes, interpretation = compute_delta(req.investigation, previous_inv)
+
+    saved_id = None
+    if req.save_snapshot:
+        current_hash = stable_hash(req.investigation)
+        if not previous_row or previous_row["investigation_hash"] != current_hash:
+            saved_id = save_snapshot(req.investigation)
+
+    return DeltaResponse(
+        baseline_found=previous_row is not None,
+        baseline_snapshot_id=f"SNP-{previous_row['id']}" if previous_row else None,
+        current_hash=stable_hash(req.investigation),
+        previous_hash=previous_row["investigation_hash"] if previous_row else None,
+        changes=changes,
+        interpretation=interpretation,
+        saved_snapshot_id=saved_id,
+    )
 
 
 @app.post("/memory/compare", response_model=CompareResponse)

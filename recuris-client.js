@@ -517,6 +517,18 @@ async function refreshPendingDecisionFromBackend() {
 }
 
 
+function readyMicrotargetsForHumanReview(inv) {
+  const micros = Array.isArray(inv?.microNos) ? inv.microNos : [];
+  const claims = Array.isArray(inv?.claims) ? inv.claims : [];
+  const supportedIds = new Set((inv?.fonteClaims || []).filter(x => x?.tipo === "sustenta").map(x => String(x.claimId || "")));
+  return micros.filter(m => {
+    if (!m?.id || m.estado === "resolvido") return false;
+    const children = micros.filter(ch => ch.parentId === m.id);
+    if (!children.length || children.some(ch => ch.estado !== "resolvido")) return false;
+    return claims.some(c => c.microalvoId === m.id && c.estado === "apoiada" && supportedIds.has(String(c.id)));
+  });
+}
+
 function claimsWithoutSources(inv) {
   const claims = Array.isArray(inv?.claims) ? inv.claims : [];
   const links = Array.isArray(inv?.fonteClaims) ? inv.fonteClaims : [];
@@ -779,6 +791,26 @@ async function applySafeRecommendedAction() {
     if (rec.category === "prioridade") {
       const db = loadWholeDB();
       const inv = db.ativa;
+      const ready = readyMicrotargetsForHumanReview(inv);
+      if (ready.length) {
+        const items = ready.map(m => `<li><strong>${esc(m.id)}</strong> — ${esc(m.titulo || "")}</li>`).join("");
+        panel.innerHTML = `
+          <div class="card">
+            <strong>Prontidão recursiva detectada</strong>
+            <p>${ready.length} microalvo(s) possui(em) todos os filhos resolvidos e ao menos um claim direto apoiado com evidência.</p>
+            <ul>${items}</ul>
+            <p><strong>Revisão humana obrigatória:</strong> confirme se a sustentação direta responde ao microalvo pai. Só então altere manualmente o estado para <strong>resolvido</strong>.</p>
+            <p><strong>Nenhum microalvo foi resolvido automaticamente.</strong></p>
+          </div>`;
+        await recordSafeExecution(decisionId, {
+          type: "surface_recursive_readiness",
+          microalvo_ids: ready.map(m => m.id),
+          changed_investigation: false,
+          generated_at: new Date().toISOString()
+        });
+        setStatus(`✓ ${ready.length} microalvo(s) pronto(s) para revisão humana; nenhuma resolução automática.`, true);
+        return;
+      }
       const picked = pickPriorityTarget(inv);
       if (!picked) throw new Error("Nenhum microalvo ativo disponível para priorização.");
 
@@ -824,7 +856,7 @@ async function applySafeRecommendedAction() {
           <div class="meta">Score: ${esc(scoreText)} · ${esc(parts)}</div>
           <div class="meta">Estado: ${esc(previousState)} → ${esc(micro.estado)}</div>
           <p>Nenhum claim, fonte, confiança ou relação de verdade foi modificado.</p>
-          <div class="meta">v27: foco causal preservado; se nenhum score ficar acima de zero, o sistema entrará em estado estável em vez de criar outra decisão artificial.</div>
+          <div class="meta">v32: prontidão recursiva verificada antes do foco; se nenhum score ficar acima de zero, o sistema entrará em estado estável em vez de criar outra decisão artificial.</div>
         </div>`;
       setStatus(`✓ Prioridade operacional focada em ${micro.id}, sem alterar conteúdo epistemológico.`, true);
       return;

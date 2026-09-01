@@ -38,6 +38,24 @@ function evidenceProfile(inv, claimId){
   return {links,sourceIds,classified,types,avgReliability,classificationRate,score,label};
 }
 
+
+function microReadiness(inv, micro){
+  const children=(inv.microNos||[]).filter(m=>m.parentId===micro.id);
+  const directClaims=(inv.claims||[]).filter(c=>c.microalvoId===micro.id);
+  const supported=directClaims.filter(c=>c.estado==="apoiada");
+  const supportedWithEvidence=supported.filter(c=>evidenceProfile(inv,c.id).links.length>0);
+  const diverse=supported.filter(c=>evidenceProfile(inv,c.id).types.length>=2);
+  const unresolvedChildren=children.filter(c=>c.estado!=="resolvido");
+  const ready=micro.estado!=="resolvido" && children.length>0 && unresolvedChildren.length===0 && supportedWithEvidence.length>0;
+  let reason="";
+  if(micro.estado==="resolvido") reason="já resolvido";
+  else if(!children.length) reason="microalvo folha: revisão depende de sua evidência direta";
+  else if(unresolvedChildren.length) reason=`${unresolvedChildren.length} filho(s) ainda não resolvido(s)`;
+  else if(!supportedWithEvidence.length) reason="filhos resolvidos, mas falta claim direto apoiado com evidência";
+  else reason=`filhos resolvidos + ${supportedWithEvidence.length} claim(s) direto(s) apoiado(s) com evidência`;
+  return {children,directClaims,supported,supportedWithEvidence,diverse,unresolvedChildren,ready,reason};
+}
+
 function evidenceSummaryHtml(inv, claimId){
   const p=evidenceProfile(inv,claimId);
   if(!p.links.length) return `<div class="meta">Evidência: nenhum vínculo <b>sustenta</b>.</div>`;
@@ -386,7 +404,17 @@ function renderVerification(){
       <div class="metric"><strong>${inv.relacoes.length}</strong><br>Relações entre claims</div>
       <div class="metric"><strong>${inv.relacoesMicro.length}</strong><br>Relações entre microalvos</div>
     </div>
-    <div class="item"><strong>Convergência evidencial v31</strong><p class="meta">O IEE mede apenas estrutura de sustentação. O verificador agora respeita a revisão semântica humana e não reapresenta como inconsistência uma relação já classificada como compatível.</p></div>`;
+    <div class="item"><strong>Convergência evidencial v32</strong><p class="meta">O IEE mede apenas estrutura de sustentação. A prontidão recursiva é uma indicação operacional para revisão humana: nunca resolve um microalvo automaticamente.</p></div>`;
+
+  const readiness=(inv.microNos||[]).map(m=>({micro:m,...microReadiness(inv,m)}));
+  const ready=readiness.filter(x=>x.ready);
+  const blockedParents=readiness.filter(x=>x.micro.estado!=="resolvido" && x.children.length>0 && !x.ready);
+  const readinessHtml=readiness.filter(x=>x.children.length>0 || x.ready).map(x=>`<div class="item ${x.ready?"ok":""}">
+    <strong>${esc(x.micro.id)} — ${x.ready?"PRONTO PARA REVISÃO HUMANA":"ainda não pronto"}</strong>
+    <div class="meta">${esc(x.micro.titulo||"")}</div>
+    <div class="meta">${esc(x.reason)} · claims diretos apoiados com evidência: ${x.supportedWithEvidence.length} · convergentes: ${x.diverse.length}</div>
+  </div>`).join("");
+  $("verificacoes").insertAdjacentHTML("beforeend",`<div class="item"><strong>Prontidão recursiva v32</strong><p class="meta">${ready.length} microalvo(s) pronto(s) para revisão humana · ${blockedParents.length} pai(s) ainda bloqueado(s). Filhos resolvidos são condição necessária, mas não suficiente: o pai também precisa de sustentação direta.</p>${readinessHtml||"<p class='meta'>Nenhum pai recursivo para avaliar.</p>"}</div>`);
 
   if(unclassifiedLinks.length){
     const sourceById=Object.fromEntries((inv.fontes||[]).map(x=>[x.id,x]));

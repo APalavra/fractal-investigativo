@@ -753,6 +753,39 @@ def investigation_metrics(inv: dict[str, Any]) -> dict[str, Any]:
             experimental_claim_ids.add(claim_id)
     diverse_evidence_claims = sum(1 for types in supporting_by_claim.values() if len(types) >= 2)
 
+    # v32: propagação de prontidão, nunca de verdade. Um pai só fica pronto para
+    # revisão humana quando todos os filhos estão resolvidos E existe ao menos
+    # um claim direto apoiado com vínculo de sustentação. Nenhum estado é alterado.
+    children_by_parent: dict[str, list[dict[str, Any]]] = {}
+    for m in micros:
+        pid = m.get("parentId")
+        if pid:
+            children_by_parent.setdefault(str(pid), []).append(m)
+    claim_by_micro: dict[str, list[dict[str, Any]]] = {}
+    for c in claims:
+        mid = c.get("microalvoId")
+        if mid:
+            claim_by_micro.setdefault(str(mid), []).append(c)
+    support_linked_claim_ids = {
+        str(x.get("claimId")) for x in fonte_claims
+        if x.get("tipo") == "sustenta" and x.get("claimId")
+    }
+    ready_review_ids: list[str] = []
+    parents_children_resolved = 0
+    for m in micros:
+        mid = str(m.get("id") or "")
+        children = children_by_parent.get(mid, [])
+        if not children or m.get("estado") == "resolvido":
+            continue
+        if all(ch.get("estado") == "resolvido" for ch in children):
+            parents_children_resolved += 1
+            direct_supported = any(
+                c.get("estado") == "apoiada" and str(c.get("id")) in support_linked_claim_ids
+                for c in claim_by_micro.get(mid, [])
+            )
+            if direct_supported:
+                ready_review_ids.append(mid)
+
     return {
         "claims": len(claims),
         "microalvos": len(micros),
@@ -773,6 +806,8 @@ def investigation_metrics(inv: dict[str, Any]) -> dict[str, Any]:
         "vinculos_evidencia_nao_classificada": unclassified_evidence_links,
         "claims_evidencia_diversa": diverse_evidence_claims,
         "claims_evidencia_experimental": len(experimental_claim_ids),
+        "microalvos_filhos_resolvidos": parents_children_resolved,
+        "microalvos_prontos_revisao": len(ready_review_ids),
     }
 
 
@@ -882,7 +917,7 @@ def category_applicability(inv: dict[str, Any]) -> dict[str, bool]:
             or metrics["contradicoes_confirmadas"] > 0
             or metrics["tensoes_semanticas"] > 0
         ),
-        "prioridade": dep_count > 0 or metrics["microalvos_ativos"] > 0,
+        "prioridade": dep_count > 0 or metrics["microalvos_ativos"] > 0 or metrics["microalvos_prontos_revisao"] > 0,
     }
 
 
@@ -1023,6 +1058,15 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
             scores[cat] -= penalty
             reasons[cat].append(f"Memória registra {count} ciclo(s) dessa categoria; penalidade anti-repetição (-{penalty}).")
 
+    # v32: oportunidade de fechamento recursivo deve superar dívida de qualidade legado.
+    # Isto só recomenda revisão humana; jamais resolve o pai automaticamente.
+    if metrics["microalvos_prontos_revisao"] > 0:
+        v = min(24, 18 * metrics["microalvos_prontos_revisao"])
+        scores["prioridade"] += v
+        reasons["prioridade"].append(
+            f"{metrics['microalvos_prontos_revisao']} microalvo(s) com filhos resolvidos e sustentação direta: pronto(s) para revisão humana (+{v})."
+        )
+
     # Priority/gargalo gets pressure from structural dependency density.
     dep_count = sum(1 for r in (inv.get("relacoesMicro", []) or []) if r.get("tipo") == "depende")
     if dep_count:
@@ -1040,7 +1084,7 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
             None,
         )
         focused_state = str((focused_micro or {}).get("estado") or "").lower()
-        if focused_state == "investigando":
+        if focused_state == "investigando" and metrics["microalvos_prontos_revisao"] == 0:
             scores["prioridade"] -= 3
             reasons["prioridade"].append(
                 f"{focused_id} já está como foco operacional em investigação; penalidade anti-loop (-3)."
@@ -1056,7 +1100,7 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
     actions = {
         "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
         "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
-        "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
+        "prioridade": "Revise primeiro microalvos recursivamente prontos ou, na ausência deles, o gargalo que bloqueia dependências estruturais.",
         "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
         "qualidade": "Revise pendências de qualidade: semântica de relações e tipologia de evidência, sempre com decisão humana.",
     }
@@ -1406,7 +1450,7 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
             actions = {
                 "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
                 "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
-                "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
+                "prioridade": "Revise primeiro microalvos recursivamente prontos ou, na ausência deles, o gargalo que bloqueia dependências estruturais.",
                 "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
                 "qualidade": "Revise pendências de qualidade: semântica de relações e tipologia de evidência, sempre com decisão humana.",
             }
@@ -1735,7 +1779,7 @@ def memory_adaptive_route(req: AdaptiveRequest):
             "action": {
                 "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
                 "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
-                "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
+                "prioridade": "Revise primeiro microalvos recursivamente prontos ou, na ausência deles, o gargalo que bloqueia dependências estruturais.",
                 "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
                 "qualidade": "Revise pendências de qualidade: semântica de relações e tipologia de evidência, sempre com decisão humana.",
             }[winner["category"]],

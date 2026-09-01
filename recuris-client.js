@@ -595,6 +595,8 @@ function init() {
   $("btnEvoResultado").addEventListener("click", evaluateLastDecision);
   $("btnEvoCiclo").addEventListener("click", runAutomaticCycle);
   $("btnEvoAplicarSeguro").addEventListener("click", applySafeRecommendedAction);
+  syncSafeActionButton();
+  restorePendingDecision();
   setStatus(input.value ? "Backend configurado; teste a conexão." : "Backend ainda não configurado.");
 }
 

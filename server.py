@@ -96,6 +96,22 @@ class DeltaResponse(BaseModel):
     saved_snapshot_id: str | None = None
 
 
+class AdaptiveRequest(BaseModel):
+    investigation: dict[str, Any]
+    save_snapshot: bool = True
+
+
+class AdaptiveResponse(BaseModel):
+    current_hash: str
+    snapshot_id: str | None = None
+    memory_records: int
+    baseline_found: bool
+    delta: dict[str, Any]
+    adaptive_scores: list[dict[str, Any]]
+    recommendation: dict[str, Any]
+    rationale: list[str]
+
+
 
 def memory_guidance_for(inv: dict[str, Any]) -> tuple[list[str], set[str]]:
     notes = []
@@ -690,11 +706,125 @@ def compute_delta(current: dict[str, Any], previous: dict[str, Any] | None) -> t
     }, notes
 
 
+
+def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, memory_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any], list[str], dict[str, Any]]:
+    metrics = investigation_metrics(inv)
+    changes, delta_notes = compute_delta(inv, previous_inv)
+    delta = changes.get("delta", {}) or {}
+
+    # Historical category frequency from persistent evolutionary memory.
+    hist: dict[str, int] = {}
+    for row in memory_rows:
+        proposal = row.get("proposal") or {}
+        cat = str(proposal.get("category") or proposal.get("categoria") or "outro")
+        hist[cat] = hist.get(cat, 0) + 1
+
+    scores = {
+        "evidencia": 0,
+        "decomposicao": 0,
+        "prioridade": 0,
+        "contradicao": 0,
+    }
+    reasons: dict[str, list[str]] = {k: [] for k in scores}
+
+    # Current-state pressure
+    if metrics["claims_sem_fonte"] > 0:
+        v = 12 + 4 * metrics["claims_sem_fonte"]
+        scores["evidencia"] += v
+        reasons["evidencia"].append(f"{metrics['claims_sem_fonte']} claim(s) ainda sem fonte (+{v}).")
+
+    if metrics["microalvos_ativos"] > 0:
+        v = min(18, 3 * metrics["microalvos_ativos"])
+        scores["decomposicao"] += v
+        reasons["decomposicao"].append(f"{metrics['microalvos_ativos']} microalvo(s) ativos (+{v}).")
+
+    if metrics["claims_contestados"] > 0:
+        v = 10 + 5 * metrics["claims_contestados"]
+        scores["contradicao"] += v
+        reasons["contradicao"].append(f"{metrics['claims_contestados']} claim(s) contestado(s) (+{v}).")
+
+    # Delta: reward unresolved deterioration, reduce pressure when improving.
+    if delta.get("claims_sem_fonte", 0) > 0:
+        scores["evidencia"] += 10
+        reasons["evidencia"].append("Δ mostra aumento de claims sem fonte (+10).")
+    elif delta.get("claims_sem_fonte", 0) < 0:
+        scores["evidencia"] -= 6
+        reasons["evidencia"].append("Δ mostra melhora de rastreabilidade (-6).")
+
+    if delta.get("vinculos_fonte_claim", 0) > 0:
+        scores["evidencia"] -= 4
+        reasons["evidencia"].append("Δ mostra novos vínculos fonte→claim (-4).")
+
+    if delta.get("claims_contestados", 0) > 0:
+        scores["contradicao"] += 10
+        reasons["contradicao"].append("Δ mostra novas contestações (+10).")
+    elif delta.get("claims_contestados", 0) < 0:
+        scores["contradicao"] -= 6
+        reasons["contradicao"].append("Δ mostra redução de contestações (-6).")
+
+    if delta.get("microalvos_resolvidos", 0) > 0:
+        scores["decomposicao"] -= 5
+        reasons["decomposicao"].append("Δ mostra microalvos resolvidos (-5).")
+
+    # Historical repetition: repeated categories get a small penalty to avoid tunnel vision.
+    for cat, count in hist.items():
+        if cat in scores and count:
+            penalty = min(8, count * 2)
+            scores[cat] -= penalty
+            reasons[cat].append(f"Memória registra {count} ciclo(s) dessa categoria; penalidade anti-repetição (-{penalty}).")
+
+    # Priority/gargalo gets pressure from structural dependency density.
+    dep_count = sum(1 for r in (inv.get("relacoesMicro", []) or []) if r.get("tipo") == "depende")
+    if dep_count:
+        v = min(20, 5 * dep_count)
+        scores["prioridade"] += v
+        reasons["prioridade"].append(f"{dep_count} dependência(s) estrutural(is) ativa(s) (+{v}).")
+
+    ranked = sorted(
+        [{"category": k, "score": int(v), "reasons": reasons[k]} for k, v in scores.items()],
+        key=lambda x: (-x["score"], x["category"])
+    )
+    winner = ranked[0]
+
+    actions = {
+        "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
+        "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
+        "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
+        "contradicao": "Isole a contestação dominante e registre evidências pró e contra antes de avançar.",
+    }
+    recommendation = {
+        "category": winner["category"],
+        "score": winner["score"],
+        "action": actions[winner["category"]],
+    }
+
+    rationale = [
+        f"Categoria adaptativa escolhida: {winner['category']} (score {winner['score']}).",
+        *winner["reasons"],
+        *delta_notes[:2],
+    ]
+    return ranked, recommendation, rationale, changes
+
+
+
+def load_memory_rows(limit: int = 100) -> list[dict[str, Any]]:
+    init_db()
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, created_at, investigation_hash, proposal_fingerprint, proposal, validation
+                FROM evolutionary_memory
+                ORDER BY id DESC
+                LIMIT %s
+            """, (limit,))
+            return list(cur.fetchall())
+
+
 # ---------- HTTP app ----------
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="0.6.0-temporal-delta",
+    version="0.7.0-adaptive-feedback",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -718,7 +848,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.6.0-temporal-delta"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.7.0-adaptive-feedback"}
 
 
 @app.get("/health")
@@ -755,6 +885,36 @@ def commit_route(req: CommitRequest):
 def memory_route():
     mem = load_memory()
     return {"schema": mem.get("schema"), "version": mem.get("version", 0), "entries": mem.get("entries", [])}
+
+
+@app.post("/memory/adaptive", response_model=AdaptiveResponse)
+def memory_adaptive_route(req: AdaptiveRequest):
+    if not req.investigation or not isinstance(req.investigation, dict):
+        raise HTTPException(status_code=400, detail="investigation ausente ou inválida")
+
+    previous_row = latest_snapshot()
+    previous_inv = previous_row["investigation"] if previous_row else None
+    memory_rows = load_memory_rows(limit=100)
+
+    ranked, recommendation, rationale, changes = adaptive_feedback(
+        req.investigation, previous_inv, memory_rows
+    )
+
+    saved_id = None
+    current_hash = stable_hash(req.investigation)
+    if req.save_snapshot and (not previous_row or previous_row["investigation_hash"] != current_hash):
+        saved_id = save_snapshot(req.investigation)
+
+    return AdaptiveResponse(
+        current_hash=current_hash,
+        snapshot_id=saved_id,
+        memory_records=len(memory_rows),
+        baseline_found=previous_row is not None,
+        delta=changes.get("delta", {}) or {},
+        adaptive_scores=ranked,
+        recommendation=recommendation,
+        rationale=rationale,
+    )
 
 
 @app.post("/memory/delta", response_model=DeltaResponse)

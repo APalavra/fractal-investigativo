@@ -244,6 +244,41 @@ async function compareWithMemory() {
 }
 
 
+
+async function runAdaptiveDecision() {
+  try {
+    setStatus("Executando ciclo adaptativo: memória + Δ + estado atual...");
+    const investigation = loadInvestigation();
+    const data = await request("/memory/adaptive", {
+      method: "POST",
+      body: JSON.stringify({ investigation, save_snapshot: true }),
+    });
+
+    const target = $("evoAdaptivePanel");
+    const scores = (data.adaptive_scores || []).map(x => `
+      <div class="meta"><strong>${esc(x.category)}</strong>: ${esc(x.score)}</div>
+    `).join("");
+
+    const rationale = (data.rationale || []).map(x => `<li>${esc(x)}</li>`).join("");
+    const rec = data.recommendation || {};
+
+    target.innerHTML = `
+      <div class="card">
+        <strong>Decisão adaptativa</strong>
+        <div class="meta">Memórias consultadas: ${esc(data.memory_records)}</div>
+        <div class="meta">Categoria escolhida: <strong>${esc(rec.category || "-")}</strong></div>
+        <div class="meta">Score: ${esc(rec.score ?? "-")}</div>
+        <p><strong>Próxima ação:</strong> ${esc(rec.action || "-")}</p>
+        <div class="card">${scores}</div>
+        ${rationale ? `<ul>${rationale}</ul>` : ""}
+      </div>
+    `;
+    setStatus("✓ Decisão adaptativa concluída.", true);
+  } catch (err) {
+    setStatus(`✗ ${err.message}`);
+  }
+}
+
 async function measureDelta() {
   try {
     setStatus("Medindo evolução temporal Δ...");
@@ -288,6 +323,7 @@ function init() {
   $("btnEvoMemoria").addEventListener("click", showMemorySummary);
   $("btnEvoComparar").addEventListener("click", compareWithMemory);
   $("btnEvoDelta").addEventListener("click", measureDelta);
+  $("btnEvoAdaptativo").addEventListener("click", runAdaptiveDecision);
   setStatus(input.value ? "Backend configurado; teste a conexão." : "Backend ainda não configurado.");
 }
 

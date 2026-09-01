@@ -50,7 +50,14 @@ async function testBackend() {
     localStorage.setItem(BACKEND_KEY, url);
     setStatus("Testando conexão...");
     const data = await request("/health");
-    setStatus(`✓ Backend conectado. Memória evolutiva v${data.memory_version}.`, true);
+    await restorePendingDecision();
+    const pending = lastAutomaticCycle?.decision?.decision_id;
+    setStatus(
+      pending
+        ? `✓ Backend conectado. Memória evolutiva v${data.memory_version}. Decisão pendente ${pending} restaurada.`
+        : `✓ Backend conectado. Memória evolutiva v${data.memory_version}. Nenhuma decisão pendente.`,
+      true
+    );
   } catch (err) {
     setStatus(`✗ ${err.message}`);
   }
@@ -300,10 +307,18 @@ function syncSafeActionButton() {
   const btn = $("btnEvoAplicarSeguro");
   if (!btn) return;
   const rec = lastAutomaticCycle?.decision?.recommendation;
-  btn.disabled = !(rec && rec.category === "decomposicao");
-  btn.title = btn.disabled
-    ? "Disponível quando houver uma decisão pendente segura de decomposição."
-    : "Aplicar a decisão pendente de decomposição.";
+
+  // v19: nunca deixar o botão "morto".
+  // Se o estado local estiver vazio, o próprio clique consulta o backend.
+  btn.disabled = false;
+
+  if (!rec) {
+    btn.title = "Consultar a decisão pendente no backend e aplicar somente se for seguro.";
+  } else if (rec.category === "decomposicao") {
+    btn.title = "Aplicar a decisão pendente de decomposição.";
+  } else {
+    btn.title = "Ver a justificativa de segurança para esta recomendação.";
+  }
 }
 
 async function restorePendingDecision() {
@@ -323,23 +338,59 @@ async function restorePendingDecision() {
   }
 }
 
+async function refreshPendingDecisionFromBackend() {
+  const data = await request("/memory/pending-decision", { method: "GET" });
+
+  if (data?.found && data.decision) {
+    lastAutomaticCycle = {
+      decision_created: false,
+      decision: data.decision,
+      message: "Decisão pendente sincronizada diretamente do backend."
+    };
+    syncSafeActionButton();
+    return data.decision;
+  }
+
+  lastAutomaticCycle = null;
+  syncSafeActionButton();
+  return null;
+}
+
 async function applySafeRecommendedAction() {
   const panel = $("evoSafeActionPanel");
   try {
+    setStatus("Sincronizando decisão pendente com o backend...");
+
+    if (!lastAutomaticCycle?.decision?.recommendation) {
+      await refreshPendingDecisionFromBackend();
+    }
+
     const cycle = lastAutomaticCycle;
     if (!cycle?.decision?.recommendation) {
-      throw new Error("Execute primeiro o ciclo automático para obter uma decisão atual.");
+      panel.innerHTML = `
+        <div class="card">
+          <strong>Nenhuma decisão pendente encontrada</strong>
+          <p>O backend foi consultado diretamente e não retornou uma decisão operacional pendente.</p>
+          <p>Execute um novo ciclo automático apenas quando quiser gerar a próxima decisão.</p>
+        </div>`;
+      setStatus("✓ Backend consultado; nenhuma decisão pendente disponível.", true);
+      return;
     }
 
     const rec = cycle.decision.recommendation;
     if (rec.category !== "decomposicao") {
+      const detail = rec.category === "evidencia"
+        ? "A recomendação exige uma fonte real. O sistema não inventará referências nem criará evidência fictícia. Adicione ou selecione uma fonte verdadeira e vincule-a ao claim correspondente."
+        : "O protótipo não resolverá contradições nem elevará confiança automaticamente. Essas ações exigem julgamento humano.";
+
       panel.innerHTML = `
         <div class="card">
-          <strong>Ação automática bloqueada por segurança epistemológica</strong>
+          <strong>Ação automática bloqueada com segurança</strong>
           <p>A categoria atual é <strong>${esc(rec.category || "-")}</strong>.</p>
-          <p>O protótipo não inventará fontes, não resolverá contradições e não elevará confiança automaticamente. Essas ações exigem julgamento humano.</p>
+          <p>${esc(detail)}</p>
+          <p><strong>Nenhuma alteração foi feita na investigação.</strong></p>
         </div>`;
-      setStatus("✓ Nenhuma alteração automática inadequada foi feita.", true);
+      setStatus("✓ Ação automática recusada com segurança; nenhuma evidência foi inventada.", true);
       return;
     }
 

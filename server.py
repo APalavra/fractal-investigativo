@@ -10,6 +10,8 @@ from typing import Any, Literal
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+import psycopg
+from psycopg.rows import dict_row
 
 
 # ---------- Schemas ----------
@@ -251,36 +253,88 @@ def analyze(inv: dict[str, Any], context: dict[str, Any] | None = None) -> Analy
     )
 
 
-# ---------- Simple memory store ----------
-# NOTE: on a free Render web service this filesystem is ephemeral.
-# This is adequate for connectivity testing only. We'll replace it with persistent storage later.
+# ---------- Persistent PostgreSQL memory ----------
 
-def memory_path() -> Path:
-    return Path(os.getenv("MEMORY_FILE", "skill_memory.json"))
+def database_url() -> str:
+    url = os.getenv("DATABASE_URL", "").strip()
+    if not url:
+        raise RuntimeError("DATABASE_URL não configurada.")
+    return url
+
+
+def db_connect():
+    return psycopg.connect(database_url(), row_factory=dict_row)
+
+
+def init_db() -> None:
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS evolutionary_memory (
+                    id BIGSERIAL PRIMARY KEY,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    investigation_hash TEXT NOT NULL,
+                    proposal_fingerprint TEXT NOT NULL,
+                    proposal JSONB NOT NULL,
+                    validation JSONB NOT NULL,
+                    UNIQUE (investigation_hash, proposal_fingerprint)
+                )
+            """)
+        conn.commit()
+
+
+def memory_version() -> int:
+    init_db()
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS n FROM evolutionary_memory")
+            row = cur.fetchone()
+            return int(row["n"])
 
 
 def load_memory() -> dict[str, Any]:
-    p = memory_path()
-    if not p.exists():
-        return {"schema": "fractal-skill-memory/0.1", "version": 0, "entries": []}
-    try:
-        return json.loads(p.read_text(encoding="utf-8"))
-    except Exception:
-        return {"schema": "fractal-skill-memory/0.1", "version": 0, "entries": []}
+    init_db()
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, created_at, investigation_hash,
+                       proposal_fingerprint, proposal, validation
+                FROM evolutionary_memory
+                ORDER BY id
+            """)
+            rows = cur.fetchall()
+
+    entries = []
+    for row in rows:
+        entries.append({
+            "id": f"MEM-{row['id']}",
+            "created_at": row["created_at"].isoformat(),
+            "investigation_hash": row["investigation_hash"],
+            "proposal_fingerprint": row["proposal_fingerprint"],
+            "proposal": row["proposal"],
+            "validation": row["validation"],
+        })
+
+    return {
+        "schema": "fractal-skill-memory/postgres-0.2",
+        "version": len(entries),
+        "entries": entries,
+    }
 
 
 def commit_memory(req: CommitRequest) -> CommitResponse:
     if not req.validation.accepted or req.validation.proposal_id != req.proposal.id:
-        mem = load_memory()
         return CommitResponse(
             committed=False,
-            memory_version=int(mem.get("version", 0)),
+            memory_version=memory_version(),
             message="Proposta não possui validação aceita correspondente.",
         )
 
-    mem = load_memory()
+    init_db()
     inv_hash = stable_hash(req.investigation)
     proposal_payload = req.proposal.model_dump()
+    validation_payload = req.validation.model_dump()
+
     proposal_fingerprint = stable_hash({
         "id": proposal_payload.get("id"),
         "category": proposal_payload.get("category"),
@@ -290,46 +344,71 @@ def commit_memory(req: CommitRequest) -> CommitResponse:
         "evidence": proposal_payload.get("evidence"),
     })
 
-    # Idempotência: a mesma proposta para o mesmo estado da investigação
-    # pode ser enviada várias vezes pelo navegador, mas só vira uma memória.
-    for entry in mem.get("entries", []) or []:
-        if entry.get("investigation_hash") != inv_hash:
-            continue
-        old = entry.get("proposal") or {}
-        old_fingerprint = entry.get("proposal_fingerprint") or stable_hash({
-            "id": old.get("id"),
-            "category": old.get("category"),
-            "title": old.get("title"),
-            "action": old.get("action"),
-            "rationale": old.get("rationale"),
-            "evidence": old.get("evidence"),
-        })
-        if old_fingerprint == proposal_fingerprint:
-            return CommitResponse(
-                committed=False,
-                duplicate=True,
-                memory_version=int(mem.get("version", 0)),
-                entry_id=entry.get("id"),
-                message="Esta mesma proposta já foi registrada para este estado da investigação.",
-            )
+    with db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id
+                FROM evolutionary_memory
+                WHERE investigation_hash = %s
+                  AND proposal_fingerprint = %s
+                LIMIT 1
+            """, (inv_hash, proposal_fingerprint))
+            existing = cur.fetchone()
 
-    mem["version"] = int(mem.get("version", 0)) + 1
-    entry_id = f"MEM-{mem['version']}"
-    mem.setdefault("entries", []).append({
-        "id": entry_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "investigation_hash": inv_hash,
-        "proposal_fingerprint": proposal_fingerprint,
-        "proposal": proposal_payload,
-        "validation": req.validation.model_dump(),
-    })
-    p = memory_path()
-    p.write_text(json.dumps(mem, ensure_ascii=False, indent=2), encoding="utf-8")
+            if existing:
+                cur.execute("SELECT COUNT(*) AS n FROM evolutionary_memory")
+                version = int(cur.fetchone()["n"])
+                return CommitResponse(
+                    committed=False,
+                    duplicate=True,
+                    memory_version=version,
+                    entry_id=f"MEM-{existing['id']}",
+                    message="Esta mesma proposta já foi registrada para este estado da investigação.",
+                )
+
+            try:
+                cur.execute("""
+                    INSERT INTO evolutionary_memory (
+                        investigation_hash,
+                        proposal_fingerprint,
+                        proposal,
+                        validation
+                    )
+                    VALUES (%s, %s, %s::jsonb, %s::jsonb)
+                    RETURNING id
+                """, (
+                    inv_hash,
+                    proposal_fingerprint,
+                    json.dumps(proposal_payload, ensure_ascii=False),
+                    json.dumps(validation_payload, ensure_ascii=False),
+                ))
+                new_id = int(cur.fetchone()["id"])
+                conn.commit()
+            except psycopg.errors.UniqueViolation:
+                conn.rollback()
+                cur.execute("""
+                    SELECT id
+                    FROM evolutionary_memory
+                    WHERE investigation_hash = %s
+                      AND proposal_fingerprint = %s
+                    LIMIT 1
+                """, (inv_hash, proposal_fingerprint))
+                existing = cur.fetchone()
+                cur.execute("SELECT COUNT(*) AS n FROM evolutionary_memory")
+                version = int(cur.fetchone()["n"])
+                return CommitResponse(
+                    committed=False,
+                    duplicate=True,
+                    memory_version=version,
+                    entry_id=f"MEM-{existing['id']}" if existing else None,
+                    message="Esta mesma proposta já foi registrada para este estado da investigação.",
+                )
+
     return CommitResponse(
         committed=True,
-        memory_version=mem["version"],
-        entry_id=entry_id,
-        message="Proposta validada registrada na memória evolutiva.",
+        memory_version=memory_version(),
+        entry_id=f"MEM-{new_id}",
+        message="Proposta validada registrada permanentemente no PostgreSQL.",
     )
 
 
@@ -337,7 +416,7 @@ def commit_memory(req: CommitRequest) -> CommitResponse:
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="0.1.2-dedup",
+    version="0.2.0-postgres",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -361,13 +440,25 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.1.2-dedup"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.2.0-postgres"}
 
 
 @app.get("/health")
 def health():
-    mem = load_memory()
-    return {"ok": True, "service": "fractal-recuris-bridge", "memory_version": mem.get("version", 0)}
+    try:
+        version = memory_version()
+        return {
+            "ok": True,
+            "service": "fractal-recuris-bridge",
+            "storage": "postgresql",
+            "persistent": True,
+            "memory_version": version,
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Backend ativo, mas memória PostgreSQL indisponível: {exc}",
+        )
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)

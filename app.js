@@ -64,6 +64,17 @@ function evidenceSummaryHtml(inv, claimId){
   return `<div class="meta"><b>Evidência estrutural:</b> ${p.sourceIds.length} fonte(s) · ${p.types.length} tipo(s) (${esc(typeText)}) · IEE ${p.score}/100 — ${esc(p.label)}${pending?` · ${pending} vínculo(s) sem tipologia`:""}. <b>IEE não é confiança nem probabilidade de verdade.</b></div>`;
 }
 
+function investigationClosure(inv){
+  const micros=inv?.microNos||[];
+  const resolved=micros.filter(m=>m.estado==="resolvido").length;
+  const rels=(inv?.relacoes||[]).filter(r=>r.tipo==="contradiz");
+  const confirmed=rels.filter(r=>semanticRelationStatusLocal(r)==="contradicao_real").length;
+  const unreviewed=rels.filter(r=>semanticRelationStatusLocal(r)==="nao_avaliada").length;
+  const unclassified=(inv?.fonteClaims||[]).filter(x=>!x.natureza||x.natureza==="nao_classificada").length;
+  const complete=micros.length>0 && resolved===micros.length && confirmed===0 && unreviewed===0;
+  return {complete,total:micros.length,resolved,confirmed,unreviewed,unclassified};
+}
+
 function persist(){
   if(db.ativa) db.ativa.atualizadoEm=now();
   save(db);
@@ -404,17 +415,22 @@ function renderVerification(){
       <div class="metric"><strong>${inv.relacoes.length}</strong><br>Relações entre claims</div>
       <div class="metric"><strong>${inv.relacoesMicro.length}</strong><br>Relações entre microalvos</div>
     </div>
-    <div class="item"><strong>Convergência evidencial v32</strong><p class="meta">O IEE mede apenas estrutura de sustentação. A prontidão recursiva é uma indicação operacional para revisão humana: nunca resolve um microalvo automaticamente.</p></div>`;
+    <div class="item"><strong>Convergência evidencial v33</strong><p class="meta">O IEE mede apenas estrutura de sustentação. A prontidão recursiva é uma indicação operacional para revisão humana: nunca resolve um microalvo automaticamente.</p></div>`;
 
   const readiness=(inv.microNos||[]).map(m=>({micro:m,...microReadiness(inv,m)}));
   const ready=readiness.filter(x=>x.ready);
   const blockedParents=readiness.filter(x=>x.micro.estado!=="resolvido" && x.children.length>0 && !x.ready);
-  const readinessHtml=readiness.filter(x=>x.children.length>0 || x.ready).map(x=>`<div class="item ${x.ready?"ok":""}">
+  const readinessHtml=readiness.filter(x=>x.micro.estado!=="resolvido" && (x.children.length>0 || x.ready)).map(x=>`<div class="item ${x.ready?"ok":""}">
     <strong>${esc(x.micro.id)} — ${x.ready?"PRONTO PARA REVISÃO HUMANA":"ainda não pronto"}</strong>
     <div class="meta">${esc(x.micro.titulo||"")}</div>
     <div class="meta">${esc(x.reason)} · claims diretos apoiados com evidência: ${x.supportedWithEvidence.length} · convergentes: ${x.diverse.length}</div>
   </div>`).join("");
-  $("verificacoes").insertAdjacentHTML("beforeend",`<div class="item"><strong>Prontidão recursiva v32</strong><p class="meta">${ready.length} microalvo(s) pronto(s) para revisão humana · ${blockedParents.length} pai(s) ainda bloqueado(s). Filhos resolvidos são condição necessária, mas não suficiente: o pai também precisa de sustentação direta.</p>${readinessHtml||"<p class='meta'>Nenhum pai recursivo para avaliar.</p>"}</div>`);
+  $("verificacoes").insertAdjacentHTML("beforeend",`<div class="item"><strong>Prontidão recursiva v33</strong><p class="meta">${ready.length} microalvo(s) pronto(s) para revisão humana · ${blockedParents.length} pai(s) ainda bloqueado(s). Filhos resolvidos são condição necessária, mas não suficiente: o pai também precisa de sustentação direta.</p>${readinessHtml||"<p class='meta'>Nenhum pai recursivo para avaliar.</p>"}</div>`);
+
+  const closure=investigationClosure(inv);
+  if(closure.complete){
+    $("verificacoes").insertAdjacentHTML("beforeend",`<div class="item ok"><strong>Critério de parada epistemológica v33 atingido</strong><p class="meta">${closure.resolved}/${closure.total} microalvos resolvidos · nenhum microalvo aguarda revisão recursiva · nenhuma contradição real ou relação “contradiz” sem revisão semântica bloqueia o encerramento.</p><p class="meta">${closure.unclassified} vínculo(s) sem tipologia permanecem como dívida de qualidade não bloqueante. Eles podem ser revisados depois, mas não obrigam a reabrir a investigação.</p><p><strong>Nenhuma nova ação investigativa é necessária.</strong></p></div>`);
+  }
 
   if(unclassifiedLinks.length){
     const sourceById=Object.fromEntries((inv.fontes||[]).map(x=>[x.id,x]));

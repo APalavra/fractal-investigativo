@@ -468,7 +468,10 @@ function syncSafeActionButton() {
   // Se o estado local estiver vazio, o próprio clique consulta o backend.
   btn.disabled = false;
 
-  if (!rec) {
+  const localComplete = (() => { try { return localCompletionState(loadInvestigation()).complete; } catch { return false; } })();
+  if (localComplete || rec?.category === "concluida") {
+    btn.title = "Investigação concluída: nenhuma ação segura investigativa precisa ser aplicada.";
+  } else if (!rec) {
     btn.title = "Consultar a decisão pendente no backend e aplicar somente se for seguro.";
   } else if (["decomposicao","prioridade"].includes(rec.category)) {
     btn.title = "Aplicar somente a parte operacional segura desta decisão.";
@@ -529,6 +532,23 @@ function readyMicrotargetsForHumanReview(inv) {
   });
 }
 
+function semanticRelationStatusClient(rel) {
+  const raw = String(rel?.validacaoSemantica || rel?.statusSemantico || rel?.semantica || "nao_avaliada").toLowerCase();
+  if (["contradicao_real","tensao","compativel"].includes(raw)) return raw;
+  return "nao_avaliada";
+}
+
+function localCompletionState(inv) {
+  const micros = Array.isArray(inv?.microNos) ? inv.microNos : [];
+  const resolved = micros.filter(m => m?.estado === "resolvido").length;
+  const contradict = (inv?.relacoes || []).filter(r => r?.tipo === "contradiz");
+  const confirmed = contradict.filter(r => semanticRelationStatusClient(r) === "contradicao_real").length;
+  const unreviewed = contradict.filter(r => semanticRelationStatusClient(r) === "nao_avaliada").length;
+  const unclassified = unclassifiedEvidenceLinks(inv).length;
+  const complete = micros.length > 0 && resolved === micros.length && confirmed === 0 && unreviewed === 0;
+  return { complete, total: micros.length, resolved, confirmed, unreviewed, unclassified };
+}
+
 function claimsWithoutSources(inv) {
   const claims = Array.isArray(inv?.claims) ? inv.claims : [];
   const links = Array.isArray(inv?.fonteClaims) ? inv.fonteClaims : [];
@@ -550,6 +570,18 @@ function classifiedEvidenceTypes(inv, claimId) {
 async function applySafeRecommendedAction() {
   const panel = $("evoSafeActionPanel");
   try {
+    const localCompletion = localCompletionState(loadInvestigation());
+    if (localCompletion.complete) {
+      panel.innerHTML = `
+        <div class="card">
+          <strong>Investigação concluída — nenhuma ação aplicada</strong>
+          <p>${localCompletion.resolved}/${localCompletion.total} microalvos estão resolvidos e não há bloqueio semântico de encerramento.</p>
+          <p>${localCompletion.unclassified} vínculo(s) sem tipologia permanecem como dívida de qualidade não bloqueante.</p>
+          <p><strong>Nenhuma alteração foi feita.</strong></p>
+        </div>`;
+      setStatus("✓ Critério de parada atingido; nenhuma ação investigativa aplicada.", true);
+      return;
+    }
     setStatus("Sincronizando decisão pendente com o backend...");
 
     if (!lastAutomaticCycle?.decision?.recommendation) {
@@ -965,6 +997,9 @@ async function runAutomaticCycle() {
     lastAutomaticCycle = data;
     syncSafeActionButton();
 
+    const safePanel = $("evoSafeActionPanel");
+    if (safePanel) safePanel.innerHTML = "";
+
     const target = $("evoCyclePanel");
     const decision = data.decision || {};
     const rec = decision.recommendation || {};
@@ -987,11 +1022,22 @@ async function runAutomaticCycle() {
       <div class="meta">Nenhum resultado anterior precisou ser avaliado neste ciclo.</div>
     `;
 
+    const completion = data.completion || {};
+    const completionHtml = completion.structurally_complete ? `
+      <div class="card">
+        <strong>Investigação estruturalmente concluída</strong>
+        <p>${esc(completion.resolved_microtargets)}/${esc(completion.total_microtargets)} microalvos resolvidos.</p>
+        <p>Nenhum microalvo aguarda revisão recursiva e nenhum bloqueio semântico de encerramento permanece.</p>
+        <p>${esc(completion.nonblocking_quality_debt || 0)} pendência(s) de tipologia permanecem como dívida de qualidade não bloqueante.</p>
+        <p><strong>Nenhuma nova ação investigativa é necessária.</strong></p>
+      </div>` : "";
+
     target.innerHTML = `
       <div class="card">
         <strong>Ciclo automático</strong>
         <div class="meta">${esc(data.message)}</div>
         <div class="meta">Memória evolutiva v${esc(data.memory_version)}</div>
+        ${completionHtml}
         ${outcomeHtml}
         <div class="card">
           <strong>${data.stable_state ? "Estado estável — nenhuma nova decisão" : (data.decision_created ? "Nova decisão" : "Decisão pendente preservada")}</strong>
@@ -1006,7 +1052,7 @@ async function runAutomaticCycle() {
       </div>
     `;
 
-    setStatus(data.stable_state ? "✓ Ciclo concluído: estado estável, sem nova decisão artificial." : "✓ Ciclo automático concluído.", true);
+    setStatus(data.completion?.structurally_complete ? "✓ Investigação concluída: critério de parada atingido; nenhuma nova decisão criada." : (data.stable_state ? "✓ Ciclo concluído: estado estável, sem nova decisão artificial." : "✓ Ciclo automático concluído."), true);
   } catch (err) {
     setStatus(`✗ ${err.message}`);
   } finally {

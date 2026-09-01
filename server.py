@@ -133,6 +133,7 @@ class AutoCycleRequest(BaseModel):
 class AutoCycleResponse(BaseModel):
     memory_version: int
     stable_state: bool = False
+    completion: dict[str, Any] | None = None
     outcome_evaluated: bool
     outcome: dict[str, Any] | None = None
     comparison: dict[str, Any]
@@ -811,6 +812,41 @@ def investigation_metrics(inv: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def investigation_completion(inv: dict[str, Any]) -> dict[str, Any]:
+    """v33: critério de parada estrutural, sem transformar metadados pendentes em verdade."""
+    metrics = investigation_metrics(inv)
+    total = int(metrics.get("microalvos", 0) or 0)
+    resolved = int(metrics.get("microalvos_resolvidos", 0) or 0)
+    confirmed = int(metrics.get("contradicoes_confirmadas", 0) or 0)
+    unreviewed = int(metrics.get("contradicoes_nao_avaliadas", 0) or 0)
+    ready = int(metrics.get("microalvos_prontos_revisao", 0) or 0)
+    unclassified = int(metrics.get("vinculos_evidencia_nao_classificada", 0) or 0)
+
+    blockers: list[str] = []
+    if total == 0:
+        blockers.append("Nenhum microalvo foi definido.")
+    elif resolved < total:
+        blockers.append(f"{total - resolved} microalvo(s) ainda não resolvido(s).")
+    if ready > 0:
+        blockers.append(f"{ready} microalvo(s) ainda pronto(s) para revisão humana.")
+    if unreviewed > 0:
+        blockers.append(f"{unreviewed} relação(ões) 'contradiz' ainda sem revisão semântica.")
+    if confirmed > 0:
+        blockers.append(f"{confirmed} contradição(ões) real(is) permanece(m) aberta(s).")
+
+    structurally_complete = total > 0 and resolved == total and ready == 0 and unreviewed == 0 and confirmed == 0
+    return {
+        "structurally_complete": structurally_complete,
+        "total_microtargets": total,
+        "resolved_microtargets": resolved,
+        "ready_for_review": ready,
+        "semantic_blockers": confirmed + unreviewed,
+        "nonblocking_quality_debt": unclassified if structurally_complete else 0,
+        "unclassified_evidence_links": unclassified,
+        "blockers": blockers,
+    }
+
+
 def latest_snapshot() -> dict[str, Any] | None:
     init_db()
     with db_connect() as conn:
@@ -904,6 +940,11 @@ def compute_delta(current: dict[str, Any], previous: dict[str, Any] | None) -> t
 
 def category_applicability(inv: dict[str, Any]) -> dict[str, bool]:
     metrics = investigation_metrics(inv)
+    completion = investigation_completion(inv)
+    if completion["structurally_complete"]:
+        # v33: dívida de qualidade pode permanecer registrada, mas não reabre uma investigação
+        # que já foi encerrada humanamente sem bloqueio semântico.
+        return {k: False for k in ("evidencia", "decomposicao", "qualidade", "contradicao", "prioridade")}
     dep_count = sum(1 for r in (inv.get("relacoesMicro", []) or []) if r.get("tipo") == "depende")
     return {
         "evidencia": metrics["claims_sem_fonte"] > 0,
@@ -1373,6 +1414,7 @@ def outcome_history_summary() -> dict[str, Any]:
 def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
     init_db()
     current_hash = stable_hash(inv)
+    completion = investigation_completion(inv)
 
     pending = latest_unevaluated_decision()
     outcome = None
@@ -1380,6 +1422,13 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
         outcome = evaluate_decision_outcome(inv)
 
     pending_same_state = latest_unevaluated_decision()
+
+    # v33: ao atingir o critério de parada, uma decisão antiga de manutenção/qualidade
+    # não pode manter a investigação artificialmente aberta. Ela é reconciliada como obsoleta.
+    completion_reconciliation = None
+    if completion["structurally_complete"] and pending_same_state:
+        completion_reconciliation = reconcile_pending_decision(f"DEC-{pending_same_state['id']}", inv)
+        pending_same_state = latest_unevaluated_decision()
 
     # v27: decisões de pressão zero ou negativa não podem bloquear o ciclo.
     # Elas representam ausência de urgência adaptativa, não uma tarefa pendente.
@@ -1420,78 +1469,104 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
     stable_state = False
 
     if not same_state_pending:
-        memory_rows = load_memory_rows(limit=100)
-        ranked, recommendation, rationale, _ = adaptive_feedback(
-            inv, previous_inv, memory_rows
-        )
-
-        outcome_summary = outcome_history_summary()
-        historical_scores = outcome_summary.get("average_score_by_category", {})
-        if historical_scores:
-            rationale.append(
-                "Aprendizado por resultado disponível: " +
-                ", ".join(f"{k}={v}" for k, v in historical_scores.items())
-            )
-            applicability = category_applicability(inv)
-            for item in ranked:
-                cat = item["category"]
-                avg = float(historical_scores.get(cat, 0))
-                if applicability.get(cat, False):
-                    item["score"] += round(avg)
-                else:
-                    # Histórico pode modular uma necessidade existente, nunca ressuscitar
-                    # uma categoria sem gatilho no estado atual.
-                    item["score"] = min(item["score"], 0)
-                    item.setdefault("reasons", []).append(
-                        "Categoria sem gatilho no estado atual; bônus histórico bloqueado."
-                    )
-            ranked.sort(key=lambda x: (-x["score"], {"prioridade":0,"evidencia":1,"qualidade":2,"decomposicao":3,"contradicao":4}.get(x["category"],99), x["category"]))
-            winner = ranked[0]
-            actions = {
-                "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
-                "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
-                "prioridade": "Revise primeiro microalvos recursivamente prontos ou, na ausência deles, o gargalo que bloqueia dependências estruturais.",
-                "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
-                "qualidade": "Revise pendências de qualidade: semântica de relações e tipologia de evidência, sempre com decisão humana.",
-            }
-            recommendation = {
-                "category": winner["category"],
-                "score": winner["score"],
-                "action": actions[winner["category"]],
-            }
-            rationale.append(
-                f"Score reajustado pelo histórico de resultados; vencedor atual: "
-                f"{winner['category']} ({winner['score']})."
-            )
-
-        # v27: uma categoria só vira decisão quando existe pressão adaptativa positiva.
-        # Score <= 0 significa que o sistema não encontrou um gargalo que justifique nova ação.
-        winner_score = float((recommendation or {}).get("score", 0) or 0)
-        if winner_score > 0:
-            decision_id = save_adaptive_decision(inv, recommendation, ranked)
-            decision = {
-                "decision_id": decision_id,
-                "recommendation": recommendation,
-                "adaptive_scores": ranked,
-                "rationale": rationale,
-            }
-            decision_created = True
-        else:
+        if completion["structurally_complete"]:
             stable_state = True
+            ranked = [
+                {"category": cat, "score": 0, "reasons": ["Critério de parada v33: investigação estruturalmente concluída; categoria não aplicável."]}
+                for cat in ("prioridade", "evidencia", "qualidade", "decomposicao", "contradicao")
+            ]
             decision = {
                 "decision_id": None,
                 "recommendation": {
-                    "category": "estavel",
-                    "score": winner_score,
-                    "action": "Nenhuma nova ação adaptativa é necessária agora. Mantenha o foco operacional atual e avance a investigação antes de recalcular.",
+                    "category": "concluida",
+                    "score": 0,
+                    "action": "Nenhuma nova ação investigativa é necessária. Pendências de tipologia podem ser revisadas posteriormente como manutenção não bloqueante.",
                 },
                 "adaptive_scores": ranked,
                 "rationale": [
-                    *rationale,
-                    "Limiar v27: nenhum score adaptativo ficou acima de zero; nenhuma nova decisão foi criada.",
-                    "O estado é operacionalmente estável: continuar o trabalho já focado é preferível a gerar uma ação artificial.",
+                    f"Critério de parada v33 atingido: {completion['resolved_microtargets']}/{completion['total_microtargets']} microalvos resolvidos.",
+                    "Nenhum microalvo aguarda revisão recursiva e nenhum bloqueio semântico de encerramento permanece.",
+                    f"{completion['nonblocking_quality_debt']} vínculo(s) sem tipologia permanecem registrados como dívida de qualidade não bloqueante.",
+                    "Nenhuma nova decisão adaptativa foi criada; o sistema reconheceu que pode parar.",
+                    *(
+                        [f"Decisão pendente anterior reconciliada: {completion_reconciliation.get('decision_id')}."]
+                        if completion_reconciliation and completion_reconciliation.get("reconciled") else []
+                    ),
                 ],
             }
+        else:
+            memory_rows = load_memory_rows(limit=100)
+            ranked, recommendation, rationale, _ = adaptive_feedback(
+                inv, previous_inv, memory_rows
+            )
+
+            outcome_summary = outcome_history_summary()
+            historical_scores = outcome_summary.get("average_score_by_category", {})
+            if historical_scores:
+                rationale.append(
+                    "Aprendizado por resultado disponível: " +
+                    ", ".join(f"{k}={v}" for k, v in historical_scores.items())
+                )
+                applicability = category_applicability(inv)
+                for item in ranked:
+                    cat = item["category"]
+                    avg = float(historical_scores.get(cat, 0))
+                    if applicability.get(cat, False):
+                        item["score"] += round(avg)
+                    else:
+                        # Histórico pode modular uma necessidade existente, nunca ressuscitar
+                        # uma categoria sem gatilho no estado atual.
+                        item["score"] = min(item["score"], 0)
+                        item.setdefault("reasons", []).append(
+                            "Categoria sem gatilho no estado atual; bônus histórico bloqueado."
+                        )
+                ranked.sort(key=lambda x: (-x["score"], {"prioridade":0,"evidencia":1,"qualidade":2,"decomposicao":3,"contradicao":4}.get(x["category"],99), x["category"]))
+                winner = ranked[0]
+                actions = {
+                    "evidencia": "Vincule fonte(s) aos claims sem rastreabilidade antes de elevar a confiança.",
+                    "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
+                    "prioridade": "Revise primeiro microalvos recursivamente prontos ou, na ausência deles, o gargalo que bloqueia dependências estruturais.",
+                    "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
+                    "qualidade": "Revise pendências de qualidade: semântica de relações e tipologia de evidência, sempre com decisão humana.",
+                }
+                recommendation = {
+                    "category": winner["category"],
+                    "score": winner["score"],
+                    "action": actions[winner["category"]],
+                }
+                rationale.append(
+                    f"Score reajustado pelo histórico de resultados; vencedor atual: "
+                    f"{winner['category']} ({winner['score']})."
+                )
+
+            # v27: uma categoria só vira decisão quando existe pressão adaptativa positiva.
+            # Score <= 0 significa que o sistema não encontrou um gargalo que justifique nova ação.
+            winner_score = float((recommendation or {}).get("score", 0) or 0)
+            if winner_score > 0:
+                decision_id = save_adaptive_decision(inv, recommendation, ranked)
+                decision = {
+                    "decision_id": decision_id,
+                    "recommendation": recommendation,
+                    "adaptive_scores": ranked,
+                    "rationale": rationale,
+                }
+                decision_created = True
+            else:
+                stable_state = True
+                decision = {
+                    "decision_id": None,
+                    "recommendation": {
+                        "category": "estavel",
+                        "score": winner_score,
+                        "action": "Nenhuma nova ação adaptativa é necessária agora. Mantenha o foco operacional atual e avance a investigação antes de recalcular.",
+                    },
+                    "adaptive_scores": ranked,
+                    "rationale": [
+                        *rationale,
+                        "Limiar v27: nenhum score adaptativo ficou acima de zero; nenhuma nova decisão foi criada.",
+                        "O estado é operacionalmente estável: continuar o trabalho já focado é preferível a gerar uma ação artificial.",
+                    ],
+                }
     else:
         decision = {
             "decision_id": f"DEC-{pending_same_state['id']}",
@@ -1507,6 +1582,7 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
     return {
         "memory_version": int(mem.get("version", 0)),
         "stable_state": stable_state,
+        "completion": completion,
         "outcome_evaluated": outcome is not None,
         "outcome": outcome,
         "comparison": comparison,
@@ -1514,6 +1590,8 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
         "decision_created": decision_created,
         "decision": decision,
         "message": (
+            "Ciclo automático concluído: investigação estruturalmente concluída; nenhuma nova decisão adaptativa foi criada."
+            if completion["structurally_complete"] else
             "Ciclo automático concluído: resultado anterior avaliado; nenhum novo gatilho adaptativo positivo foi encontrado."
             if outcome is not None and stable_state else
             "Ciclo automático concluído: nenhum novo gatilho adaptativo positivo foi encontrado."
@@ -1740,6 +1818,37 @@ def memory_auto_cycle_route(req: AutoCycleRequest):
 def memory_adaptive_route(req: AdaptiveRequest):
     if not req.investigation or not isinstance(req.investigation, dict):
         raise HTTPException(status_code=400, detail="investigation ausente ou inválida")
+
+    completion = investigation_completion(req.investigation)
+    previous_row = latest_snapshot()
+    if completion["structurally_complete"]:
+        current_hash = stable_hash(req.investigation)
+        saved_id = None
+        if req.save_snapshot and (not previous_row or previous_row["investigation_hash"] != current_hash):
+            saved_id = save_snapshot(req.investigation)
+        ranked = [
+            {"category": cat, "score": 0, "reasons": ["Critério de parada v33: investigação concluída; categoria não aplicável."]}
+            for cat in ("prioridade", "evidencia", "qualidade", "decomposicao", "contradicao")
+        ]
+        return AdaptiveResponse(
+            current_hash=current_hash,
+            snapshot_id=saved_id,
+            decision_id=None,
+            memory_records=len(load_memory_rows(limit=100)),
+            baseline_found=previous_row is not None,
+            delta={},
+            adaptive_scores=ranked,
+            recommendation={
+                "category": "concluida",
+                "score": 0,
+                "action": "Nenhuma nova ação investigativa é necessária; pendências de manutenção podem ser revisadas sem reabrir a investigação.",
+            },
+            rationale=[
+                f"Critério de parada v33 atingido: {completion['resolved_microtargets']}/{completion['total_microtargets']} microalvos resolvidos.",
+                f"{completion['nonblocking_quality_debt']} pendência(s) de tipologia permanecem como dívida de qualidade não bloqueante.",
+                "Nenhuma decisão persistente foi criada.",
+            ],
+        )
 
     previous_row = latest_snapshot()
     previous_inv = previous_row["investigation"] if previous_row else None

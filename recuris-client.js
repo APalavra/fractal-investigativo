@@ -2,6 +2,7 @@ const DB_KEY = "fractal_investigativo_v1_alpha";
 const BACKEND_KEY = "fractal_backend_url";
 const DEFAULT_BACKEND_URL = "https://fractal-investigativo.onrender.com";
 let lastAnalysis = null;
+let lastAutomaticCycle = null;
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "")
@@ -247,6 +248,128 @@ async function compareWithMemory() {
 
 
 
+
+function loadWholeDB() {
+  const raw = localStorage.getItem(DB_KEY);
+  if (!raw) throw new Error("Memória local do Fractal não encontrada.");
+  const db = JSON.parse(raw);
+  if (!db.ativa) throw new Error("Não há investigação ativa.");
+  return db;
+}
+
+function saveWholeDB(db) {
+  if (db.ativa) db.ativa.atualizadoEm = new Date().toISOString();
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+}
+
+function nextClaimId(inv) {
+  inv.counters = inv.counters || {};
+  let n = Number(inv.counters.claim || 1);
+  const used = new Set((inv.claims || []).map(c => c.id));
+  while (used.has(`CLM-${n}`)) n += 1;
+  inv.counters.claim = n + 1;
+  return `CLM-${n}`;
+}
+
+function pickDecompositionTarget(inv) {
+  const active = (inv.microNos || []).filter(m =>
+    ["aberto", "investigando"].includes(m.estado)
+  );
+  if (!active.length) return null;
+
+  const claimCount = id => (inv.claims || []).filter(c => c.microalvoId === id).length;
+  const depth = id => String(id || "").split(".").length;
+
+  active.sort((a, b) => {
+    const aNoClaim = claimCount(a.id) === 0 ? 0 : 1;
+    const bNoClaim = claimCount(b.id) === 0 ? 0 : 1;
+    return aNoClaim - bNoClaim
+      || depth(a.id) - depth(b.id)
+      || String(a.id).localeCompare(String(b.id), undefined, {numeric:true});
+  });
+  return active[0];
+}
+
+function buildSafeHypothesis(micro) {
+  const title = String(micro.titulo || micro.id || "microalvo").trim();
+  return `Hipótese operacional para ${micro.id}: ${title} pode ser decomposto em uma afirmação específica e verificável por evidências explícitas.`;
+}
+
+async function applySafeRecommendedAction() {
+  const panel = $("evoSafeActionPanel");
+  try {
+    const cycle = lastAutomaticCycle;
+    if (!cycle?.decision?.recommendation) {
+      throw new Error("Execute primeiro o ciclo automático para obter uma decisão atual.");
+    }
+
+    const rec = cycle.decision.recommendation;
+    if (rec.category !== "decomposicao") {
+      panel.innerHTML = `
+        <div class="card">
+          <strong>Ação automática bloqueada por segurança epistemológica</strong>
+          <p>A categoria atual é <strong>${esc(rec.category || "-")}</strong>.</p>
+          <p>O protótipo não inventará fontes, não resolverá contradições e não elevará confiança automaticamente. Essas ações exigem julgamento humano.</p>
+        </div>`;
+      setStatus("✓ Nenhuma alteração automática inadequada foi feita.", true);
+      return;
+    }
+
+    const db = loadWholeDB();
+    const inv = db.ativa;
+    const micro = pickDecompositionTarget(inv);
+    if (!micro) throw new Error("Nenhum microalvo ativo disponível para decomposição.");
+
+    const text = buildSafeHypothesis(micro);
+
+    const duplicate = (inv.claims || []).some(c =>
+      c.microalvoId === micro.id &&
+      String(c.texto || "").trim().toLowerCase() === text.toLowerCase()
+    );
+    if (duplicate) {
+      panel.innerHTML = `<div class="card"><strong>Nenhuma alteração feita.</strong><p>Essa hipótese automática já existe para ${esc(micro.id)}.</p></div>`;
+      setStatus("✓ Duplicação evitada.", true);
+      return;
+    }
+
+    if (!confirm(
+      `Aplicar uma decomposição segura em ${micro.id}?\n\n` +
+      `Será criado apenas um claim H pendente, confiança 30%, sem apagar nem validar nada automaticamente.`
+    )) return;
+
+    inv.claims = inv.claims || [];
+    const id = nextClaimId(inv);
+    const now = new Date().toISOString();
+    inv.claims.push({
+      id,
+      texto: text,
+      tipo: "H",
+      estado: "pendente",
+      microalvoId: micro.id,
+      confianca: 30,
+      criadoEm: now,
+      atualizadoEm: now,
+      geradoAutomaticamente: true,
+      origemAutomatica: cycle.decision.decision_id || null
+    });
+
+    saveWholeDB(db);
+
+    panel.innerHTML = `
+      <div class="card">
+        <strong>Alteração segura aplicada</strong>
+        <p>${esc(id)} foi criado e ligado a ${esc(micro.id)}.</p>
+        <div class="meta">Tipo H · pendente · confiança 30% · nenhuma fonte inventada · nenhuma conclusão validada automaticamente.</div>
+        <p>A página será recarregada para sincronizar toda a interface.</p>
+      </div>`;
+    setStatus(`✓ ${id} criado com rastreabilidade automática.`, true);
+
+    setTimeout(() => location.reload(), 1200);
+  } catch (err) {
+    setStatus(`✗ ${err.message}`);
+  }
+}
+
 async function runAutomaticCycle() {
   const button = $("btnEvoCiclo");
   try {
@@ -259,6 +382,7 @@ async function runAutomaticCycle() {
       method: "POST",
       body: JSON.stringify({ investigation }),
     });
+    lastAutomaticCycle = data;
 
     const target = $("evoCyclePanel");
     const decision = data.decision || {};
@@ -423,6 +547,7 @@ function init() {
   $("btnEvoAdaptativo").addEventListener("click", runAdaptiveDecision);
   $("btnEvoResultado").addEventListener("click", evaluateLastDecision);
   $("btnEvoCiclo").addEventListener("click", runAutomaticCycle);
+  $("btnEvoAplicarSeguro").addEventListener("click", applySafeRecommendedAction);
   setStatus(input.value ? "Backend configurado; teste a conexão." : "Backend ainda não configurado.");
 }
 

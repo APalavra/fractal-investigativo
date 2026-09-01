@@ -1144,7 +1144,7 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="0.9.0-auto-cycle",
+    version="1.0.0-safe-action",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -1168,7 +1168,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.9.0-auto-cycle"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.0.0-safe-action"}
 
 
 @app.get("/health")

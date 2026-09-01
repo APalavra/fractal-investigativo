@@ -524,6 +524,17 @@ function claimsWithoutSources(inv) {
   return claims.filter(c => c?.id && !linked.has(c.id));
 }
 
+function unclassifiedEvidenceLinks(inv) {
+  const links = Array.isArray(inv?.fonteClaims) ? inv.fonteClaims : [];
+  return links.filter(x => !x?.natureza || x.natureza === "nao_classificada");
+}
+
+function classifiedEvidenceTypes(inv, claimId) {
+  return [...new Set((inv?.fonteClaims || [])
+    .filter(x => x.claimId === claimId && x.tipo === "sustenta" && x.natureza && x.natureza !== "nao_classificada")
+    .map(x => x.natureza))];
+}
+
 async function applySafeRecommendedAction() {
   const panel = $("evoSafeActionPanel");
   try {
@@ -604,6 +615,29 @@ async function applySafeRecommendedAction() {
       const pairs = contradictionPairs(inv, { onlyUnreviewed: true });
 
       if (!pairs.length) {
+        const unclassified = unclassifiedEvidenceLinks(inv);
+        if (unclassified.length) {
+          const claimById = Object.fromEntries((inv?.claims || []).map(c => [c.id,c]));
+          const items = unclassified.map(link => {
+            const c = claimById[link.claimId];
+            const text = cleanClaimText(c?.texto);
+            const short = text.length > 90 ? text.slice(0,87) + "..." : text;
+            const existingTypes = classifiedEvidenceTypes(inv, link.claimId);
+            return `<li><strong>${esc(link.id)}</strong> — ${esc(link.fonteId)} → ${esc(link.tipo)} → ${esc(link.claimId)}${short ? ` — ${esc(short)}` : ""}${existingTypes.length ? `<br><span class="meta">Tipos já classificados neste claim: ${esc(existingTypes.join(", "))}</span>` : ""}</li>`;
+          }).join("");
+          panel.innerHTML = `
+            <div class="card">
+              <strong>Revisão de qualidade da evidência</strong>
+              <p>Há ${unclassified.length} vínculo(s) fonte→claim sem tipologia de evidência.</p>
+              <p><strong>O sistema não classificará nenhum automaticamente.</strong> Natureza da evidência depende do conteúdo/metodologia da fonte.</p>
+              <ul>${items}</ul>
+              <p><strong>Próxima ação humana:</strong> na seção 6, escolha Teórica, Experimental, Observacional, Documental ou Argumentativa para cada vínculo que você puder justificar. Deixe “Não classificada” quando houver dúvida.</p>
+              <p>Nenhum Estado ou Confiança de claim foi alterado.</p>
+            </div>`;
+          setStatus(`✓ Qualidade: ${unclassified.length} vínculo(s) sem tipologia localizado(s); classificação mantida sob controle humano.`, true);
+          return;
+        }
+
         const reconciled = await reconcileDecisionIfObsolete(decisionId, inv);
         if (reconciled?.reconciled || reconciled?.status === "already_closed") {
           lastAutomaticCycle = null;
@@ -611,11 +645,11 @@ async function applySafeRecommendedAction() {
         }
         panel.innerHTML = `
           <div class="card">
-            <strong>Nenhuma relação 'contradiz' aguarda revisão semântica</strong>
-            <p>O estado local não possui relação não avaliada.</p>
+            <strong>Nenhuma pendência de qualidade estrutural encontrada</strong>
+            <p>Não há relação 'contradiz' sem revisão semântica nem vínculo de evidência sem tipologia.</p>
             <p>${reconciled?.reconciled ? `${esc(decisionId || "A decisão")} foi reconciliada e encerrada como obsoleta.` : "Nenhuma alteração epistemológica foi feita."}</p>
           </div>`;
-        setStatus("✓ Qualidade: nenhuma relação pendente; decisão reconciliada quando aplicável.", true);
+        setStatus("✓ Qualidade: nenhuma pendência local; decisão reconciliada quando aplicável.", true);
         return;
       }
 

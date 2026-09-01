@@ -8,6 +8,44 @@ import {esc, optionFill, microOptions, claimOptions, sourceOptions} from "./ui.j
 const $=id=>document.getElementById(id);
 let db=freshDB();
 
+const EVIDENCE_NATURE_LABELS = {
+  nao_classificada:"Não classificada",
+  teorica:"Teórica",
+  experimental:"Experimental",
+  observacional:"Observacional",
+  documental:"Documental",
+  argumentativa:"Argumentativa"
+};
+
+function evidenceProfile(inv, claimId){
+  const links=(inv?.fonteClaims||[]).filter(x=>x.claimId===claimId && x.tipo==="sustenta");
+  const sourceById=Object.fromEntries((inv?.fontes||[]).map(s=>[s.id,s]));
+  const sourceIds=[...new Set(links.map(x=>x.fonteId).filter(Boolean))];
+  const classified=links.filter(x=>x.natureza && x.natureza!=="nao_classificada");
+  const types=[...new Set(classified.map(x=>x.natureza))];
+  const reliabilities=sourceIds.map(id=>Number(sourceById[id]?.confiabilidade)).filter(Number.isFinite);
+  const avgReliability=reliabilities.length?reliabilities.reduce((a,b)=>a+b,0)/reliabilities.length:0;
+  const classificationRate=links.length?classified.length/links.length:0;
+  // Índice puramente estrutural: mede rastreabilidade, diversidade e classificação; NÃO é probabilidade de verdade.
+  const score=Math.round(Math.min(100,
+    (links.length?20:0) +
+    Math.min(20,sourceIds.length*8) +
+    Math.min(35,types.length*15) +
+    (15*classificationRate) +
+    (10*Math.max(0,Math.min(100,avgReliability))/100)
+  ));
+  const label=!links.length?"sem evidência vinculada":score>=90?"convergência estrutural forte":score>=70?"convergência estrutural moderada":score>=45?"sustentação estrutural básica":"rastreabilidade inicial";
+  return {links,sourceIds,classified,types,avgReliability,classificationRate,score,label};
+}
+
+function evidenceSummaryHtml(inv, claimId){
+  const p=evidenceProfile(inv,claimId);
+  if(!p.links.length) return `<div class="meta">Evidência: nenhum vínculo <b>sustenta</b>.</div>`;
+  const typeText=p.types.length?p.types.map(t=>EVIDENCE_NATURE_LABELS[t]||t).join(" + "):"nenhuma natureza classificada";
+  const pending=p.links.length-p.classified.length;
+  return `<div class="meta"><b>Evidência estrutural:</b> ${p.sourceIds.length} fonte(s) · ${p.types.length} tipo(s) (${esc(typeText)}) · IEE ${p.score}/100 — ${esc(p.label)}${pending?` · ${pending} vínculo(s) sem tipologia`:""}. <b>IEE não é confiança nem probabilidade de verdade.</b></div>`;
+}
+
 function persist(){
   if(db.ativa) db.ativa.atualizadoEm=now();
   save(db);
@@ -268,15 +306,23 @@ function renderVerification(){
     $("verificacoes").insertAdjacentHTML("beforeend",`<div class="item ${cls}">${esc(msg)}</div>`);
   }
   const inv=db.ativa;
+  const profiles=inv.claims.map(c=>evidenceProfile(inv,c.id));
+  const convergent=profiles.filter(p=>p.types.length>=2).length;
+  const experimental=profiles.filter(p=>p.types.includes("experimental")).length;
+  const unclassified=(inv.fonteClaims||[]).filter(x=>!x.natureza||x.natureza==="nao_classificada").length;
   $("metricas").innerHTML=`
     <div class="metricgrid">
       <div class="metric"><strong>${inv.microNos.length}</strong><br>Microalvos</div>
       <div class="metric"><strong>${Math.max(0,...inv.microNos.map(m=>microDepth(m.id)))}</strong><br>Profundidade máxima</div>
       <div class="metric"><strong>${inv.claims.length}</strong><br>Claims</div>
       <div class="metric"><strong>${inv.fontes.length}</strong><br>Fontes</div>
+      <div class="metric"><strong>${convergent}</strong><br>Claims com ≥2 tipos de evidência</div>
+      <div class="metric"><strong>${experimental}</strong><br>Claims com evidência experimental</div>
+      <div class="metric"><strong>${unclassified}</strong><br>Vínculos sem tipologia</div>
       <div class="metric"><strong>${inv.relacoes.length}</strong><br>Relações entre claims</div>
       <div class="metric"><strong>${inv.relacoesMicro.length}</strong><br>Relações entre microalvos</div>
-    </div>`;
+    </div>
+    <div class="item"><strong>Convergência evidencial v30</strong><p class="meta">O IEE mede apenas estrutura de sustentação: quantidade de fontes, diversidade de natureza, completude da classificação e confiabilidade cadastrada. Ele nunca altera automaticamente Estado ou Confiança de um claim.</p></div>`;
 }
 
 function renderMicroList(){
@@ -331,6 +377,7 @@ function renderClaims(){
         </div>
         <label>Microalvo<select id="cm-${c.id}"><option value="">Sem microalvo</option>${mopts.map(o=>`<option value="${o.value}" ${c.microalvoId===o.value?"selected":""}>${esc(o.label)}</option>`).join("")}</select></label>
         <label>Confiança <input id="cc-${c.id}" type="number" min="0" max="100" value="${c.confianca}"></label>
+        ${evidenceSummaryHtml(db.ativa,c.id)}
         <div class="row">
           <button class="secondary" onclick="updateClaim('${c.id}')">Salvar edição</button>
           <button class="danger" onclick="removeClaim('${c.id}')">Remover</button>

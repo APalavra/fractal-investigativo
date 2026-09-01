@@ -736,6 +736,23 @@ def investigation_metrics(inv: dict[str, Any]) -> dict[str, Any]:
     linked_claim_ids = {str(x.get("claimId")) for x in fonte_claims if x.get("claimId")}
     unsupported_claims = sum(1 for c in claims if str(c.get("id")) not in linked_claim_ids)
 
+    unclassified_evidence_links = sum(
+        1 for x in fonte_claims
+        if not x.get("natureza") or x.get("natureza") == "nao_classificada"
+    )
+    supporting_by_claim: dict[str, set[str]] = {}
+    experimental_claim_ids: set[str] = set()
+    for x in fonte_claims:
+        if x.get("tipo") != "sustenta" or not x.get("claimId"):
+            continue
+        claim_id = str(x.get("claimId"))
+        nature = str(x.get("natureza") or "nao_classificada")
+        if nature != "nao_classificada":
+            supporting_by_claim.setdefault(claim_id, set()).add(nature)
+        if nature == "experimental":
+            experimental_claim_ids.add(claim_id)
+    diverse_evidence_claims = sum(1 for types in supporting_by_claim.values() if len(types) >= 2)
+
     return {
         "claims": len(claims),
         "microalvos": len(micros),
@@ -753,6 +770,9 @@ def investigation_metrics(inv: dict[str, Any]) -> dict[str, Any]:
         "microalvos_ativos": active_micros,
         "microalvos_ativos_sem_claim": active_micros_without_claims,
         "claims_sem_fonte": unsupported_claims,
+        "vinculos_evidencia_nao_classificada": unclassified_evidence_links,
+        "claims_evidencia_diversa": diverse_evidence_claims,
+        "claims_evidencia_experimental": len(experimental_claim_ids),
     }
 
 
@@ -825,6 +845,14 @@ def compute_delta(current: dict[str, Any], previous: dict[str, Any] | None) -> t
     if delta["fontes"] > 0:
         notes.append(f"Base empírica/documental ampliada: +{delta['fontes']} fonte(s).")
 
+    if delta.get("vinculos_evidencia_nao_classificada", 0) < 0:
+        notes.append(f"Qualidade evidencial: {-delta['vinculos_evidencia_nao_classificada']} vínculo(s) recebeu(ram) tipologia.")
+    elif delta.get("vinculos_evidencia_nao_classificada", 0) > 0:
+        notes.append(f"Tipologia pendente: +{delta['vinculos_evidencia_nao_classificada']} vínculo(s) sem natureza classificada.")
+
+    if delta.get("claims_evidencia_diversa", 0) > 0:
+        notes.append(f"Convergência evidencial aumentou: +{delta['claims_evidencia_diversa']} claim(s) passou(ram) a ter ao menos 2 naturezas de evidência.")
+
     if delta["claims"] == 0 and delta["microalvos"] == 0 and delta["fontes"] == 0 and delta["vinculos_fonte_claim"] == 0:
         notes.append("Estrutura principal praticamente inalterada desde o snapshot anterior.")
 
@@ -845,7 +873,10 @@ def category_applicability(inv: dict[str, Any]) -> dict[str, bool]:
     return {
         "evidencia": metrics["claims_sem_fonte"] > 0,
         "decomposicao": metrics["microalvos_ativos_sem_claim"] > 0,
-        "qualidade": metrics["contradicoes_nao_avaliadas"] > 0,
+        "qualidade": (
+            metrics["contradicoes_nao_avaliadas"] > 0
+            or metrics["vinculos_evidencia_nao_classificada"] > 0
+        ),
         "contradicao": (
             metrics["claims_contestados"] > 0
             or metrics["contradicoes_confirmadas"] > 0
@@ -916,6 +947,13 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
             f"{metrics['contradicoes_nao_avaliadas']} relação(ões) 'contradiz' sem validação semântica (+{v})."
         )
 
+    if metrics["vinculos_evidencia_nao_classificada"] > 0:
+        v = min(12, 2 * metrics["vinculos_evidencia_nao_classificada"])
+        scores["qualidade"] += v
+        reasons["qualidade"].append(
+            f"{metrics['vinculos_evidencia_nao_classificada']} vínculo(s) fonte→claim sem tipologia de evidência (+{v})."
+        )
+
     if metrics["contradicoes_confirmadas"] > 0:
         v = 12 + 4 * metrics["contradicoes_confirmadas"]
         scores["contradicao"] += v
@@ -963,6 +1001,17 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
         scores["qualidade"] -= 4
         reasons["qualidade"].append("Δ mostra relações semânticas revisadas (-4).")
 
+    if delta.get("vinculos_evidencia_nao_classificada", 0) > 0:
+        scores["qualidade"] += 5
+        reasons["qualidade"].append("Δ mostra novos vínculos ainda sem tipologia de evidência (+5).")
+    elif delta.get("vinculos_evidencia_nao_classificada", 0) < 0:
+        scores["qualidade"] -= 4
+        reasons["qualidade"].append("Δ mostra avanço na classificação da natureza da evidência (-4).")
+
+    if delta.get("claims_evidencia_diversa", 0) > 0:
+        scores["qualidade"] -= 3
+        reasons["qualidade"].append("Δ mostra aumento de convergência entre naturezas de evidência (-3).")
+
     if delta.get("microalvos_resolvidos", 0) > 0:
         scores["decomposicao"] -= 5
         reasons["decomposicao"].append("Δ mostra microalvos resolvidos (-5).")
@@ -1009,7 +1058,7 @@ def adaptive_feedback(inv: dict[str, Any], previous_inv: dict[str, Any] | None, 
         "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
         "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
         "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
-        "qualidade": "Revise semanticamente as relações 'contradiz' ainda não avaliadas antes de tratá-las como contradições reais.",
+        "qualidade": "Revise pendências de qualidade: semântica de relações e tipologia de evidência, sempre com decisão humana.",
     }
     recommendation = {
         "category": winner["category"],
@@ -1160,6 +1209,12 @@ def evaluate_decision_outcome(current_inv: dict[str, Any]) -> dict[str, Any]:
         if d.get("contradicoes_nao_avaliadas", 0) < 0:
             score += 4
             outcome_notes.append("Relações 'contradiz' receberam revisão semântica humana (+4).")
+        if d.get("vinculos_evidencia_nao_classificada", 0) < 0:
+            score += 3
+            outcome_notes.append("Vínculos receberam tipologia de evidência por revisão humana (+3).")
+        if d.get("claims_evidencia_diversa", 0) > 0:
+            score += 2
+            outcome_notes.append("A diversidade de naturezas de evidência aumentou (+2).")
 
     executed = row.get("executed_action") or {}
     if executed:
@@ -1353,7 +1408,7 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
                 "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
                 "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
                 "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
-                "qualidade": "Revise semanticamente as relações 'contradiz' ainda não avaliadas antes de tratá-las como contradições reais.",
+                "qualidade": "Revise pendências de qualidade: semântica de relações e tipologia de evidência, sempre com decisão humana.",
             }
             recommendation = {
                 "category": winner["category"],
@@ -1682,7 +1737,7 @@ def memory_adaptive_route(req: AdaptiveRequest):
                 "decomposicao": "Converta o microalvo ativo mais amplo em uma hipótese/claim diretamente verificável.",
                 "prioridade": "Ataque primeiro o microalvo que bloqueia dependências estruturais.",
                 "contradicao": "Isole somente contradições semanticamente confirmadas e registre evidências pró e contra.",
-                "qualidade": "Revise semanticamente as relações 'contradiz' ainda não avaliadas antes de tratá-las como contradições reais.",
+                "qualidade": "Revise pendências de qualidade: semântica de relações e tipologia de evidência, sempre com decisão humana.",
             }[winner["category"]],
         }
         rationale.append(

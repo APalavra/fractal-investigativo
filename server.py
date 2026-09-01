@@ -132,6 +132,7 @@ class AutoCycleRequest(BaseModel):
 
 class AutoCycleResponse(BaseModel):
     memory_version: int
+    stable_state: bool = False
     outcome_evaluated: bool
     outcome: dict[str, Any] | None = None
     comparison: dict[str, Any]
@@ -201,7 +202,7 @@ def proposal_fingerprint_from_model(proposal: Proposal) -> str:
 
 # ---------- Core ----------
 
-ENGINE_NAME = "Fractal Evolution Engine 0.4 — aprendizado causal de prioridade"
+ENGINE_NAME = "Fractal Evolution Engine 0.5 — limiar positivo e estado estável"
 
 
 def stable_hash(value: Any) -> str:
@@ -1280,6 +1281,19 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
         outcome = evaluate_decision_outcome(inv)
 
     pending_same_state = latest_unevaluated_decision()
+
+    # v27: decisões de pressão zero ou negativa não podem bloquear o ciclo.
+    # Elas representam ausência de urgência adaptativa, não uma tarefa pendente.
+    if pending_same_state and pending_same_state.get("baseline_hash") == current_hash:
+        pending_rec = pending_same_state.get("recommendation") or {}
+        try:
+            pending_score = float(pending_rec.get("score", 0) or 0)
+        except Exception:
+            pending_score = 0.0
+        if pending_score <= 0:
+            reconcile_pending_decision(f"DEC-{pending_same_state['id']}", inv)
+            pending_same_state = latest_unevaluated_decision()
+
     same_state_pending = bool(
         pending_same_state and pending_same_state.get("baseline_hash") == current_hash
     )
@@ -1304,6 +1318,7 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
 
     decision = None
     decision_created = False
+    stable_state = False
 
     if not same_state_pending:
         memory_rows = load_memory_rows(limit=100)
@@ -1350,14 +1365,34 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
                 f"{winner['category']} ({winner['score']})."
             )
 
-        decision_id = save_adaptive_decision(inv, recommendation, ranked)
-        decision = {
-            "decision_id": decision_id,
-            "recommendation": recommendation,
-            "adaptive_scores": ranked,
-            "rationale": rationale,
-        }
-        decision_created = True
+        # v27: uma categoria só vira decisão quando existe pressão adaptativa positiva.
+        # Score <= 0 significa que o sistema não encontrou um gargalo que justifique nova ação.
+        winner_score = float((recommendation or {}).get("score", 0) or 0)
+        if winner_score > 0:
+            decision_id = save_adaptive_decision(inv, recommendation, ranked)
+            decision = {
+                "decision_id": decision_id,
+                "recommendation": recommendation,
+                "adaptive_scores": ranked,
+                "rationale": rationale,
+            }
+            decision_created = True
+        else:
+            stable_state = True
+            decision = {
+                "decision_id": None,
+                "recommendation": {
+                    "category": "estavel",
+                    "score": winner_score,
+                    "action": "Nenhuma nova ação adaptativa é necessária agora. Mantenha o foco operacional atual e avance a investigação antes de recalcular.",
+                },
+                "adaptive_scores": ranked,
+                "rationale": [
+                    *rationale,
+                    "Limiar v27: nenhum score adaptativo ficou acima de zero; nenhuma nova decisão foi criada.",
+                    "O estado é operacionalmente estável: continuar o trabalho já focado é preferível a gerar uma ação artificial.",
+                ],
+            }
     else:
         decision = {
             "decision_id": f"DEC-{pending_same_state['id']}",
@@ -1372,6 +1407,7 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
     mem = load_memory()
     return {
         "memory_version": int(mem.get("version", 0)),
+        "stable_state": stable_state,
         "outcome_evaluated": outcome is not None,
         "outcome": outcome,
         "comparison": comparison,
@@ -1379,6 +1415,10 @@ def run_automatic_cycle(inv: dict[str, Any]) -> dict[str, Any]:
         "decision_created": decision_created,
         "decision": decision,
         "message": (
+            "Ciclo automático concluído: resultado anterior avaliado; nenhum novo gatilho adaptativo positivo foi encontrado."
+            if outcome is not None and stable_state else
+            "Ciclo automático concluído: nenhum novo gatilho adaptativo positivo foi encontrado."
+            if stable_state else
             "Ciclo automático concluído: resultado anterior avaliado e nova decisão criada."
             if outcome is not None and decision_created else
             "Ciclo automático concluído: nova decisão criada."
@@ -1419,19 +1459,32 @@ def reconcile_pending_decision(decision_id: str, current_inv: dict[str, Any]) ->
 
     recommendation = row.get("recommendation") or {}
     category = str(recommendation.get("category") or "")
-    if recommendation_still_applicable(current_inv, recommendation):
+    try:
+        rec_score = float(recommendation.get("score", 0) or 0)
+    except Exception:
+        rec_score = 0.0
+
+    if rec_score > 0 and recommendation_still_applicable(current_inv, recommendation):
         return {
             "decision_id": f"DEC-{numeric_id}",
             "reconciled": False,
             "status": "still_applicable",
-            "message": "A recomendação ainda possui gatilho real no estado atual.",
+            "message": "A recomendação ainda possui gatilho real e pressão positiva no estado atual.",
             "category": category or None,
         }
 
-    notes = [
-        f"Decisão reconciliada: a categoria '{category}' não possui mais gatilho no estado atual.",
-        "A decisão foi encerrada como obsoleta/satisfeita sem fabricar alteração epistemológica.",
-    ]
+    if rec_score <= 0:
+        notes = [
+            f"Decisão reconciliada: a categoria '{category}' ficou sem pressão adaptativa positiva (score {rec_score:g}).",
+            "Limiar v27: score zero ou negativo não permanece como decisão pendente.",
+        ]
+        close_label = "sem_pressao"
+    else:
+        notes = [
+            f"Decisão reconciliada: a categoria '{category}' não possui mais gatilho no estado atual.",
+            "A decisão foi encerrada como obsoleta/satisfeita sem fabricar alteração epistemológica.",
+        ]
+        close_label = "obsoleta"
     with db_connect() as conn:
         with conn.cursor() as cur:
             cur.execute("""
@@ -1440,12 +1493,13 @@ def reconcile_pending_decision(decision_id: str, current_inv: dict[str, Any]) ->
                     outcome_investigation_hash = %s,
                     outcome_investigation = %s::jsonb,
                     outcome_score = 0,
-                    outcome_label = 'obsoleta',
+                    outcome_label = %s,
                     outcome_notes = %s::jsonb
                 WHERE id = %s AND evaluated_at IS NULL
             """, (
                 stable_hash(current_inv),
                 json.dumps(current_inv, ensure_ascii=False),
+                close_label,
                 json.dumps(notes, ensure_ascii=False),
                 numeric_id,
             ))
@@ -1635,7 +1689,17 @@ def memory_adaptive_route(req: AdaptiveRequest):
             f"Score reajustado pelo histórico de resultados; vencedor atual: {winner['category']} ({winner['score']})."
         )
 
-    decision_id = save_adaptive_decision(req.investigation, recommendation, ranked)
+    # v27: a análise manual também respeita o limiar positivo.
+    if float((recommendation or {}).get("score", 0) or 0) > 0:
+        decision_id = save_adaptive_decision(req.investigation, recommendation, ranked)
+    else:
+        decision_id = None
+        recommendation = {
+            "category": "estavel",
+            "score": float((ranked[0] if ranked else {}).get("score", 0) or 0),
+            "action": "Nenhuma nova ação adaptativa é necessária agora; mantenha o foco atual e avance a investigação.",
+        }
+        rationale.append("Limiar v27: nenhum score positivo; nenhuma decisão persistente foi criada.")
 
     saved_id = None
     current_hash = stable_hash(req.investigation)

@@ -474,6 +474,8 @@ function syncSafeActionButton() {
     btn.title = "Aplicar somente a parte operacional segura desta decisão.";
   } else if (["evidencia","contradicao","qualidade"].includes(rec.category)) {
     btn.title = "Abrir orientação segura ou revisão humana sem decidir fatos automaticamente.";
+  } else if (rec.category === "estavel") {
+    btn.title = "Estado estável: nenhuma nova ação adaptativa deve ser aplicada agora.";
   } else {
     btn.title = "Ver a justificativa de segurança para esta recomendação.";
   }
@@ -788,9 +790,21 @@ async function applySafeRecommendedAction() {
           <div class="meta">Score: ${esc(scoreText)} · ${esc(parts)}</div>
           <div class="meta">Estado: ${esc(previousState)} → ${esc(micro.estado)}</div>
           <p>Nenhum claim, fonte, confiança ou relação de verdade foi modificado.</p>
-          <div class="meta">v26: este foco será reconhecido como efeito causal no próximo ciclo; o mesmo microalvo não será refocado se houver alternativa ativa.</div>
+          <div class="meta">v27: foco causal preservado; se nenhum score ficar acima de zero, o sistema entrará em estado estável em vez de criar outra decisão artificial.</div>
         </div>`;
       setStatus(`✓ Prioridade operacional focada em ${micro.id}, sem alterar conteúdo epistemológico.`, true);
+      return;
+    }
+
+    if (rec.category === "estavel") {
+      panel.innerHTML = `
+        <div class="card">
+          <strong>Estado operacional estável</strong>
+          <p>Nenhum score adaptativo positivo foi encontrado.</p>
+          <p><strong>Nenhuma nova decisão deve ser forçada.</strong> Continue a investigação no foco atual e execute outro ciclo somente depois de uma mudança real.</p>
+          <div class="meta">Nenhum claim, fonte, confiança, relação ou microalvo foi alterado.</div>
+        </div>`;
+      setStatus("✓ Estado estável: nenhuma ação artificial foi criada.", true);
       return;
     }
 
@@ -914,7 +928,7 @@ async function runAutomaticCycle() {
         <div class="meta">Memória evolutiva v${esc(data.memory_version)}</div>
         ${outcomeHtml}
         <div class="card">
-          <strong>${data.decision_created ? "Nova decisão" : "Decisão pendente preservada"}</strong>
+          <strong>${data.stable_state ? "Estado estável — nenhuma nova decisão" : (data.decision_created ? "Nova decisão" : "Decisão pendente preservada")}</strong>
           <div class="meta">${esc(decision.decision_id || "-")}</div>
           <div class="meta">Categoria: <strong>${esc(rec.category || "-")}</strong> · score ${esc(rec.score ?? "-")}</div>
           <p><strong>Próxima ação:</strong> ${esc(rec.action || "-")}</p>
@@ -926,7 +940,7 @@ async function runAutomaticCycle() {
       </div>
     `;
 
-    setStatus("✓ Ciclo automático concluído.", true);
+    setStatus(data.stable_state ? "✓ Ciclo concluído: estado estável, sem nova decisão artificial." : "✓ Ciclo automático concluído.", true);
   } catch (err) {
     setStatus(`✗ ${err.message}`);
   } finally {

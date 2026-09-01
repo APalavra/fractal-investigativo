@@ -450,7 +450,7 @@ async function applySafeRecommendedAction() {
 
     if (!confirm(
       `Aplicar uma decomposiÃ§Ã£o segura em ${micro.id}?\n\n` +
-      `SerÃ¡ criado apenas um claim H pendente, confianÃ§a 30%, sem apagar nem validar nada automaticamente.`
+      `SerÃ¡ criado apenas um claim H pendente e estrutural, confianÃ§a 0%, sem inventar fatos, apagar ou validar nada automaticamente.`
     )) return;
 
     inv.claims = inv.claims || [];
@@ -498,7 +498,7 @@ async function applySafeRecommendedAction() {
       <div class="card">
         <strong>AlteraÃ§Ã£o segura aplicada</strong>
         <p>${esc(id)} foi criado e ligado a ${esc(micro.id)}.</p>
-        <div class="meta">Tipo H Â· pendente Â· confianÃ§a 30% Â· nenhuma fonte inventada Â· nenhuma conclusÃ£o validada automaticamente.</div>
+        <div class="meta">Tipo H Â· pendente Â· confianÃ§a 0% Â· rascunho estrutural Â· nenhum fato ou fonte inventados Â· nenhuma conclusÃ£o validada automaticamente.</div>
         <div class="meta">A execuÃ§Ã£o foi registrada para avaliaÃ§Ã£o causal no prÃ³ximo ciclo.</div>
         <p>O claim jÃ¡ foi sincronizado com a investigaÃ§Ã£o atual.</p>
       </div>`;

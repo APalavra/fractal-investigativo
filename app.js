@@ -298,18 +298,81 @@ function renderRanking(){
   });
 }
 
+
+function semanticRelationStatusLocal(relation){
+  const raw=String(relation?.validacaoSemantica || relation?.statusSemantico || "nao_avaliada").trim().toLowerCase();
+  const aliases={
+    "real":"contradicao_real","confirmada":"contradicao_real","contradicao":"contradicao_real","contradição_real":"contradicao_real",
+    "tensão":"tensao","contestacao":"tensao","contestação":"tensao",
+    "compatível":"compativel","compativeis":"compativel","compatíveis":"compativel",
+    "nao_avaliado":"nao_avaliada","não_avaliada":"nao_avaliada","não_avaliado":"nao_avaliada"
+  };
+  return aliases[raw] || raw;
+}
+
+function warningAlreadyResolvedSemantically(inv,msg){
+  const text=String(msg||"");
+  const m=text.match(/(CLM-\d+)\s+sustenta\s+e\s+contradiz\s+(CLM-\d+)/i);
+  if(!m)return false;
+  const [a,b]=[m[1],m[2]];
+  return (inv?.relacoes||[]).some(r=>
+    r.tipo==="contradiz" &&
+    ((r.origem===a && r.destino===b)||(r.origem===b && r.destino===a)) &&
+    semanticRelationStatusLocal(r)==="compativel"
+  );
+}
+
+function evidenceNatureOptions(selected="nao_classificada"){
+  const items=[
+    ["nao_classificada","Não classificada"],
+    ["teorica","Teórica"],
+    ["experimental","Experimental"],
+    ["observacional","Observacional"],
+    ["documental","Documental"],
+    ["argumentativa","Argumentativa"]
+  ];
+  return items.map(([v,l])=>`<option value="${v}" ${selected===v?"selected":""}>${l}</option>`).join("");
+}
+
+window.saveVerificationEvidenceTypes=()=>{
+  if(!db.ativa)return;
+  let changed=0;
+  for(const link of (db.ativa.fonteClaims||[])){
+    const select=document.getElementById(`vq-${link.id}`);
+    if(!select)continue;
+    const next=select.value||"nao_classificada";
+    const prev=link.natureza||"nao_classificada";
+    if(next!==prev){
+      link.natureza=next;
+      changed++;
+    }
+  }
+  persist();
+  renderFS();
+  renderVerification();
+  const msg=changed?`${changed} classificação(ões) de evidência salva(s).`:`Nenhuma classificação foi alterada.`;
+  alert(msg);
+};
+
 function renderVerification(){
   if(!db.ativa)return;
-  const out=verify(db.ativa);
+  const inv=db.ativa;
+  const rawOut=verify(inv);
+  const out=rawOut.filter(([,msg])=>!warningAlreadyResolvedSemantically(inv,msg));
+  const suppressed=rawOut.length-out.length;
   $("verificacoes").innerHTML="";
   for(const [cls,msg] of out){
     $("verificacoes").insertAdjacentHTML("beforeend",`<div class="item ${cls}">${esc(msg)}</div>`);
   }
-  const inv=db.ativa;
+  if(suppressed){
+    $("verificacoes").insertAdjacentHTML("beforeend",`<div class="item ok"><strong>Revisão semântica respeitada</strong><p class="meta">${suppressed} alerta(s) bruto(s) de contradição foi(ram) suprimido(s) porque a relação correspondente já foi classificada humanamente como compatível. Nenhum claim foi alterado.</p></div>`);
+  }
+
   const profiles=inv.claims.map(c=>evidenceProfile(inv,c.id));
   const convergent=profiles.filter(p=>p.types.length>=2).length;
   const experimental=profiles.filter(p=>p.types.includes("experimental")).length;
-  const unclassified=(inv.fonteClaims||[]).filter(x=>!x.natureza||x.natureza==="nao_classificada").length;
+  const unclassifiedLinks=(inv.fonteClaims||[]).filter(x=>!x.natureza||x.natureza==="nao_classificada");
+  const semReviewed=(inv.relacoes||[]).filter(r=>r.tipo==="contradiz" && semanticRelationStatusLocal(r)!=="nao_avaliada").length;
   $("metricas").innerHTML=`
     <div class="metricgrid">
       <div class="metric"><strong>${inv.microNos.length}</strong><br>Microalvos</div>
@@ -318,11 +381,42 @@ function renderVerification(){
       <div class="metric"><strong>${inv.fontes.length}</strong><br>Fontes</div>
       <div class="metric"><strong>${convergent}</strong><br>Claims com ≥2 tipos de evidência</div>
       <div class="metric"><strong>${experimental}</strong><br>Claims com evidência experimental</div>
-      <div class="metric"><strong>${unclassified}</strong><br>Vínculos sem tipologia</div>
+      <div class="metric"><strong>${unclassifiedLinks.length}</strong><br>Vínculos sem tipologia</div>
+      <div class="metric"><strong>${semReviewed}</strong><br>Relações contradiz revisadas</div>
       <div class="metric"><strong>${inv.relacoes.length}</strong><br>Relações entre claims</div>
       <div class="metric"><strong>${inv.relacoesMicro.length}</strong><br>Relações entre microalvos</div>
     </div>
-    <div class="item"><strong>Convergência evidencial v30</strong><p class="meta">O IEE mede apenas estrutura de sustentação: quantidade de fontes, diversidade de natureza, completude da classificação e confiabilidade cadastrada. Ele nunca altera automaticamente Estado ou Confiança de um claim.</p></div>`;
+    <div class="item"><strong>Convergência evidencial v31</strong><p class="meta">O IEE mede apenas estrutura de sustentação. O verificador agora respeita a revisão semântica humana e não reapresenta como inconsistência uma relação já classificada como compatível.</p></div>`;
+
+  if(unclassifiedLinks.length){
+    const sourceById=Object.fromEntries((inv.fontes||[]).map(x=>[x.id,x]));
+    const claimById=Object.fromEntries((inv.claims||[]).map(x=>[x.id,x]));
+    const rows=unclassifiedLinks.map(link=>{
+      const src=sourceById[link.fonteId]||{};
+      const cl=claimById[link.claimId]||{};
+      const claimText=String(cl.texto||"").trim();
+      const short=claimText.length>105?claimText.slice(0,102)+"...":claimText;
+      const title=String(src.titulo||"fonte sem título").trim();
+      return `<div class="item">
+        <strong>${esc(link.id)} — ${esc(link.fonteId)} → ${esc(link.tipo)} → ${esc(link.claimId)}</strong>
+        <div class="meta">Fonte: ${esc(title)}${src.tipo?` · tipo cadastrado: ${esc(src.tipo)}`:""}</div>
+        ${short?`<div class="meta">Claim: ${esc(short)}</div>`:""}
+        ${link.observacao?`<div class="meta">Vínculo: ${esc(link.observacao)}</div>`:""}
+        <label>Natureza da evidência
+          <select id="vq-${esc(link.id)}">${evidenceNatureOptions(link.natureza||"nao_classificada")}</select>
+        </label>
+      </div>`;
+    }).join("");
+    $("verificacoes").insertAdjacentHTML("beforeend",`
+      <div class="item">
+        <strong>Fila rápida de revisão legado — ${unclassifiedLinks.length} vínculo(s)</strong>
+        <p class="meta">Classifique apenas quando o conteúdo/metodologia da fonte justificar. O sistema não pré-seleciona nenhuma natureza e permite deixar itens como “Não classificada”.</p>
+        ${rows}
+        <button type="button" class="secondary" onclick="saveVerificationEvidenceTypes()">Salvar classificações escolhidas</button>
+      </div>`);
+  }else{
+    $("verificacoes").insertAdjacentHTML("beforeend",`<div class="item ok"><strong>Tipologia completa</strong><p class="meta">Não há vínculos fonte→claim pendentes de classificação de natureza.</p></div>`);
+  }
 }
 
 function renderMicroList(){

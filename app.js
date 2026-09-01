@@ -358,15 +358,36 @@ function renderSources(){
   }
 }
 
+function updateFSNatureza(id,natureza){
+  if(!db.ativa)return;
+  const item=db.ativa.fonteClaims.find(x=>x.id===id);
+  if(!item)return;
+  item.natureza=natureza||"nao_classificada";
+  persist();
+  renderFS();
+}
+window.updateFSNatureza=updateFSNatureza;
+
 function renderFS(){
   if(!db.ativa)return;
   optionFill($("fsFonte"),sourceOptions(db.ativa));
   optionFill($("fsClaim"),claimOptions(db.ativa));
   $("fsLista").innerHTML="";
+  const naturezas=[
+    ["nao_classificada","Não classificada"],
+    ["teorica","Teórica"],
+    ["experimental","Experimental"],
+    ["observacional","Observacional"],
+    ["documental","Documental"],
+    ["argumentativa","Argumentativa"]
+  ];
   for(const x of db.ativa.fonteClaims){
+    const atual=x.natureza||"nao_classificada";
     $("fsLista").insertAdjacentHTML("beforeend",`
       <div class="item"><strong>${esc(x.id)}</strong><p>${esc(x.fonteId)} → <b>${esc(x.tipo)}</b> → ${esc(x.claimId)}</p>
-      <div class="meta"><b>Evidência:</b> ${esc(({teorica:"teórica",experimental:"experimental",observacional:"observacional",documental:"documental",argumentativa:"argumentativa",nao_classificada:"não classificada"})[x.natureza||"nao_classificada"] || x.natureza)}</div>
+      <label>Natureza da evidência<select class="inline-select" onchange="updateFSNatureza('${x.id}',this.value)">
+        ${naturezas.map(([v,l])=>`<option value="${v}" ${atual===v?"selected":""}>${l}</option>`).join("")}
+      </select></label>
       <div class="meta">${esc(x.observacao)}</div><button class="danger" onclick="removeFS('${x.id}')">Remover</button></div>`);
   }
 }

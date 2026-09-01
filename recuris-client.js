@@ -210,6 +210,7 @@ function init() {
   input.value = localStorage.getItem(BACKEND_KEY) || DEFAULT_BACKEND_URL;
   $("btnEvoTestar").addEventListener("click", testBackend);
   $("btnEvoAnalisar").addEventListener("click", analyzeCurrent);
+  $("btnEvoMemoria").addEventListener("click", showMemorySummary);
   setStatus(input.value ? "Backend configurado; teste a conexão." : "Backend ainda não configurado.");
 }
 

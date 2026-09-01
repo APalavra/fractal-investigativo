@@ -204,6 +204,45 @@ async function showMemorySummary() {
   }
 }
 
+
+async function compareWithMemory() {
+  try {
+    setStatus("Comparando investigação atual com ciclos anteriores...");
+    const investigation = loadInvestigation();
+    const data = await request("/memory/compare", {
+      method: "POST",
+      body: JSON.stringify({ investigation }),
+    });
+
+    const target = $("evoComparePanel");
+    const cats = Object.entries(data.prior_categories || {})
+      .map(([k,v]) => `${esc(k)}: ${v}`)
+      .join(" · ") || "nenhuma";
+
+    const guidance = (data.guidance || [])
+      .map(x => `<li>${esc(x)}</li>`)
+      .join("");
+
+    const repeated = (data.repeated_targets || []).length
+      ? esc(data.repeated_targets.join(", "))
+      : "nenhum";
+
+    target.innerHTML = `
+      <div class="card">
+        <strong>Comparação com ciclos anteriores</strong>
+        <div class="meta">Memória v${data.memory_version} · correspondências exatas do estado atual: ${data.exact_state_matches}</div>
+        <div class="meta">Categorias históricas: ${cats}</div>
+        <div class="meta">Alvos recorrentes: ${repeated}</div>
+        ${guidance ? `<ul>${guidance}</ul>` : ""}
+      </div>
+    `;
+
+    setStatus("✓ Comparação histórica concluída.", true);
+  } catch (err) {
+    setStatus(`✗ ${err.message}`);
+  }
+}
+
 function init() {
   const input = $("evoBackendUrl");
   if (!input) return;
@@ -211,6 +250,7 @@ function init() {
   $("btnEvoTestar").addEventListener("click", testBackend);
   $("btnEvoAnalisar").addEventListener("click", analyzeCurrent);
   $("btnEvoMemoria").addEventListener("click", showMemorySummary);
+  $("btnEvoComparar").addEventListener("click", compareWithMemory);
   setStatus(input.value ? "Backend configurado; teste a conexão." : "Backend ainda não configurado.");
 }
 

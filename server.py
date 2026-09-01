@@ -68,6 +68,19 @@ class CommitResponse(BaseModel):
     duplicate: bool = False
 
 
+class CompareRequest(BaseModel):
+    investigation: dict[str, Any]
+
+
+class CompareResponse(BaseModel):
+    memory_version: int
+    current_hash: str
+    exact_state_matches: int
+    prior_categories: dict[str, int]
+    repeated_targets: list[str]
+    guidance: list[str]
+
+
 
 def memory_guidance_for(inv: dict[str, Any]) -> tuple[list[str], set[str]]:
     notes = []
@@ -462,11 +475,78 @@ def commit_memory(req: CommitRequest) -> CommitResponse:
     )
 
 
+
+def compare_with_memory(inv: dict[str, Any]) -> CompareResponse:
+    mem = load_memory()
+    entries = mem.get("entries", []) or []
+    current_hash = stable_hash(inv)
+
+    exact = 0
+    cats: dict[str, int] = {}
+    target_counts: dict[str, int] = {}
+    guidance: list[str] = []
+
+    for e in entries:
+        if e.get("investigation_hash") == current_hash:
+            exact += 1
+
+        p = e.get("proposal") or {}
+        cat = p.get("category") or "outro"
+        cats[cat] = cats.get(cat, 0) + 1
+
+        for ref in p.get("evidence") or []:
+            rid = str(ref.get("id") or "").strip()
+            if rid:
+                target_counts[rid] = target_counts.get(rid, 0) + 1
+
+    repeated = [
+        rid for rid, count in sorted(
+            target_counts.items(),
+            key=lambda kv: (-kv[1], kv[0])
+        )
+        if count >= 2
+    ]
+
+    if not entries:
+        guidance.append("Ainda não há memória evolutiva suficiente para comparação histórica.")
+    else:
+        guidance.append(
+            f"Há {len(entries)} ciclo(s) persistente(s) disponíveis para orientar a investigação."
+        )
+
+    if exact:
+        guidance.append(
+            f"O estado atual já apareceu em {exact} registro(s); evite repetir ações já memorizadas sem mudança factual."
+        )
+
+    if repeated:
+        guidance.append(
+            "Alvos recorrentes na memória: " + ", ".join(repeated[:8]) +
+            ". Considere verificar se são gargalos reais ou apenas foco repetitivo."
+        )
+
+    if cats:
+        top_cat = max(cats, key=cats.get)
+        guidance.append(
+            f"A categoria mais frequente na memória é '{top_cat}' ({cats[top_cat]} registro(s)). "
+            "Busque equilíbrio se outras dimensões estiverem sendo negligenciadas."
+        )
+
+    return CompareResponse(
+        memory_version=int(mem.get("version", 0)),
+        current_hash=current_hash,
+        exact_state_matches=exact,
+        prior_categories=cats,
+        repeated_targets=repeated,
+        guidance=guidance,
+    )
+
+
 # ---------- HTTP app ----------
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="0.3.0-memory-aware",
+    version="0.4.0-cycle-compare",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -490,7 +570,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.3.0-memory-aware"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "0.4.0-cycle-compare"}
 
 
 @app.get("/health")
@@ -527,6 +607,13 @@ def commit_route(req: CommitRequest):
 def memory_route():
     mem = load_memory()
     return {"schema": mem.get("schema"), "version": mem.get("version", 0), "entries": mem.get("entries", [])}
+
+
+@app.post("/memory/compare", response_model=CompareResponse)
+def memory_compare_route(req: CompareRequest):
+    if not req.investigation or not isinstance(req.investigation, dict):
+        raise HTTPException(status_code=400, detail="investigation ausente ou inválida")
+    return compare_with_memory(req.investigation)
 
 
 @app.get("/memory/summary")

@@ -295,6 +295,34 @@ function buildSafeHypothesis(micro) {
   return `Hipótese operacional para ${micro.id}: ${title} pode ser decomposto em uma afirmação específica e verificável por evidências explícitas.`;
 }
 
+
+function syncSafeActionButton() {
+  const btn = $("btnEvoAplicarSeguro");
+  if (!btn) return;
+  const rec = lastAutomaticCycle?.decision?.recommendation;
+  btn.disabled = !(rec && rec.category === "decomposicao");
+  btn.title = btn.disabled
+    ? "Disponível quando houver uma decisão pendente segura de decomposição."
+    : "Aplicar a decisão pendente de decomposição.";
+}
+
+async function restorePendingDecision() {
+  try {
+    const data = await request("/memory/pending-decision", { method: "GET" });
+    if (data?.found && data.decision) {
+      lastAutomaticCycle = {
+        decision_created: false,
+        decision: data.decision,
+        message: "Decisão pendente restaurada do backend."
+      };
+    }
+  } catch (err) {
+    console.warn("Não foi possível restaurar a decisão pendente:", err);
+  } finally {
+    syncSafeActionButton();
+  }
+}
+
 async function applySafeRecommendedAction() {
   const panel = $("evoSafeActionPanel");
   try {
@@ -354,6 +382,7 @@ async function applySafeRecommendedAction() {
     });
 
     saveWholeDB(db);
+    if ($("btnEvoAplicarSeguro")) $("btnEvoAplicarSeguro").disabled = true;
 
     try {
       await request("/memory/action-execution", {
@@ -400,6 +429,7 @@ async function runAutomaticCycle() {
       body: JSON.stringify({ investigation }),
     });
     lastAutomaticCycle = data;
+    syncSafeActionButton();
 
     const target = $("evoCyclePanel");
     const decision = data.decision || {};

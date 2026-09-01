@@ -151,6 +151,11 @@ class ActionExecutionResponse(BaseModel):
     registered: bool
 
 
+class PendingDecisionResponse(BaseModel):
+    found: bool
+    decision: dict[str, Any] | None = None
+
+
 
 def memory_guidance_for(inv: dict[str, Any]) -> tuple[list[str], set[str]]:
     notes = []
@@ -1194,7 +1199,7 @@ def register_executed_action(decision_id: str, action: dict[str, Any]) -> bool:
 
 app = FastAPI(
     title="Fractal Recuris Bridge",
-    version="1.1.0-causal-action",
+    version="1.2.0-restore-pending",
     description="Backend evolutivo do Fractal Investigativo.",
 )
 
@@ -1218,7 +1223,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.1.0-causal-action"}
+    return {"ok": True, "service": "fractal-recuris-bridge", "version": "1.2.0-restore-pending"}
 
 
 @app.get("/health")
@@ -1266,6 +1271,20 @@ def memory_outcome_route(req: OutcomeRequest):
         return OutcomeResponse(**result)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
+
+
+@app.get("/memory/pending-decision", response_model=PendingDecisionResponse)
+def pending_decision_route():
+    row = latest_unevaluated_decision()
+    if not row:
+        return PendingDecisionResponse(found=False, decision=None)
+    decision = {
+        "decision_id": f"DEC-{row['id']}",
+        "recommendation": row.get("recommendation") or {},
+        "adaptive_scores": row.get("adaptive_scores") or [],
+        "baseline_hash": row.get("baseline_hash"),
+    }
+    return PendingDecisionResponse(found=True, decision=decision)
 
 
 @app.post("/memory/action-execution", response_model=ActionExecutionResponse)

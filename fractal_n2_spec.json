@@ -1,0 +1,56 @@
+{
+  "project": "Fractal N2",
+  "canonical_equation": "N2=G+W+H+F+R+A+E+M",
+  "constitution_version": "1.0",
+  "adopted_on": "2026-09-02",
+  "change_policy": {
+    "default": "immutable",
+    "requires_explicit_user_approval": true,
+    "silent_scope_reduction_forbidden": true,
+    "semantic_shrinkage_forbidden": true,
+    "means_goal_substitution_forbidden": true
+  },
+  "pillars": {
+    "G": {
+      "name": "General Intelligence / Interface",
+      "required": true,
+      "status": "planned"
+    },
+    "W": {
+      "name": "World / Web / Tools",
+      "required": true,
+      "status": "planned"
+    },
+    "H": {
+      "name": "Historical Memory",
+      "required": true,
+      "status": "planned"
+    },
+    "F": {
+      "name": "Fractal Investigation",
+      "required": true,
+      "status": "partial_prototype"
+    },
+    "R": {
+      "name": "Recuris-style Evolution",
+      "required": true,
+      "status": "partial_prototype"
+    },
+    "A": {
+      "name": "AlphaEvolve-style Evolution",
+      "required": true,
+      "status": "planned"
+    },
+    "E": {
+      "name": "Evolvable Harness / Exo-style",
+      "required": true,
+      "status": "planned"
+    },
+    "M": {
+      "name": "Meta-recursion",
+      "required": true,
+      "status": "planned"
+    }
+  },
+  "completion_rule": "Complete only when all 8 pillars and the integrated Supreme Test pass."
+}
